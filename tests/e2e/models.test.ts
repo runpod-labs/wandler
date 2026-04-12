@@ -27,7 +27,7 @@ describe("GET /v1/models", () => {
       }>;
     };
     expect(body.object).toBe("list");
-    expect(body.data).toHaveLength(2); // LLM + STT
+    expect(body.data).toHaveLength(3); // LLM + STT + Embedding
     expect(body.data[0]!.id).toBe("mock-model/test");
     expect(body.data[0]!.object).toBe("model");
     expect(body.data[0]!.owned_by).toBe("wandler");

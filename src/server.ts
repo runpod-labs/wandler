@@ -2,8 +2,11 @@ import http from "node:http";
 import type { ServerConfig } from "./config.js";
 import type { LoadedModels } from "./models/manager.js";
 import { handleChatCompletions } from "./routes/chat.js";
+import { handleCompletions } from "./routes/completions.js";
+import { handleEmbeddings } from "./routes/embeddings.js";
 import { handleListModels, handleGetModel } from "./routes/models.js";
 import { handleAudioTranscriptions } from "./routes/audio.js";
+import { handleTokenize, handleDetokenize } from "./routes/tokenize.js";
 import { handleHealth } from "./routes/health.js";
 import { errorJson, setCorsHeaders } from "./utils/http.js";
 
@@ -38,9 +41,33 @@ export function createServer(config: ServerConfig, models: LoadedModels): http.S
       return;
     }
 
+    // POST /v1/completions
+    if (req.method === "POST" && url === "/v1/completions") {
+      await handleCompletions(req, res, models, config.modelId);
+      return;
+    }
+
+    // POST /v1/embeddings
+    if (req.method === "POST" && url === "/v1/embeddings") {
+      await handleEmbeddings(req, res, models, config.embeddingModelId || config.modelId);
+      return;
+    }
+
     // POST /v1/audio/transcriptions
     if (req.method === "POST" && url === "/v1/audio/transcriptions") {
       await handleAudioTranscriptions(req, res, models);
+      return;
+    }
+
+    // POST /tokenize
+    if (req.method === "POST" && url === "/tokenize") {
+      await handleTokenize(req, res, models);
+      return;
+    }
+
+    // POST /detokenize
+    if (req.method === "POST" && url === "/detokenize") {
+      await handleDetokenize(req, res, models);
       return;
     }
 

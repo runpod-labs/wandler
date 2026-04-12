@@ -28,24 +28,36 @@ export interface ToolCall {
   };
 }
 
-export interface ChatCompletionRequest {
-  model?: string;
-  messages: ChatMessage[];
+// ── Shared sampling parameters (used by both chat and completions) ──────────
+
+export interface SamplingParams {
   temperature?: number;
   top_p?: number;
+  top_k?: number;
+  min_p?: number;
+  typical_p?: number;
   max_tokens?: number;
   stream?: boolean;
   stream_options?: { include_usage?: boolean };
   stop?: string | string[];
   presence_penalty?: number;
   frequency_penalty?: number;
+  repetition_penalty?: number;
   logit_bias?: Record<string, number>;
   seed?: number;
   n?: number;
+  no_repeat_ngram_size?: number;
   response_format?: { type: "text" | "json_object" };
+  user?: string;
+}
+
+// ── Chat Completions ────────────────────────────────────────────────────────
+
+export interface ChatCompletionRequest extends SamplingParams {
+  model?: string;
+  messages: ChatMessage[];
   tools?: Tool[];
   tool_choice?: "none" | "auto" | "required" | { type: "function"; function: { name: string } };
-  user?: string;
 }
 
 export interface TokenUsage {
@@ -90,6 +102,94 @@ export interface ChatCompletionChunk {
   usage?: TokenUsage;
 }
 
+// ── Text Completions ────────────────────────────────────────────────────────
+
+export interface CompletionRequest extends SamplingParams {
+  model?: string;
+  prompt: string | string[];
+  echo?: boolean;
+  suffix?: string;
+}
+
+export interface CompletionChoice {
+  index: number;
+  text: string;
+  finish_reason: "stop" | "length";
+}
+
+export interface CompletionResponse {
+  id: string;
+  object: "text_completion";
+  created: number;
+  model: string;
+  choices: CompletionChoice[];
+  usage: TokenUsage;
+}
+
+export interface CompletionChunkChoice {
+  index: number;
+  text: string;
+  finish_reason: "stop" | "length" | null;
+}
+
+export interface CompletionChunk {
+  id: string;
+  object: "text_completion";
+  created: number;
+  model: string;
+  choices: CompletionChunkChoice[];
+  usage?: TokenUsage;
+}
+
+// ── Embeddings ──────────────────────────────────────────────────────────────
+
+export interface EmbeddingRequest {
+  model?: string;
+  input: string | string[];
+  encoding_format?: "float" | "base64";
+  user?: string;
+}
+
+export interface EmbeddingObject {
+  object: "embedding";
+  embedding: number[] | string; // number[] for float, string for base64
+  index: number;
+}
+
+export interface EmbeddingResponse {
+  object: "list";
+  data: EmbeddingObject[];
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+}
+
+// ── Tokenization ────────────────────────────────────────────────────────────
+
+export interface TokenizeRequest {
+  model?: string;
+  input: string;
+  add_special_tokens?: boolean;
+}
+
+export interface TokenizeResponse {
+  tokens: number[];
+  count: number;
+}
+
+export interface DetokenizeRequest {
+  model?: string;
+  tokens: number[];
+}
+
+export interface DetokenizeResponse {
+  text: string;
+}
+
+// ── Models ──────────────────────────────────────────────────────────────────
+
 export interface ModelObject {
   id: string;
   object: "model";
@@ -102,12 +202,16 @@ export interface ModelListResponse {
   data: ModelObject[];
 }
 
+// ── Health ───────────────────────────────────────────────────────────────────
+
 export interface HealthResponse {
   status: "ok";
   engine: string;
   device: string;
   models: Record<string, string>;
 }
+
+// ── Errors ──────────────────────────────────────────────────────────────────
 
 export interface ErrorResponse {
   error: {
@@ -117,6 +221,8 @@ export interface ErrorResponse {
     code: string | null;
   };
 }
+
+// ── Internal ────────────────────────────────────────────────────────────────
 
 export interface GenerationResult {
   text: string;
@@ -128,7 +234,11 @@ export interface GenerationOptions {
   max_new_tokens: number;
   temperature: number;
   top_p: number;
+  top_k?: number;
+  min_p?: number;
+  typical_p?: number;
   do_sample: boolean;
   repetition_penalty?: number;
+  no_repeat_ngram_size?: number;
   eos_token_id?: number[];
 }

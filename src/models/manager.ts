@@ -15,6 +15,7 @@ export interface LoadedModels {
     dispose?(): Promise<void>;
   };
   transcriber: ((input: Float32Array) => Promise<{ text: string }>) | null;
+  embedder: ((input: string, opts: Record<string, unknown>) => Promise<{ data: Float32Array }>) | null;
 }
 
 export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
@@ -39,9 +40,22 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     console.log(`[wandler] STT ready in ${((Date.now() - t1) / 1000).toFixed(1)}s`);
   }
 
+  let embedder: LoadedModels["embedder"] = null;
+  if (config.embeddingModelId) {
+    console.log(`[wandler] Loading embeddings: ${config.embeddingModelId} (${config.embeddingDtype})`);
+    const t2 = Date.now();
+    const embPipeline = await pipeline("feature-extraction", config.embeddingModelId, {
+      dtype: config.embeddingDtype as "q4" | "q8" | "fp16" | "fp32",
+    });
+    embedder = (input: string, opts: Record<string, unknown>) =>
+      embPipeline(input, opts) as Promise<{ data: Float32Array }>;
+    console.log(`[wandler] Embeddings ready in ${((Date.now() - t2) / 1000).toFixed(1)}s`);
+  }
+
   return {
     tokenizer,
     model: model as unknown as LoadedModels["model"],
     transcriber,
+    embedder,
   };
 }

@@ -5,52 +5,13 @@ import type {
   ChatCompletionRequest,
   ChatCompletionResponse,
   ChatMessage,
-  GenerationOptions,
   ToolCall,
 } from "../types/openai.js";
 import { generate } from "../generation/generate.js";
+import { buildGenOpts } from "../generation/options.js";
 import { generateStream } from "../generation/stream.js";
 import { parseToolCalls } from "../tools/parser.js";
 import { errorJson, json, makeId, readBody } from "../utils/http.js";
-import type { Tokenizer } from "../models/tokenizer.js";
-
-function buildGenOpts(params: ChatCompletionRequest, tokenizer: Tokenizer): GenerationOptions {
-  const temperature = params.temperature ?? 0.7;
-  const opts: GenerationOptions = {
-    max_new_tokens: params.max_tokens || 2048,
-    temperature,
-    top_p: params.top_p ?? 0.95,
-    do_sample: temperature > 0,
-  };
-
-  // Map presence_penalty + frequency_penalty to repetition_penalty.
-  // transformers.js supports repetition_penalty (> 1.0 penalizes repetition).
-  const penalty = (params.presence_penalty ?? 0) + (params.frequency_penalty ?? 0);
-  if (penalty !== 0) {
-    opts.repetition_penalty = 1.0 + Math.max(0, penalty) * 0.5;
-  }
-
-  // Convert stop sequences to extra eos_token_id values
-  if (params.stop) {
-    const stops = Array.isArray(params.stop) ? params.stop : [params.stop];
-    const extraEosIds: number[] = [];
-    for (const seq of stops) {
-      const encoded = tokenizer(seq, { return_tensors: "pt" });
-      // Use the last token of each stop sequence as an eos trigger
-      const dims = encoded.input_ids.dims;
-      if (dims[1]! > 0) {
-        // Access the last token ID — the shape is [1, seq_len]
-        const lastIdx = dims[1]! - 1;
-        extraEosIds.push(lastIdx);
-      }
-    }
-    if (extraEosIds.length > 0) {
-      opts.eos_token_id = extraEosIds;
-    }
-  }
-
-  return opts;
-}
 
 /** Inject a JSON instruction if response_format is json_object */
 function applyResponseFormat(
@@ -132,7 +93,7 @@ export async function handleChatCompletions(
 
   const id = makeId();
   const created = Math.floor(Date.now() / 1000);
-  const genOpts = buildGenOpts(params, models.tokenizer);
+  const genOpts = buildGenOpts(params as ChatCompletionRequest, models.tokenizer);
   const messages = applyResponseFormat(params.messages, params.response_format);
   const includeUsage = params.stream_options?.include_usage ?? true;
 

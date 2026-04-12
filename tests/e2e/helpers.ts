@@ -86,7 +86,11 @@ export function createMockModels(): LoadedModels {
     text: " This is a mock transcription. ",
   });
 
-  return { tokenizer, model, transcriber };
+  const embedder = async (_input: string, _opts: Record<string, unknown>) => ({
+    data: new Float32Array([0.1, 0.2, 0.3, 0.4, 0.5]),
+  });
+
+  return { tokenizer, model, transcriber, embedder };
 }
 
 export function createTestConfig(
@@ -99,6 +103,8 @@ export function createTestConfig(
     device: "cpu",
     sttModelId: "mock-stt/test",
     sttDtype: "q4",
+    embeddingModelId: "mock-embedding/test",
+    embeddingDtype: "q8",
     ...overrides,
   };
 }

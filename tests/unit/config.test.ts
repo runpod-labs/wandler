@@ -10,6 +10,8 @@ describe("loadConfig", () => {
     expect(config.device).toBe("webgpu");
     expect(config.sttModelId).toBe("onnx-community/whisper-tiny");
     expect(config.sttDtype).toBe("q4");
+    expect(config.embeddingModelId).toBe("");
+    expect(config.embeddingDtype).toBe("q8");
   });
 
   it("reads from env vars", () => {

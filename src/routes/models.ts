@@ -11,6 +11,9 @@ function buildModelList(config: ServerConfig): ModelObject[] {
   if (config.sttModelId) {
     models.push({ id: config.sttModelId, object: "model", created, owned_by: "wandler" });
   }
+  if (config.embeddingModelId) {
+    models.push({ id: config.embeddingModelId, object: "model", created, owned_by: "wandler" });
+  }
   return models;
 }
 

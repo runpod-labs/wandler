@@ -7,6 +7,8 @@ export interface ServerConfig {
   device: string;
   sttModelId: string;
   sttDtype: string;
+  embeddingModelId: string;
+  embeddingDtype: string;
 }
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): ServerConfig {
@@ -17,5 +19,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     device: env.DEVICE || "webgpu",
     sttModelId: env.STT_MODEL_ID || "onnx-community/whisper-tiny",
     sttDtype: env.STT_DTYPE || "q4",
+    embeddingModelId: env.EMBEDDING_MODEL_ID || "",
+    embeddingDtype: env.EMBEDDING_DTYPE || "q8",
   };
 }
