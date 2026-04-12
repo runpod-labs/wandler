@@ -39,9 +39,9 @@ for await (const chunk of res) {
 		<div className="flex flex-col min-h-screen bg-black text-white">
 			<Header />
 
-			<main className="flex-grow pt-16">
+			<main className="flex-grow">
 				{/* ── Hero ── */}
-				<section className="min-h-screen relative overflow-hidden flex flex-col justify-center px-4 md:px-0 py-12">
+				<section className="relative overflow-hidden flex flex-col justify-center px-4 md:px-0 pt-20 pb-16 md:pt-24 md:pb-20">
 					<div className="container mx-auto">
 						<div className="grid md:grid-cols-[1fr_1fr] gap-8 md:gap-12 items-center">
 							{/* Left: Logo centered + cards */}
