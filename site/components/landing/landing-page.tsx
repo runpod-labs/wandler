@@ -39,138 +39,129 @@ for await (const chunk of res) {
 		<div className="flex flex-col min-h-screen bg-black text-white">
 			<Header />
 
-			<main className="flex-grow">
+			<main className="flex-grow pt-16">
 				{/* ── Hero ── */}
-				<section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4">
-					{/* Robot head as atmospheric background */}
-					<div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-						<div className="relative w-[600px] h-[600px] md:w-[900px] md:h-[900px] opacity-[0.08]">
-							<Image
-								src="https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/20250202_wandler_head_v2-Ma4f25yqpXRSf32ZnmivUnnV1LGQ69.jpg"
-								alt=""
-								fill
-								className="object-contain"
-								priority
-							/>
-						</div>
-					</div>
+				<section className="min-h-screen relative overflow-hidden flex flex-col justify-center px-4 md:px-0 py-12">
+					<div className="container mx-auto">
+						<div className="grid md:grid-cols-[3fr_2fr] gap-8 md:gap-12 items-center">
+							{/* Left: Logo + Info */}
+							<div className="space-y-8">
+								<Image
+									src="https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/wandler_logo_v5-vJ2L3NmauebkFJs9fOcFe7bPVM14To.svg"
+									alt="wandler"
+									width={500}
+									height={100}
+									className="w-[320px] md:w-[500px] h-auto"
+									priority
+								/>
 
-					{/* Subtle scan line overlay */}
-					<div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
-						backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)",
-					}} />
+								<h1 className="text-3xl md:text-5xl font-bold tracking-tighter">
+									openai-compatible{" "}
+									<span className="text-primary">inference server</span>
+								</h1>
 
-					<div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto space-y-10">
-						{/* Large centered logo */}
-						<div className="w-[320px] md:w-[560px] lg:w-[700px]">
-							<Image
-								src="https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/wandler_logo_v5-vJ2L3NmauebkFJs9fOcFe7bPVM14To.svg"
-								alt="wandler"
-								width={700}
-								height={140}
-								className="w-full h-auto"
-								priority
-							/>
-						</div>
+								<p className="text-lg text-muted-foreground">
+									powered by 🤗{" "}
+									<a
+										href="https://huggingface.co/docs/transformers.js/en/index"
+										className="text-primary hover:underline"
+									>
+										transformers.js
+									</a>
+									{" "}— run ONNX models locally with WebGPU. no python, no CUDA.
+								</p>
 
-						{/* Core proposition — no borders, just typography */}
-						<p className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-white/80">
-							openai-compatible inference server
-						</p>
+								{/* Key facts in cyberpunk corner cards */}
+								<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+									{[
+										{ label: "up to", value: "248 tok/s" },
+										{ label: "TTFT", value: "16ms" },
+										{ label: "models", value: "2900+" },
+										{ label: "quantization", value: "q4 / q8" },
+									].map((stat) => (
+										<div key={stat.value} className="cyberpunk-corners bg-secondary p-4">
+											<div className="text-xs text-muted-foreground uppercase tracking-wider">{stat.label}</div>
+											<div className="text-xl font-bold text-primary mt-1">{stat.value}</div>
+										</div>
+									))}
+								</div>
 
-						{/* Key facts as clean inline items */}
-						<div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm md:text-base text-white/40 font-mono">
-							<span>powered by <span className="text-primary/70">transformers.js</span></span>
-							<span>local inference</span>
-							<span>webgpu accelerated</span>
-							<span>no python</span>
-						</div>
-
-						{/* Quickstart command */}
-						<div className="w-full max-w-2xl mt-4">
-							<button
-								onClick={() => handleCopy(quickstart, "qs")}
-								className="group w-full flex items-center gap-3 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.06] hover:border-primary/20 transition-all px-4 py-3 text-left cursor-pointer"
-							>
-								<Terminal className="w-4 h-4 text-primary/60 shrink-0" />
-								<code className="font-mono text-sm md:text-base text-white/60 group-hover:text-white/80 transition-colors truncate">
-									{quickstart}
-								</code>
-								<span className="ml-auto shrink-0">
-									{copied === "qs" ? (
-										<Check className="w-4 h-4 text-primary" />
-									) : (
-										<Copy className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors" />
-									)}
-								</span>
-							</button>
-						</div>
-					</div>
-				</section>
-
-				{/* ── What it does ── */}
-				<section className="py-24 md:py-32 border-t border-white/[0.06]">
-					<div className="container mx-auto px-4 max-w-5xl">
-						<div className="grid md:grid-cols-3 gap-16 md:gap-12">
-							<div>
-								<div className="text-primary/50 font-mono text-xs tracking-widest uppercase mb-4">speed</div>
-								<div className="text-4xl md:text-5xl font-bold tracking-tighter">248</div>
-								<div className="text-white/40 mt-1">tokens per second</div>
-								<div className="text-white/20 text-sm mt-2 font-mono">LFM2.5-350M · WebGPU · q4</div>
+								{/* Quickstart */}
+								<div className="cyberpunk-corners bg-secondary p-4">
+									<button
+										onClick={() => handleCopy(quickstart, "qs")}
+										className="w-full flex items-center gap-3 text-left cursor-pointer group"
+									>
+										<Terminal className="w-4 h-4 text-primary shrink-0" />
+										<code className="font-mono text-sm md:text-base text-white truncate">
+											{quickstart}
+										</code>
+										<span className="ml-auto shrink-0">
+											{copied === "qs" ? (
+												<Check className="w-4 h-4 text-primary" />
+											) : (
+												<Copy className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+											)}
+										</span>
+									</button>
+								</div>
 							</div>
-							<div>
-								<div className="text-primary/50 font-mono text-xs tracking-widest uppercase mb-4">latency</div>
-								<div className="text-4xl md:text-5xl font-bold tracking-tighter">16<span className="text-lg text-white/40 ml-1">ms</span></div>
-								<div className="text-white/40 mt-1">time to first token</div>
-								<div className="text-white/20 text-sm mt-2 font-mono">streaming · SSE</div>
-							</div>
-							<div>
-								<div className="text-primary/50 font-mono text-xs tracking-widest uppercase mb-4">models</div>
-								<div className="text-4xl md:text-5xl font-bold tracking-tighter">2900+</div>
-								<div className="text-white/40 mt-1">ONNX models on HuggingFace</div>
-								<div className="text-white/20 text-sm mt-2 font-mono">transformers.js compatible</div>
+
+							{/* Right: Robot head */}
+							<div className="relative flex justify-center mt-8 md:mt-0">
+								<div className="w-[280px] h-[280px] md:w-[500px] md:h-[500px] relative">
+									<Image
+										src="https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/20250202_wandler_head_v2-Ma4f25yqpXRSf32ZnmivUnnV1LGQ69.jpg"
+										alt="wandler"
+										fill
+										className="object-contain"
+										priority
+									/>
+									<div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
+								</div>
 							</div>
 						</div>
 					</div>
 				</section>
 
 				{/* ── Endpoints ── */}
-				<section className="py-24 md:py-32 border-t border-white/[0.06]">
-					<div className="container mx-auto px-4 max-w-5xl">
-						<h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-16">
+				<section className="py-20 md:py-28 border-t border-primary/20">
+					<div className="container mx-auto px-4">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-12">
 							endpoints
 						</h2>
-						<div className="grid md:grid-cols-2 gap-x-16 gap-y-10">
+						<div className="grid md:grid-cols-3 gap-6">
 							{[
-								{ path: "POST /v1/chat/completions", desc: "Streaming & non-streaming chat with tool calling" },
-								{ path: "POST /v1/completions", desc: "Legacy text completions with echo & suffix" },
-								{ path: "POST /v1/embeddings", desc: "Text embeddings for RAG and semantic search" },
-								{ path: "GET  /v1/models", desc: "List and inspect loaded models" },
-								{ path: "POST /v1/audio/transcriptions", desc: "Speech-to-text via Whisper" },
-								{ path: "POST /tokenize", desc: "Convert between text and token IDs" },
+								{ path: "/v1/chat/completions", title: "Chat Completions", desc: "Streaming & non-streaming chat with tool calling" },
+								{ path: "/v1/completions", title: "Text Completions", desc: "Legacy completions with echo & suffix" },
+								{ path: "/v1/embeddings", title: "Embeddings", desc: "Text embeddings for RAG and semantic search" },
+								{ path: "/v1/models", title: "Models", desc: "List and inspect loaded models" },
+								{ path: "/v1/audio/transcriptions", title: "Audio Transcriptions", desc: "Speech-to-text via Whisper" },
+								{ path: "/tokenize", title: "Tokenize / Detokenize", desc: "Convert between text and token IDs" },
 							].map((ep) => (
-								<div key={ep.path} className="group">
-									<code className="text-primary/70 text-sm font-mono">{ep.path}</code>
-									<p className="text-white/40 text-sm mt-1">{ep.desc}</p>
+								<div key={ep.path} className="cyberpunk-corners bg-secondary p-6">
+									<code className="text-primary text-sm font-mono">{ep.path}</code>
+									<h3 className="text-lg font-bold mt-2">{ep.title}</h3>
+									<p className="text-muted-foreground text-sm mt-1">{ep.desc}</p>
 								</div>
 							))}
 						</div>
 					</div>
 				</section>
 
-				{/* ── Code ── */}
-				<section className="py-24 md:py-32 border-t border-white/[0.06]">
-					<div className="container mx-auto px-4 max-w-5xl">
-						<h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-3">
+				{/* ── Code Example ── */}
+				<section className="py-20 md:py-28 border-t border-primary/20">
+					<div className="container mx-auto px-4">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
 							works with any openai sdk
 						</h2>
-						<p className="text-white/40 mb-10">
+						<p className="text-muted-foreground mb-8">
 							drop-in replacement — change the base URL and go
 						</p>
-						<div className="relative bg-white/[0.02] border border-white/[0.06] p-5 md:p-8">
+						<div className="cyberpunk-corners bg-secondary p-5 md:p-8 relative">
 							<button
 								onClick={() => handleCopy(sdkExample, "sdk")}
-								className="absolute top-4 right-4 p-2 text-white/20 hover:text-primary transition-colors"
+								className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-primary transition-colors"
 								title="Copy code"
 							>
 								{copied === "sdk" ? (
@@ -179,7 +170,7 @@ for await (const chunk of res) {
 									<Copy className="w-4 h-4" />
 								)}
 							</button>
-							<pre className="font-mono text-sm leading-relaxed overflow-x-auto text-white/50">
+							<pre className="font-mono text-sm leading-relaxed overflow-x-auto text-white">
 								<code>{sdkExample}</code>
 							</pre>
 						</div>
@@ -187,23 +178,23 @@ for await (const chunk of res) {
 				</section>
 
 				{/* ── Benchmarks ── */}
-				<section className="py-24 md:py-32 border-t border-white/[0.06]">
-					<div className="container mx-auto px-4 max-w-5xl">
-						<h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-3">
+				<section className="py-20 md:py-28 border-t border-primary/20">
+					<div className="container mx-auto px-4">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
 							benchmarks
 						</h2>
-						<p className="text-white/40 mb-10 font-mono text-sm">
-							WebGPU · q4 · 10 runs per scenario
+						<p className="text-muted-foreground mb-8 font-mono text-sm">
+							WebGPU · q4 quantization · 10 runs per scenario
 						</p>
 						<div className="overflow-x-auto">
 							<table className="w-full text-left">
 								<thead>
-									<tr className="border-b border-white/[0.08]">
-										<th className="py-3 pr-6 text-white/30 font-mono text-xs tracking-widest uppercase">Model</th>
-										<th className="py-3 pr-6 text-white/30 font-mono text-xs tracking-widest uppercase">tok/s</th>
-										<th className="py-3 pr-6 text-white/30 font-mono text-xs tracking-widest uppercase">TTFT</th>
-										<th className="py-3 pr-6 text-white/30 font-mono text-xs tracking-widest uppercase">Load</th>
-										<th className="py-3 text-white/30 font-mono text-xs tracking-widest uppercase">Tools</th>
+									<tr className="border-b border-primary/30">
+										<th className="py-3 pr-6 text-primary font-mono text-sm">Model</th>
+										<th className="py-3 pr-6 text-primary font-mono text-sm">tok/s</th>
+										<th className="py-3 pr-6 text-primary font-mono text-sm">TTFT</th>
+										<th className="py-3 pr-6 text-primary font-mono text-sm">Load</th>
+										<th className="py-3 text-primary font-mono text-sm">Tools</th>
 									</tr>
 								</thead>
 								<tbody className="font-mono text-sm">
@@ -213,12 +204,12 @@ for await (const chunk of res) {
 										{ model: "Qwen3.5-0.8B", tps: "37", ttft: "276ms", load: "1.8s", tools: "partial" },
 										{ model: "Gemma 4 E4B", tps: "20", ttft: "636ms", load: "13.4s", tools: "—" },
 									].map((row) => (
-										<tr key={row.model} className="border-b border-white/[0.04]">
-											<td className={`py-3 pr-6 ${row.highlight ? "text-white" : "text-white/60"}`}>{row.model}</td>
-											<td className={`py-3 pr-6 ${row.highlight ? "text-primary" : "text-primary/60"}`}>{row.tps}</td>
-											<td className="py-3 pr-6 text-white/40">{row.ttft}</td>
-											<td className="py-3 pr-6 text-white/40">{row.load}</td>
-											<td className="py-3 text-white/40">{row.tools}</td>
+										<tr key={row.model} className={`border-b border-primary/10 ${row.highlight ? "bg-primary/5" : ""}`}>
+											<td className="py-3 pr-6 text-white">{row.model}</td>
+											<td className={`py-3 pr-6 font-bold ${row.highlight ? "text-primary" : "text-white"}`}>{row.tps}</td>
+											<td className="py-3 pr-6 text-white">{row.ttft}</td>
+											<td className="py-3 pr-6 text-white">{row.load}</td>
+											<td className="py-3 text-white">{row.tools}</td>
 										</tr>
 									))}
 								</tbody>
@@ -228,11 +219,11 @@ for await (const chunk of res) {
 				</section>
 
 				{/* ── Features ── */}
-				<section className="py-24 md:py-32 border-t border-white/[0.06]">
-					<div className="container mx-auto px-4 max-w-5xl">
-						<div className="grid md:grid-cols-2 gap-20">
+				<section className="py-20 md:py-28 border-t border-primary/20">
+					<div className="container mx-auto px-4">
+						<div className="grid md:grid-cols-2 gap-12">
 							<div>
-								<h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-10">
+								<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-10">
 									features
 								</h2>
 								<ul className="space-y-4">
@@ -246,15 +237,15 @@ for await (const chunk of res) {
 										"API key authentication",
 										"Admin metrics endpoint",
 									].map((f) => (
-										<li key={f} className="flex items-start gap-3 text-white/40 text-sm">
-											<span className="text-primary/40 mt-0.5">—</span>
+										<li key={f} className="flex items-start gap-3 text-white text-sm">
+											<span className="text-primary mt-0.5">▸</span>
 											{f}
 										</li>
 									))}
 								</ul>
 							</div>
 							<div>
-								<h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-10">
+								<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-10">
 									compatible with
 								</h2>
 								<ul className="space-y-4">
@@ -265,8 +256,8 @@ for await (const chunk of res) {
 										"LlamaIndex",
 										"Any OpenAI-compatible client",
 									].map((c) => (
-										<li key={c} className="flex items-start gap-3 text-white/40 text-sm">
-											<span className="text-primary/40 mt-0.5">—</span>
+										<li key={c} className="flex items-start gap-3 text-white text-sm">
+											<span className="text-primary mt-0.5">▸</span>
 											{c}
 										</li>
 									))}
@@ -277,12 +268,12 @@ for await (const chunk of res) {
 				</section>
 			</main>
 
-			<footer className="py-8 border-t border-white/[0.06]">
-				<div className="container mx-auto px-4 max-w-5xl flex justify-between items-center text-white/20 text-sm font-mono">
-					<span>wandler</span>
+			<footer className="py-8 border-t border-primary/20">
+				<div className="container mx-auto px-4 flex justify-between items-center text-muted-foreground text-sm">
+					<span>wandler — inference for the typescript ecosystem</span>
 					<Link
 						href="https://github.com/runpod-labs/wandler"
-						className="hover:text-primary/60 transition-colors"
+						className="text-primary hover:underline"
 						target="_blank"
 					>
 						github
