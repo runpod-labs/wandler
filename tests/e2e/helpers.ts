@@ -105,6 +105,7 @@ export function createTestConfig(
     sttDtype: "q4",
     embeddingModelId: "mock-embedding/test",
     embeddingDtype: "q8",
+    apiKey: "",
     ...overrides,
   };
 }

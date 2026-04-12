@@ -9,6 +9,7 @@ export interface ServerConfig {
   sttDtype: string;
   embeddingModelId: string;
   embeddingDtype: string;
+  apiKey: string;
 }
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): ServerConfig {
@@ -21,5 +22,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     sttDtype: env.STT_DTYPE || "q4",
     embeddingModelId: env.EMBEDDING_MODEL_ID || "",
     embeddingDtype: env.EMBEDDING_DTYPE || "q8",
+    apiKey: env.WANDLER_API_KEY || "",
   };
 }

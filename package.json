@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "wandler": "./node_modules/.bin/tsx src/cli.ts"
+  },
   "scripts": {
-    "start": "tsx src/index.ts",
-    "dev": "tsx --watch src/index.ts",
+    "start": "tsx src/cli.ts",
+    "dev": "tsx --watch src/cli.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "benchmark": "node --expose-gc --import tsx/esm src/benchmark.ts",

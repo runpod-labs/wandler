@@ -8,11 +8,21 @@ import { handleListModels, handleGetModel } from "./routes/models.js";
 import { handleAudioTranscriptions } from "./routes/audio.js";
 import { handleTokenize, handleDetokenize } from "./routes/tokenize.js";
 import { handleHealth } from "./routes/health.js";
+import { handleAdminMetrics, trackRequest } from "./routes/admin.js";
 import { errorJson, setCorsHeaders } from "./utils/http.js";
+
+function checkAuth(req: http.IncomingMessage, apiKey: string): boolean {
+  if (!apiKey) return true; // no key configured = open access
+  const header = req.headers.authorization;
+  if (!header) return false;
+  // Accept "Bearer <key>" or just "<key>"
+  const token = header.startsWith("Bearer ") ? header.slice(7) : header;
+  return token === apiKey;
+}
 
 export function createServer(config: ServerConfig, models: LoadedModels): http.Server {
   const server = http.createServer(async (req, res) => {
-    // CORS preflight
+    // CORS preflight — always allowed
     if (req.method === "OPTIONS") {
       setCorsHeaders(res);
       res.writeHead(204);
@@ -22,13 +32,27 @@ export function createServer(config: ServerConfig, models: LoadedModels): http.S
 
     const url = req.url ?? "/";
 
+    // Health — always allowed (load balancers need it)
+    if (req.method === "GET" && (url === "/health" || url === "/")) {
+      handleHealth(req, res, config);
+      return;
+    }
+
+    // Auth check for all other endpoints
+    if (!checkAuth(req, config.apiKey)) {
+      errorJson(res, 401, "Invalid API key", "authentication_error", null, "invalid_api_key");
+      return;
+    }
+
+    trackRequest();
+
     // GET /v1/models
     if (req.method === "GET" && url === "/v1/models") {
       handleListModels(req, res, config);
       return;
     }
 
-    // GET /v1/models/{model} — model ID may contain slashes
+    // GET /v1/models/{model}
     if (req.method === "GET" && url.startsWith("/v1/models/")) {
       const modelId = decodeURIComponent(url.slice("/v1/models/".length));
       handleGetModel(req, res, config, modelId);
@@ -71,9 +95,9 @@ export function createServer(config: ServerConfig, models: LoadedModels): http.S
       return;
     }
 
-    // GET /health or GET /
-    if (req.method === "GET" && (url === "/health" || url === "/")) {
-      handleHealth(req, res, config);
+    // GET /admin/metrics
+    if (req.method === "GET" && url === "/admin/metrics") {
+      handleAdminMetrics(req, res, config);
       return;
     }
 

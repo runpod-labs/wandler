@@ -12,6 +12,7 @@ describe("loadConfig", () => {
     expect(config.sttDtype).toBe("q4");
     expect(config.embeddingModelId).toBe("");
     expect(config.embeddingDtype).toBe("q8");
+    expect(config.apiKey).toBe("");
   });
 
   it("reads from env vars", () => {
