@@ -1,36 +1,14 @@
 {
   "name": "wandler",
-  "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "bin": {
-    "wandler": "./node_modules/.bin/tsx src/cli.ts"
-  },
+  "workspaces": ["server", "site", "packages/*"],
   "scripts": {
-    "start": "tsx src/cli.ts",
-    "dev": "tsx --watch src/cli.ts",
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "benchmark": "node --expose-gc --import tsx/esm src/benchmark.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:unit": "vitest run tests/unit",
-    "test:e2e": "vitest run tests/e2e"
-  },
-  "dependencies": {
-    "@huggingface/transformers": "^4.0.1",
-    "onnxruntime-node": "^1.24.3"
-  },
-  "overrides": {
-    "onnxruntime-node": "^1.24.3"
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck"
   },
   "devDependencies": {
-    "@ai-sdk/openai": "^3.0.52",
-    "@types/node": "^25.6.0",
-    "ai": "^6.0.158",
-    "openai": "^6.34.0",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.2",
-    "vitest": "^4.1.4"
+    "turbo": "^2.5.4"
   }
 }

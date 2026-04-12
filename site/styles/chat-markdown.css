@@ -1,0 +1,130 @@
+/* Custom markdown styling for chat */
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3,
+.chat-markdown h4 {
+	margin-top: 1rem;
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.chat-markdown h1 {
+	font-size: 1.5rem;
+}
+
+.chat-markdown h2 {
+	font-size: 1.25rem;
+}
+
+.chat-markdown h3 {
+	font-size: 1.125rem;
+}
+
+.chat-markdown h4 {
+	font-size: 1rem;
+}
+
+.chat-markdown p {
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.chat-markdown a {
+	color: #3b82f6;
+	text-decoration: underline;
+}
+
+.chat-markdown a:hover {
+	text-decoration: none;
+}
+
+.chat-markdown code {
+	font-family: monospace;
+	background-color: rgba(0, 0, 0, 0.2);
+	padding: 0.2rem 0.4rem;
+	border-radius: 0.25rem;
+	font-size: 0.875rem;
+}
+
+.chat-markdown pre {
+	background-color: rgba(0, 0, 0, 0.2);
+	padding: 1rem;
+	border-radius: 0.25rem;
+	overflow-x: auto;
+	margin: 1rem 0;
+}
+
+.chat-markdown pre code {
+	background-color: transparent;
+	padding: 0;
+	border-radius: 0;
+}
+
+.chat-markdown ul {
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	padding-left: 1.5rem;
+	list-style-type: disc;
+}
+
+.chat-markdown ol {
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	padding-left: 1.5rem;
+	list-style-type: decimal;
+}
+
+.chat-markdown ul ul {
+	list-style-type: circle;
+}
+
+.chat-markdown ol ol {
+	list-style-type: lower-alpha;
+}
+
+.chat-markdown ul ol {
+	list-style-type: decimal;
+}
+
+.chat-markdown ol ul {
+	list-style-type: disc;
+}
+
+.chat-markdown li {
+	margin-top: 0.25rem;
+	margin-bottom: 0.25rem;
+	padding-left: 0.25rem;
+}
+
+.chat-markdown ol > li {
+	padding-left: 0.25rem;
+}
+
+.chat-markdown blockquote {
+	border-left: 4px solid #3b82f6;
+	padding-left: 1rem;
+	margin-left: 0;
+	margin-right: 0;
+	font-style: italic;
+}
+
+.chat-markdown table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 1rem 0;
+}
+
+.chat-markdown th,
+.chat-markdown td {
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	padding: 0.5rem;
+}
+
+.chat-markdown th {
+	background-color: rgba(0, 0, 0, 0.2);
+}
+
+.chat-markdown tr:nth-child(even) {
+	background-color: rgba(0, 0, 0, 0.1);
+}
