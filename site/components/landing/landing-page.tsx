@@ -57,7 +57,7 @@ for await (const chunk of res) {
 
 								<h1 className="text-2xl md:text-4xl font-bold tracking-tighter text-center">
 									inference server for{" "}
-									<span className="text-primary">TypeScript</span>
+									<span className="text-primary">transformers.js</span>
 								</h1>
 
 								{/* Identity cards */}
