@@ -56,16 +56,12 @@ for await (const chunk of res) {
 								/>
 
 								<h1 className="text-2xl md:text-4xl font-bold tracking-tighter text-center">
-									inference server for{" "}
-									<span className="text-primary">transformers.js</span>
+									<span className="text-primary">transformers.js</span>{" "}
+									inference server
 								</h1>
 
 								{/* Identity cards */}
 								<div className="grid grid-cols-2 gap-4 w-full max-w-md">
-									<div className="cyberpunk-corners bg-secondary p-4 text-center">
-										<div className="text-primary font-bold">transformers.js</div>
-										<div className="text-xs text-muted-foreground mt-1">powered by</div>
-									</div>
 									<div className="cyberpunk-corners bg-secondary p-4 text-center">
 										<div className="text-primary font-bold">OpenAI API</div>
 										<div className="text-xs text-muted-foreground mt-1">compatible</div>
@@ -73,10 +69,6 @@ for await (const chunk of res) {
 									<div className="cyberpunk-corners bg-secondary p-4 text-center">
 										<div className="text-primary font-bold">WebGPU</div>
 										<div className="text-xs text-muted-foreground mt-1">accelerated</div>
-									</div>
-									<div className="cyberpunk-corners bg-secondary p-4 text-center">
-										<div className="text-primary font-bold">open source</div>
-										<div className="text-xs text-muted-foreground mt-1">MIT license</div>
 									</div>
 								</div>
 
