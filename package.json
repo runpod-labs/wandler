@@ -22,7 +22,10 @@
     "onnxruntime-node": "^1.24.3"
   },
   "devDependencies": {
+    "@ai-sdk/openai": "^3.0.52",
     "@types/node": "^25.6.0",
+    "ai": "^6.0.158",
+    "openai": "^6.34.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.4"
