@@ -292,10 +292,13 @@ async function main() {
       EMBEDDING_MODEL_ID: "",
     });
 
+    const memBefore = process.memoryUsage();
     const t0 = Date.now();
     const loadedModels = await loadModels(config);
     const loadMs = Date.now() - t0;
-    console.log(`Loaded in ${(loadMs / 1000).toFixed(1)}s`);
+    const memAfter = process.memoryUsage();
+    const memUsedMB = Math.round((memAfter.rss - memBefore.rss) / 1024 / 1024);
+    console.log(`Loaded in ${(loadMs / 1000).toFixed(1)}s | RSS +${memUsedMB}MB (total ${Math.round(memAfter.rss / 1024 / 1024)}MB)`);
 
     const server = createServer(config, loadedModels);
     await new Promise<void>((resolve) => server.listen(0, resolve));
@@ -393,8 +396,16 @@ async function main() {
 
     server.close();
 
-    // Dispose model if possible
+    // Free model memory before loading the next one
     try { await loadedModels.model.dispose?.(); } catch { /* ignore */ }
+
+    // Force garbage collection to actually reclaim memory between models.
+    // Without this, the old model's weights stay in memory while the next loads,
+    // potentially doubling memory usage and killing the system.
+    if (global.gc) {
+      global.gc();
+      console.log("  [gc] Memory released");
+    }
   }
 
   console.log(`\n${"=".repeat(70)}`);

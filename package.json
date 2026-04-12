@@ -8,7 +8,7 @@
     "dev": "tsx --watch src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "benchmark": "tsx src/benchmark.ts",
+    "benchmark": "node --expose-gc --import tsx/esm src/benchmark.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
