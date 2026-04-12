@@ -43,57 +43,51 @@ for await (const chunk of res) {
 				{/* ── Hero ── */}
 				<section className="min-h-screen relative overflow-hidden flex flex-col justify-center px-4 md:px-0 py-12">
 					<div className="container mx-auto">
-						<div className="grid md:grid-cols-[3fr_2fr] gap-8 md:gap-12 items-center">
-							{/* Left: Logo + Info */}
-							<div className="space-y-8">
+						<div className="grid md:grid-cols-[1fr_1fr] gap-8 md:gap-12 items-center">
+							{/* Left: Logo centered + cards */}
+							<div className="flex flex-col items-center space-y-10">
 								<Image
 									src="https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/wandler_logo_v5-vJ2L3NmauebkFJs9fOcFe7bPVM14To.svg"
 									alt="wandler"
-									width={500}
-									height={100}
-									className="w-[320px] md:w-[500px] h-auto"
+									width={600}
+									height={120}
+									className="w-[360px] md:w-[520px] lg:w-[600px] h-auto"
 									priority
 								/>
 
-								<h1 className="text-3xl md:text-5xl font-bold tracking-tighter">
-									openai-compatible{" "}
-									<span className="text-primary">inference server</span>
+								<h1 className="text-2xl md:text-4xl font-bold tracking-tighter text-center">
+									inference server for{" "}
+									<span className="text-primary">TypeScript</span>
 								</h1>
 
-								<p className="text-lg text-muted-foreground">
-									powered by 🤗{" "}
-									<a
-										href="https://huggingface.co/docs/transformers.js/en/index"
-										className="text-primary hover:underline"
-									>
-										transformers.js
-									</a>
-									{" "}— run ONNX models locally with WebGPU. no python, no CUDA.
-								</p>
-
-								{/* Key facts in cyberpunk corner cards */}
-								<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-									{[
-										{ label: "up to", value: "248 tok/s" },
-										{ label: "TTFT", value: "16ms" },
-										{ label: "models", value: "2900+" },
-										{ label: "quantization", value: "q4 / q8" },
-									].map((stat) => (
-										<div key={stat.value} className="cyberpunk-corners bg-secondary p-4">
-											<div className="text-xs text-muted-foreground uppercase tracking-wider">{stat.label}</div>
-											<div className="text-xl font-bold text-primary mt-1">{stat.value}</div>
-										</div>
-									))}
+								{/* Identity cards */}
+								<div className="grid grid-cols-2 gap-4 w-full max-w-md">
+									<div className="cyberpunk-corners bg-secondary p-4 text-center">
+										<div className="text-primary font-bold">transformers.js</div>
+										<div className="text-xs text-muted-foreground mt-1">powered by</div>
+									</div>
+									<div className="cyberpunk-corners bg-secondary p-4 text-center">
+										<div className="text-primary font-bold">OpenAI API</div>
+										<div className="text-xs text-muted-foreground mt-1">compatible</div>
+									</div>
+									<div className="cyberpunk-corners bg-secondary p-4 text-center">
+										<div className="text-primary font-bold">WebGPU</div>
+										<div className="text-xs text-muted-foreground mt-1">accelerated</div>
+									</div>
+									<div className="cyberpunk-corners bg-secondary p-4 text-center">
+										<div className="text-primary font-bold">open source</div>
+										<div className="text-xs text-muted-foreground mt-1">MIT license</div>
+									</div>
 								</div>
 
 								{/* Quickstart */}
-								<div className="cyberpunk-corners bg-secondary p-4">
+								<div className="cyberpunk-corners bg-secondary p-4 w-full max-w-md">
 									<button
 										onClick={() => handleCopy(quickstart, "qs")}
 										className="w-full flex items-center gap-3 text-left cursor-pointer group"
 									>
 										<Terminal className="w-4 h-4 text-primary shrink-0" />
-										<code className="font-mono text-sm md:text-base text-white truncate">
+										<code className="font-mono text-xs md:text-sm text-white truncate">
 											{quickstart}
 										</code>
 										<span className="ml-auto shrink-0">
@@ -109,7 +103,7 @@ for await (const chunk of res) {
 
 							{/* Right: Robot head */}
 							<div className="relative flex justify-center mt-8 md:mt-0">
-								<div className="w-[280px] h-[280px] md:w-[500px] md:h-[500px] relative">
+								<div className="w-[300px] h-[300px] md:w-[520px] md:h-[520px] relative">
 									<Image
 										src="https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/20250202_wandler_head_v2-Ma4f25yqpXRSf32ZnmivUnnV1LGQ69.jpg"
 										alt="wandler"
