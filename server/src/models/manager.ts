@@ -1,6 +1,8 @@
 import {
   AutoTokenizer,
   AutoModelForCausalLM,
+  AutoProcessor,
+  RawImage,
   pipeline,
   env as transformersEnv,
 } from "@huggingface/transformers";
@@ -12,6 +14,8 @@ import type { Tokenizer } from "./tokenizer.js";
 export interface LoadedModels {
   tokenizer: Tokenizer;
   chatTemplate: string | null;
+  processor: unknown | null;
+  isVision: boolean;
   model: {
     generate(opts: Record<string, unknown>): Promise<{ dims: number[]; slice(...args: unknown[]): unknown }>;
     dispose?(): Promise<void>;
@@ -30,7 +34,6 @@ async function resolveDevice(requested: string): Promise<DeviceType> {
   if (requested !== "auto") return requested as DeviceType;
 
   try {
-    // Try to get a WebGPU adapter — if it works, WebGPU is available
     const gpu = (globalThis as Record<string, unknown>).gpu as { requestAdapter?: () => Promise<unknown> } | undefined;
     if (gpu?.requestAdapter) {
       const adapter = await gpu.requestAdapter();
@@ -46,43 +49,44 @@ async function resolveDevice(requested: string): Promise<DeviceType> {
 
 /**
  * Try to load chat_template.jinja from the model repo if the tokenizer
- * doesn't have a built-in chat template. This handles models like Gemma 4
- * where Google ships the template as a separate file.
+ * doesn't have a built-in chat template.
  */
 async function loadChatTemplate(
   tokenizer: Tokenizer,
   modelId: string,
 ): Promise<string | null> {
-  // Check if the tokenizer already has a chat template
   const tok = tokenizer as unknown as { chat_template?: string | null };
-  if (tok.chat_template) return null; // tokenizer has it, no override needed
+  if (tok.chat_template) return null;
 
   try {
-    // Use transformers.js hub utilities to fetch chat_template.jinja
-    const { getModelText } = await import("@huggingface/transformers/src/utils/hub.js" as string);
-    const template = await (getModelText as (modelPath: string, fileName: string, fatal: boolean) => Promise<string | null>)(
-      modelId, "chat_template.jinja", false,
-    );
-    if (template) {
+    const url = `https://huggingface.co/${modelId}/resolve/main/chat_template.jinja`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const template = await res.text();
       console.log(`[wandler] Loaded chat_template.jinja for ${modelId}`);
       return template;
     }
   } catch {
-    // getModelText not available or file not found — try fetch directly
-    try {
-      const url = `https://huggingface.co/${modelId}/resolve/main/chat_template.jinja`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const template = await res.text();
-        console.log(`[wandler] Loaded chat_template.jinja for ${modelId}`);
-        return template;
-      }
-    } catch {
-      // Failed to fetch — no template available
-    }
+    // Failed to fetch
   }
 
   return null;
+}
+
+/**
+ * Load an image from a URL or base64 data URI.
+ */
+export async function loadImage(url: string): Promise<unknown> {
+  if (url.startsWith("data:")) {
+    // base64 data URI: data:image/jpeg;base64,/9j/4AAQ...
+    const base64Match = url.match(/^data:[^;]+;base64,(.+)$/);
+    if (!base64Match) throw new Error("Invalid base64 data URI");
+    const buffer = Buffer.from(base64Match[1]!, "base64");
+    const blob = new Blob([buffer]);
+    return RawImage.fromBlob(blob);
+  }
+  // HTTP(S) URL
+  return RawImage.read(url);
 }
 
 export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
@@ -90,24 +94,45 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   if (config.cacheDir) {
     transformersEnv.cacheDir = config.cacheDir;
   }
-  // HF_TOKEN is read automatically by @huggingface/hub (used internally by transformers.js)
   if (config.hfToken) {
     process.env.HF_TOKEN = config.hfToken;
   }
 
   const device = await resolveDevice(config.device);
-  // Update config so other parts of the server know the resolved device
   config.device = device;
 
   console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, ${device})`);
   const t0 = Date.now();
-  const tokenizer = await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer;
-  const model = await AutoModelForCausalLM.from_pretrained(config.modelId, {
-    dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
-    device,
-  });
 
-  // Load external chat template if tokenizer doesn't have one built-in
+  // Try loading as a vision model first (AutoModelForImageTextToText),
+  // fall back to text-only (AutoModelForCausalLM)
+  let model: LoadedModels["model"];
+  let processor: unknown | null = null;
+  let isVision = false;
+
+  try {
+    const { AutoModelForImageTextToText: VisionModel } = await import("@huggingface/transformers");
+    model = await VisionModel.from_pretrained(config.modelId, {
+      dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
+      device,
+    }) as unknown as LoadedModels["model"];
+
+    // If vision model loaded, also load the processor
+    processor = await AutoProcessor.from_pretrained(config.modelId);
+    isVision = true;
+    console.log(`[wandler] Loaded as vision model`);
+  } catch {
+    // Not a vision model or vision files not available — load as text-only
+    model = await AutoModelForCausalLM.from_pretrained(config.modelId, {
+      dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
+      device,
+    }) as unknown as LoadedModels["model"];
+  }
+
+  const tokenizer = isVision && processor
+    ? (processor as { tokenizer: Tokenizer }).tokenizer ?? await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer
+    : await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer;
+
   const chatTemplate = await loadChatTemplate(tokenizer, config.modelId);
   console.log(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
@@ -138,7 +163,9 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   return {
     tokenizer,
     chatTemplate,
-    model: model as unknown as LoadedModels["model"],
+    processor,
+    isVision,
+    model,
     transcriber,
     embedder,
   };

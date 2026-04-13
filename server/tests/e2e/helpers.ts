@@ -83,7 +83,7 @@ export function createMockModels(): LoadedModels {
     data: new Float32Array([0.1, 0.2, 0.3, 0.4, 0.5]),
   });
 
-  return { tokenizer, chatTemplate: null, model, transcriber, embedder };
+  return { tokenizer, chatTemplate: null, processor: null, isVision: false, model, transcriber, embedder };
 }
 
 export function createTestConfig(
