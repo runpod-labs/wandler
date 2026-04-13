@@ -29,15 +29,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build
+      - name: Build server
         run: npm run build
+        working-directory: server
 
       - name: Run tests
         run: npm run test
         working-directory: server
 
-      - name: Typecheck
+      - name: Typecheck server
         run: npm run typecheck
+        working-directory: server
 
       - name: Create Release PR or Publish
         id: changesets
