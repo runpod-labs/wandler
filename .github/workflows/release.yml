@@ -59,6 +59,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Clear npm auth from setup-node
+        if: steps.changesets_check.outputs.has_changesets == 'false'
+        run: npm config delete //registry.npmjs.org/:_authToken --location=global 2>/dev/null; echo "" > "$NPM_CONFIG_USERCONFIG"
+
       - name: Publish to npm
         if: steps.changesets_check.outputs.has_changesets == 'false'
         uses: changesets/action@v1
@@ -67,3 +71,4 @@ jobs:
           cwd: server
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ""
