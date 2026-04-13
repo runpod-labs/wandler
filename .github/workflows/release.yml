@@ -24,7 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: npm install
@@ -75,10 +74,9 @@ jobs:
       - name: Publish to npm with provenance
         if: steps.changesets_check.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
         working-directory: server
-        run: |
-          # Remove auth token so npm uses OIDC for authentication
-          npm config delete //registry.npmjs.org/:_authToken
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ""
 
       - name: Create GitHub Release
         if: steps.changesets_check.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
