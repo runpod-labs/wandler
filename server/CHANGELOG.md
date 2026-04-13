@@ -1,5 +1,11 @@
 # wandler
 
+## 2.0.2
+
+### Patch Changes
+
+- 4172877: update readme with cli docs, env vars, and npx quickstart
+
 ## 2.0.1
 
 ### Patch Changes
