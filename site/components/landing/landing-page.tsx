@@ -169,16 +169,14 @@ print(response)`,
 									inference server
 								</p>
 
-								{/* Pills */}
-								<div className="flex flex-wrap justify-center gap-2">
-									{["OpenAI API", "WebGPU", "ONNX", "TypeScript"].map((label) => (
-										<span
-											key={label}
-											className="px-2.5 py-0.5 text-xs font-mono border border-primary/30 text-primary"
-										>
-											{label}
-										</span>
-									))}
+								{/* Key capabilities */}
+								<div className="flex justify-center gap-4">
+									<span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-mono border border-primary/30 text-primary">
+										<Check className="w-3.5 h-3.5" /> OpenAI API
+									</span>
+									<span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-mono border border-primary/30 text-primary">
+										<Check className="w-3.5 h-3.5" /> WebGPU
+									</span>
 								</div>
 
 								{/* Quickstart */}
@@ -221,33 +219,8 @@ print(response)`,
 				{/* ── Hazard divider ── */}
 				<div className="w-full h-4 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg"></div>
 
-				{/* ── Endpoints ── */}
-				<section className="py-20 md:py-28">
-					<div className="container mx-auto px-4">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-12">
-							endpoints
-						</h2>
-						<div className="grid md:grid-cols-3 gap-6">
-							{[
-								{ path: "/v1/chat/completions", title: "Chat Completions", desc: "Streaming & non-streaming chat with tool calling" },
-								{ path: "/v1/completions", title: "Text Completions", desc: "Legacy completions with echo & suffix" },
-								{ path: "/v1/embeddings", title: "Embeddings", desc: "Text embeddings for RAG and semantic search" },
-								{ path: "/v1/models", title: "Models", desc: "List and inspect loaded models" },
-								{ path: "/v1/audio/transcriptions", title: "Audio", desc: "Speech-to-text via Whisper" },
-								{ path: "/tokenize", title: "Tokenize", desc: "Convert between text and token IDs" },
-							].map((ep) => (
-								<div key={ep.path} className="cyberpunk-corners bg-secondary p-6">
-									<code className="text-primary text-sm font-mono">{ep.path}</code>
-									<h3 className="text-lg font-bold mt-2">{ep.title}</h3>
-									<p className="text-muted-foreground text-sm mt-1">{ep.desc}</p>
-								</div>
-							))}
-						</div>
-					</div>
-				</section>
-
 				{/* ── Code Examples (tabbed) ── */}
-				<section className="py-20 md:py-28 border-t border-primary/20">
+				<section className="py-20 md:py-28">
 					<div className="container mx-auto px-4">
 						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
 							works with any openai sdk
@@ -289,6 +262,31 @@ print(response)`,
 								</button>
 								<SdkCodeBlock code={sdkExamples[activeTab].code} lang={sdkExamples[activeTab].lang} />
 							</div>
+						</div>
+					</div>
+				</section>
+
+				{/* ── Endpoints ── */}
+				<section className="py-20 md:py-28 border-t border-primary/20">
+					<div className="container mx-auto px-4">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-12">
+							endpoints
+						</h2>
+						<div className="grid md:grid-cols-3 gap-6">
+							{[
+								{ path: "/v1/chat/completions", title: "Chat Completions", desc: "Streaming & non-streaming chat with tool calling" },
+								{ path: "/v1/completions", title: "Text Completions", desc: "Legacy completions with echo & suffix" },
+								{ path: "/v1/embeddings", title: "Embeddings", desc: "Text embeddings for RAG and semantic search" },
+								{ path: "/v1/models", title: "Models", desc: "List and inspect loaded models" },
+								{ path: "/v1/audio/transcriptions", title: "Audio", desc: "Speech-to-text via Whisper" },
+								{ path: "/tokenize", title: "Tokenize", desc: "Convert between text and token IDs" },
+							].map((ep) => (
+								<div key={ep.path} className="cyberpunk-corners bg-secondary p-6">
+									<code className="text-primary text-sm font-mono">{ep.path}</code>
+									<h3 className="text-lg font-bold mt-2">{ep.title}</h3>
+									<p className="text-muted-foreground text-sm mt-1">{ep.desc}</p>
+								</div>
+							))}
 						</div>
 					</div>
 				</section>
