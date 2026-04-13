@@ -219,8 +219,11 @@ print(response)`,
 					</div>
 				</section>
 
+				{/* ── Hazard divider ── */}
+				<div className="w-full h-4 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg"></div>
+
 				{/* ── Endpoints ── */}
-				<section className="py-20 md:py-28 border-t border-primary/20">
+				<section className="py-20 md:py-28">
 					<div className="container mx-auto px-4">
 						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-12">
 							endpoints
@@ -231,8 +234,8 @@ print(response)`,
 								{ path: "/v1/completions", title: "Text Completions", desc: "Legacy completions with echo & suffix" },
 								{ path: "/v1/embeddings", title: "Embeddings", desc: "Text embeddings for RAG and semantic search" },
 								{ path: "/v1/models", title: "Models", desc: "List and inspect loaded models" },
-								{ path: "/v1/audio/transcriptions", title: "Audio Transcriptions", desc: "Speech-to-text via Whisper" },
-								{ path: "/tokenize", title: "Tokenize / Detokenize", desc: "Convert between text and token IDs" },
+								{ path: "/v1/audio/transcriptions", title: "Audio", desc: "Speech-to-text via Whisper" },
+								{ path: "/tokenize", title: "Tokenize", desc: "Convert between text and token IDs" },
 							].map((ep) => (
 								<div key={ep.path} className="cyberpunk-corners bg-secondary p-6">
 									<code className="text-primary text-sm font-mono">{ep.path}</code>
@@ -244,8 +247,11 @@ print(response)`,
 					</div>
 				</section>
 
+				{/* ── Jagged section divider ── */}
+				<div className="section-divider h-0" />
+
 				{/* ── Code Examples (tabbed) ── */}
-				<section className="py-20 md:py-28 border-t border-primary/20">
+				<section className="py-20 md:py-28">
 					<div className="container mx-auto px-4">
 						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
 							works with any openai sdk
@@ -255,7 +261,7 @@ print(response)`,
 						</p>
 
 						<div className="cyberpunk-corners bg-secondary p-3 md:p-4">
-							{/* Tabs — same style as the old install component */}
+							{/* Tabs */}
 							<div className="flex gap-1 md:gap-2 mb-3">
 								{(Object.keys(sdkExamples) as SdkTab[]).map((tab) => (
 									<div
@@ -300,7 +306,7 @@ print(response)`,
 						<p className="text-muted-foreground mb-8 font-mono text-sm">
 							WebGPU · q4 quantization · 10 runs per scenario
 						</p>
-						<div className="overflow-x-auto">
+						<div className="cyberpunk-corners bg-secondary p-4 md:p-6 overflow-x-auto">
 							<table className="w-full text-left">
 								<thead>
 									<tr className="border-b border-primary/30">
@@ -332,36 +338,41 @@ print(response)`,
 					</div>
 				</section>
 
-				{/* ── Features ── */}
-				<section className="py-20 md:py-28 border-t border-primary/20">
-					<div className="container mx-auto px-4">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-10">
+				{/* ── Hazard divider ── */}
+				<div className="w-full h-4 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg-reverse"></div>
+
+				{/* ── Features as cards ── */}
+				<section className="py-20 md:py-28 relative">
+					{/* Subtle dot pattern background */}
+					<div className="absolute inset-0 dot-pattern opacity-[0.03] pointer-events-none" />
+					<div className="container mx-auto px-4 relative">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-12">
 							features
 						</h2>
-						<ul className="grid md:grid-cols-2 gap-x-12 gap-y-4">
+						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 							{[
-								"SSE streaming with real-time token generation",
-								"Multi-format tool calling (LFM, Qwen, OpenAI)",
-								"Quantized inference: q4, q8, fp16, fp32",
-								"WebGPU acceleration with CPU fallback",
-								"Text embeddings for RAG workflows",
-								"Speech-to-text via Whisper",
-								"API key authentication",
-								"Admin metrics endpoint",
+								{ title: "Streaming", desc: "SSE with real-time token generation" },
+								{ title: "Tool Calling", desc: "LFM, Qwen, and OpenAI formats" },
+								{ title: "Quantized", desc: "q4, q8, fp16, fp32 inference" },
+								{ title: "WebGPU", desc: "GPU acceleration with CPU fallback" },
+								{ title: "Embeddings", desc: "Text embeddings for RAG" },
+								{ title: "Speech-to-Text", desc: "Whisper transcription" },
+								{ title: "Auth", desc: "API key authentication" },
+								{ title: "Metrics", desc: "Admin monitoring endpoint" },
 							].map((f) => (
-								<li key={f} className="flex items-start gap-3 text-white text-sm">
-									<span className="text-primary mt-0.5">▸</span>
-									{f}
-								</li>
+								<div key={f.title} className="cyberpunk-corners bg-secondary p-4">
+									<div className="text-primary font-bold text-sm">{f.title}</div>
+									<div className="text-muted-foreground text-xs mt-1">{f.desc}</div>
+								</div>
 							))}
-						</ul>
+						</div>
 					</div>
 				</section>
 			</main>
 
 			<footer className="py-8 border-t border-primary/20">
 				<div className="container mx-auto px-4 flex justify-between items-center text-muted-foreground text-sm">
-					<span>wandler — inference for the typescript ecosystem</span>
+					<span>wandler — transformers.js inference server</span>
 					<Link
 						href="https://github.com/runpod-labs/wandler"
 						className="text-primary hover:underline"
