@@ -1,5 +1,11 @@
 # wandler
 
+## 2.0.1
+
+### Patch Changes
+
+- 8d0a6ba: test: verify oidc release flow
+
 ## 2.0.0
 
 ### Major Changes
