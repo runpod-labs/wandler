@@ -19,6 +19,30 @@ export interface LoadedModels {
   embedder: ((input: string, opts: Record<string, unknown>) => Promise<{ data: Float32Array }>) | null;
 }
 
+type DeviceType = "webgpu" | "cpu" | "wasm";
+
+/**
+ * Resolve "auto" device to the best available: webgpu > cpu.
+ * If a specific device is requested, use it as-is.
+ */
+async function resolveDevice(requested: string): Promise<DeviceType> {
+  if (requested !== "auto") return requested as DeviceType;
+
+  try {
+    // Try to get a WebGPU adapter — if it works, WebGPU is available
+    const gpu = (globalThis as Record<string, unknown>).gpu as { requestAdapter?: () => Promise<unknown> } | undefined;
+    if (gpu?.requestAdapter) {
+      const adapter = await gpu.requestAdapter();
+      if (adapter) return "webgpu";
+    }
+  } catch {
+    // WebGPU not available
+  }
+
+  console.log("[wandler] WebGPU not available, falling back to cpu");
+  return "cpu";
+}
+
 export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   // Configure transformers.js environment
   if (config.cacheDir) {
@@ -29,12 +53,16 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     process.env.HF_TOKEN = config.hfToken;
   }
 
-  console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, ${config.device})`);
+  const device = await resolveDevice(config.device);
+  // Update config so other parts of the server know the resolved device
+  config.device = device;
+
+  console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, ${device})`);
   const t0 = Date.now();
   const tokenizer = await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer;
   const model = await AutoModelForCausalLM.from_pretrained(config.modelId, {
     dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
-    device: config.device as "webgpu" | "cpu" | "wasm",
+    device,
   });
   console.log(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 

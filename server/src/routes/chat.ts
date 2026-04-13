@@ -12,17 +12,27 @@ import { buildGenOpts } from "../generation/options.js";
 import { generateStreamTokens } from "../generation/stream.js";
 import { parseToolCalls } from "../tools/parser.js";
 import { makeId } from "../utils/http.js";
+import { getTextContent } from "../utils/content.js";
 
 function applyResponseFormat(
   messages: ChatMessage[],
   responseFormat?: ChatCompletionRequest["response_format"],
 ): ChatMessage[] {
-  if (responseFormat?.type !== "json_object") return messages;
-  const jsonInstruction = "Respond with valid JSON only. Do not include any text outside the JSON object.";
+  if (!responseFormat || responseFormat.type === "text") return messages;
+
+  let jsonInstruction: string;
+  if (responseFormat.type === "json_schema" && responseFormat.json_schema) {
+    const schemaStr = JSON.stringify(responseFormat.json_schema.schema);
+    jsonInstruction = `Respond with valid JSON only that conforms to this JSON schema:\n${schemaStr}\nDo not include any text outside the JSON object.`;
+  } else {
+    jsonInstruction = "Respond with valid JSON only. Do not include any text outside the JSON object.";
+  }
+
   const copy = messages.map((m) => ({ ...m }));
   const systemIdx = copy.findIndex((m) => m.role === "system");
   if (systemIdx >= 0) {
-    copy[systemIdx]!.content = `${copy[systemIdx]!.content}\n\n${jsonInstruction}`;
+    const existing = getTextContent(copy[systemIdx]!.content);
+    copy[systemIdx]!.content = `${existing}\n\n${jsonInstruction}`;
   } else {
     copy.unshift({ role: "system", content: jsonInstruction });
   }

@@ -1,8 +1,20 @@
 // ── OpenAI-compatible type definitions ──────────────────────────────────────
 
+export interface ContentPartText {
+  type: "text";
+  text: string;
+}
+
+export interface ContentPartImageUrl {
+  type: "image_url";
+  image_url: { url: string; detail?: "auto" | "low" | "high" };
+}
+
+export type ContentPart = ContentPartText | ContentPartImageUrl;
+
 export interface ChatMessage {
   role: "system" | "user" | "assistant" | "tool";
-  content: string | null;
+  content: string | ContentPart[] | null;
   name?: string;
   tool_calls?: ToolCall[];
   tool_call_id?: string;
@@ -47,7 +59,10 @@ export interface SamplingParams {
   seed?: number;
   n?: number;
   no_repeat_ngram_size?: number;
-  response_format?: { type: "text" | "json_object" };
+  response_format?: {
+    type: "text" | "json_object" | "json_schema";
+    json_schema?: { name: string; strict?: boolean; schema: Record<string, unknown> };
+  };
   user?: string;
 }
 

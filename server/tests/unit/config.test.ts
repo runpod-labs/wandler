@@ -46,7 +46,7 @@ describe("loadConfig", () => {
     expect(config.host).toBe("127.0.0.1");
     expect(config.modelId).toBe("onnx-community/gemma-4-E4B-it-ONNX");
     expect(config.modelDtype).toBe("q4");
-    expect(config.device).toBe("webgpu");
+    expect(config.device).toBe("auto");
     expect(config.sttModelId).toBe("onnx-community/whisper-tiny");
     expect(config.sttDtype).toBe("q4");
     expect(config.embeddingModelId).toBe("");

@@ -51,7 +51,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     host: env.WANDLER_HOST || "127.0.0.1",
     modelId: llm.id,
     modelDtype: llm.dtype,
-    device: env.WANDLER_DEVICE || env.DEVICE || "webgpu",
+    device: env.WANDLER_DEVICE || env.DEVICE || "auto",
     sttModelId: stt.id,
     sttDtype: stt.dtype,
     embeddingModelId: emb.id,
