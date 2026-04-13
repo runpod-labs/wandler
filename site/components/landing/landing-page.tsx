@@ -18,7 +18,13 @@ export function LandingPage() {
 
 	const quickstart = "npx wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX";
 
-	const sdkExample = `import OpenAI from "openai";
+	type SdkTab = "openai" | "ai-sdk" | "langchain" | "llamaindex" | "curl";
+	const [activeTab, setActiveTab] = useState<SdkTab>("openai");
+
+	const sdkExamples: Record<SdkTab, { label: string; code: string }> = {
+		openai: {
+			label: "OpenAI SDK",
+			code: `import OpenAI from "openai";
 
 const client = new OpenAI({
   baseURL: "http://localhost:8000/v1",
@@ -33,7 +39,65 @@ const res = await client.chat.completions.create({
 
 for await (const chunk of res) {
   process.stdout.write(chunk.choices[0]?.delta?.content ?? "");
-}`;
+}`,
+		},
+		"ai-sdk": {
+			label: "Vercel AI SDK",
+			code: `import { generateText, streamText } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
+
+const provider = createOpenAI({
+  baseURL: "http://localhost:8000/v1",
+  apiKey: "-",
+  compatibility: "compatible",
+});
+
+const { text } = await generateText({
+  model: provider.chat("LiquidAI/LFM2.5-1.2B-Instruct-ONNX"),
+  prompt: "Hello!",
+});
+
+console.log(text);`,
+		},
+		langchain: {
+			label: "LangChain",
+			code: `import { ChatOpenAI } from "@langchain/openai";
+
+const model = new ChatOpenAI({
+  modelName: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
+  configuration: {
+    baseURL: "http://localhost:8000/v1",
+    apiKey: "-",
+  },
+});
+
+const response = await model.invoke("Hello!");
+console.log(response.content);`,
+		},
+		llamaindex: {
+			label: "LlamaIndex",
+			code: `from llama_index.llms.openai_like import OpenAILike
+
+llm = OpenAILike(
+    model="LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
+    api_base="http://localhost:8000/v1",
+    api_key="-",
+)
+
+response = llm.complete("Hello!")
+print(response)`,
+		},
+		curl: {
+			label: "curl",
+			code: `curl http://localhost:8000/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "stream": true
+  }'`,
+		},
+	};
 
 	return (
 		<div className="flex flex-col min-h-screen bg-black text-white">
@@ -135,7 +199,7 @@ for await (const chunk of res) {
 					</div>
 				</section>
 
-				{/* ── Code Example ── */}
+				{/* ── Code Examples (tabbed) ── */}
 				<section className="py-20 md:py-28 border-t border-primary/20">
 					<div className="container mx-auto px-4">
 						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
@@ -144,9 +208,28 @@ for await (const chunk of res) {
 						<p className="text-muted-foreground mb-8">
 							drop-in replacement — change the base URL and go
 						</p>
+
+						{/* Tabs */}
+						<div className="flex flex-wrap gap-1 md:gap-2 mb-4">
+							{(Object.keys(sdkExamples) as SdkTab[]).map((tab) => (
+								<button
+									key={tab}
+									onClick={() => setActiveTab(tab)}
+									className={`px-3 py-1.5 text-sm font-mono transition-colors cursor-pointer ${
+										activeTab === tab
+											? "bg-primary/20 text-primary"
+											: "text-muted-foreground hover:text-white hover:bg-secondary"
+									}`}
+								>
+									{sdkExamples[tab].label}
+								</button>
+							))}
+						</div>
+
+						{/* Code block */}
 						<div className="cyberpunk-corners bg-secondary p-5 md:p-8 relative">
 							<button
-								onClick={() => handleCopy(sdkExample, "sdk")}
+								onClick={() => handleCopy(sdkExamples[activeTab].code, "sdk")}
 								className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-primary transition-colors"
 								title="Copy code"
 							>
@@ -157,7 +240,7 @@ for await (const chunk of res) {
 								)}
 							</button>
 							<pre className="font-mono text-sm leading-relaxed overflow-x-auto text-white">
-								<code>{sdkExample}</code>
+								<code>{sdkExamples[activeTab].code}</code>
 							</pre>
 						</div>
 					</div>
@@ -207,49 +290,26 @@ for await (const chunk of res) {
 				{/* ── Features ── */}
 				<section className="py-20 md:py-28 border-t border-primary/20">
 					<div className="container mx-auto px-4">
-						<div className="grid md:grid-cols-2 gap-12">
-							<div>
-								<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-10">
-									features
-								</h2>
-								<ul className="space-y-4">
-									{[
-										"SSE streaming with real-time token generation",
-										"Multi-format tool calling (LFM, Qwen, OpenAI)",
-										"Quantized inference: q4, q8, fp16, fp32",
-										"WebGPU acceleration with CPU fallback",
-										"Text embeddings for RAG workflows",
-										"Speech-to-text via Whisper",
-										"API key authentication",
-										"Admin metrics endpoint",
-									].map((f) => (
-										<li key={f} className="flex items-start gap-3 text-white text-sm">
-											<span className="text-primary mt-0.5">▸</span>
-											{f}
-										</li>
-									))}
-								</ul>
-							</div>
-							<div>
-								<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-10">
-									compatible with
-								</h2>
-								<ul className="space-y-4">
-									{[
-										"OpenAI SDK (Python & TypeScript)",
-										"Vercel AI SDK",
-										"LangChain",
-										"LlamaIndex",
-										"Any OpenAI-compatible client",
-									].map((c) => (
-										<li key={c} className="flex items-start gap-3 text-white text-sm">
-											<span className="text-primary mt-0.5">▸</span>
-											{c}
-										</li>
-									))}
-								</ul>
-							</div>
-						</div>
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-10">
+							features
+						</h2>
+						<ul className="grid md:grid-cols-2 gap-x-12 gap-y-4">
+							{[
+								"SSE streaming with real-time token generation",
+								"Multi-format tool calling (LFM, Qwen, OpenAI)",
+								"Quantized inference: q4, q8, fp16, fp32",
+								"WebGPU acceleration with CPU fallback",
+								"Text embeddings for RAG workflows",
+								"Speech-to-text via Whisper",
+								"API key authentication",
+								"Admin metrics endpoint",
+							].map((f) => (
+								<li key={f} className="flex items-start gap-3 text-white text-sm">
+									<span className="text-primary mt-0.5">▸</span>
+									{f}
+								</li>
+							))}
+						</ul>
 					</div>
 				</section>
 			</main>
