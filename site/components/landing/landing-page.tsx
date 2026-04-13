@@ -247,11 +247,8 @@ print(response)`,
 					</div>
 				</section>
 
-				{/* ── Jagged section divider ── */}
-				<div className="section-divider h-0" />
-
 				{/* ── Code Examples (tabbed) ── */}
-				<section className="py-20 md:py-28">
+				<section className="py-20 md:py-28 border-t border-primary/20">
 					<div className="container mx-auto px-4">
 						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
 							works with any openai sdk
@@ -338,14 +335,9 @@ print(response)`,
 					</div>
 				</section>
 
-				{/* ── Hazard divider ── */}
-				<div className="w-full h-4 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg-reverse"></div>
-
-				{/* ── Features as cards ── */}
-				<section className="py-20 md:py-28 relative">
-					{/* Subtle dot pattern background */}
-					<div className="absolute inset-0 dot-pattern opacity-[0.03] pointer-events-none" />
-					<div className="container mx-auto px-4 relative">
+				{/* ── Features ── */}
+				<section className="py-20 md:py-28 border-t border-primary/20">
+					<div className="container mx-auto px-4">
 						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-12">
 							features
 						</h2>
@@ -360,7 +352,7 @@ print(response)`,
 								{ title: "Auth", desc: "API key authentication" },
 								{ title: "Metrics", desc: "Admin monitoring endpoint" },
 							].map((f) => (
-								<div key={f.title} className="cyberpunk-corners bg-secondary p-4">
+								<div key={f.title} className="border border-primary/10 p-4">
 									<div className="text-primary font-bold text-sm">{f.title}</div>
 									<div className="text-muted-foreground text-xs mt-1">{f.desc}</div>
 								</div>
