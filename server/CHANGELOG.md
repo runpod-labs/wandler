@@ -1,8 +1,8 @@
 # wandler
 
-## 0.2.0
+## 2.0.0
 
-### Minor Changes
+### Major Changes
 
 - 04fa7b6: Add CLI for running wandler as an inference server via `npx wandler`
   - Support `org/repo:precision` syntax for model selection (q4, q8, fp16, fp32)
