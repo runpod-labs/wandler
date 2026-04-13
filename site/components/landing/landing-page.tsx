@@ -3,9 +3,49 @@
 import { Check, Copy, Terminal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createHighlighter, type Highlighter } from "shiki";
 
 import { Header } from "@/components/header";
+
+let highlighterPromise: Promise<Highlighter> | null = null;
+function getHighlighter() {
+	if (!highlighterPromise) {
+		highlighterPromise = createHighlighter({
+			themes: ["github-dark"],
+			langs: ["typescript", "python", "bash"],
+		});
+	}
+	return highlighterPromise;
+}
+
+function useHighlightedCode(code: string, lang: string) {
+	const [html, setHtml] = useState<string | null>(null);
+	useEffect(() => {
+		getHighlighter().then((h) => {
+			setHtml(h.codeToHtml(code.replace(/^\n+|\n+$/g, ""), { lang, theme: "github-dark" }));
+		});
+	}, [code, lang]);
+	return html;
+}
+
+function SdkCodeBlock({ code, lang }: { code: string; lang: string }) {
+	const html = useHighlightedCode(code, lang);
+	if (html) {
+		return (
+			<div
+				className="[&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:overflow-x-auto font-mono text-sm leading-relaxed"
+				dangerouslySetInnerHTML={{ __html: html }}
+			/>
+		);
+	}
+	// Fallback while loading
+	return (
+		<pre className="font-mono text-sm leading-relaxed overflow-x-auto text-white">
+			<code>{code}</code>
+		</pre>
+	);
+}
 
 export function LandingPage() {
 	const [copied, setCopied] = useState<string | null>(null);
@@ -21,9 +61,10 @@ export function LandingPage() {
 	type SdkTab = "openai" | "ai-sdk" | "langchain" | "llamaindex" | "curl";
 	const [activeTab, setActiveTab] = useState<SdkTab>("openai");
 
-	const sdkExamples: Record<SdkTab, { label: string; code: string }> = {
+	const sdkExamples: Record<SdkTab, { label: string; lang: string; code: string }> = {
 		openai: {
 			label: "OpenAI SDK",
+			lang: "typescript",
 			code: `import OpenAI from "openai";
 
 const client = new OpenAI({
@@ -43,6 +84,7 @@ for await (const chunk of res) {
 		},
 		"ai-sdk": {
 			label: "Vercel AI SDK",
+			lang: "typescript",
 			code: `import { generateText, streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 
@@ -61,6 +103,7 @@ console.log(text);`,
 		},
 		langchain: {
 			label: "LangChain",
+			lang: "typescript",
 			code: `import { ChatOpenAI } from "@langchain/openai";
 
 const model = new ChatOpenAI({
@@ -76,6 +119,7 @@ console.log(response.content);`,
 		},
 		llamaindex: {
 			label: "LlamaIndex",
+			lang: "python",
 			code: `from llama_index.llms.openai_like import OpenAILike
 
 llm = OpenAILike(
@@ -89,6 +133,7 @@ print(response)`,
 		},
 		curl: {
 			label: "curl",
+			lang: "bash",
 			code: `curl http://localhost:8000/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -209,39 +254,39 @@ print(response)`,
 							drop-in replacement — change the base URL and go
 						</p>
 
-						{/* Tabs */}
-						<div className="flex flex-wrap gap-1 md:gap-2 mb-4">
-							{(Object.keys(sdkExamples) as SdkTab[]).map((tab) => (
-								<button
-									key={tab}
-									onClick={() => setActiveTab(tab)}
-									className={`px-3 py-1.5 text-sm font-mono transition-colors cursor-pointer ${
-										activeTab === tab
-											? "bg-primary/20 text-primary"
-											: "text-muted-foreground hover:text-white hover:bg-secondary"
-									}`}
-								>
-									{sdkExamples[tab].label}
-								</button>
-							))}
-						</div>
+						<div className="cyberpunk-corners bg-secondary p-3 md:p-4">
+							{/* Tabs — same style as the old install component */}
+							<div className="flex gap-1 md:gap-2 mb-3">
+								{(Object.keys(sdkExamples) as SdkTab[]).map((tab) => (
+									<div
+										key={tab}
+										className={`cursor-pointer px-2 md:px-3 py-1 rounded text-sm ${
+											activeTab === tab
+												? "bg-primary/20 text-primary"
+												: "text-muted-foreground hover:bg-primary/10"
+										}`}
+										onClick={() => setActiveTab(tab)}
+									>
+										{sdkExamples[tab].label}
+									</div>
+								))}
+							</div>
 
-						{/* Code block */}
-						<div className="cyberpunk-corners bg-secondary p-5 md:p-8 relative">
-							<button
-								onClick={() => handleCopy(sdkExamples[activeTab].code, "sdk")}
-								className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-primary transition-colors"
-								title="Copy code"
-							>
-								{copied === "sdk" ? (
-									<Check className="w-4 h-4" />
-								) : (
-									<Copy className="w-4 h-4" />
-								)}
-							</button>
-							<pre className="font-mono text-sm leading-relaxed overflow-x-auto text-white">
-								<code>{sdkExamples[activeTab].code}</code>
-							</pre>
+							{/* Code with syntax highlighting + copy */}
+							<div className="relative">
+								<button
+									onClick={() => handleCopy(sdkExamples[activeTab].code, "sdk")}
+									className="absolute top-2 right-2 p-2 text-muted-foreground hover:text-primary transition-colors z-10"
+									title="Copy to clipboard"
+								>
+									{copied === "sdk" ? (
+										<Check className="w-4 h-4" />
+									) : (
+										<Copy className="w-4 h-4" />
+									)}
+								</button>
+								<SdkCodeBlock code={sdkExamples[activeTab].code} lang={sdkExamples[activeTab].lang} />
+							</div>
 						</div>
 					</div>
 				</section>
