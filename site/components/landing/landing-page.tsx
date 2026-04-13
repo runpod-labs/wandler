@@ -169,15 +169,9 @@ print(response)`,
 									inference server
 								</p>
 
-								{/* Key capabilities */}
-								<div className="flex justify-center gap-4">
-									<span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-mono border border-primary/30 text-primary">
-										<Check className="w-3.5 h-3.5" /> OpenAI API
-									</span>
-									<span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-mono border border-primary/30 text-primary">
-										<Check className="w-3.5 h-3.5" /> WebGPU
-									</span>
-								</div>
+								<span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-mono border border-primary/30 text-primary">
+									<Check className="w-3.5 h-3.5" /> WebGPU
+								</span>
 
 								{/* Quickstart */}
 								<div className="cyberpunk-corners bg-secondary p-4 w-full max-w-lg">
@@ -223,10 +217,10 @@ print(response)`,
 				<section className="py-20 md:py-28">
 					<div className="container mx-auto px-4">
 						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
-							works with any openai sdk
+							works with any OpenAI API compatible SDK
 						</h2>
 						<p className="text-muted-foreground mb-8">
-							drop-in replacement — change the base URL and go
+							drop-in replacement, change the base URL and go
 						</p>
 
 						<div className="cyberpunk-corners bg-secondary p-3 md:p-4">
@@ -300,7 +294,7 @@ print(response)`,
 						<p className="text-muted-foreground mb-8 font-mono text-sm">
 							WebGPU · q4 quantization · 10 runs per scenario
 						</p>
-						<div className="cyberpunk-corners bg-secondary p-4 md:p-6 overflow-x-auto">
+						<div className="cyberpunk-corners bg-secondary p-4 md:p-6">
 							<table className="w-full text-left">
 								<thead>
 									<tr className="border-b border-primary/30">
@@ -313,10 +307,10 @@ print(response)`,
 								</thead>
 								<tbody className="font-mono text-sm">
 									{[
-										{ model: "LFM2.5-350M", tps: "248", ttft: "16ms", load: "0.5s", tools: "—" },
+										{ model: "LFM2.5-350M", tps: "248", ttft: "16ms", load: "0.5s", tools: "-" },
 										{ model: "LFM2.5-1.2B", tps: "118", ttft: "34ms", load: "1.7s", tools: "yes", highlight: true },
 										{ model: "Qwen3.5-0.8B", tps: "37", ttft: "276ms", load: "1.8s", tools: "partial" },
-										{ model: "Gemma 4 E4B", tps: "20", ttft: "636ms", load: "13.4s", tools: "—" },
+										{ model: "Gemma 4 E4B", tps: "20", ttft: "636ms", load: "13.4s", tools: "-" },
 									].map((row) => (
 										<tr key={row.model} className={`border-b border-primary/10 ${row.highlight ? "bg-primary/5" : ""}`}>
 											<td className="py-3 pr-6 text-white">{row.model}</td>
@@ -361,7 +355,7 @@ print(response)`,
 
 			<footer className="py-8 border-t border-primary/20">
 				<div className="container mx-auto px-4 flex justify-between items-center text-muted-foreground text-sm">
-					<span>wandler — transformers.js inference server</span>
+					<span>wandler - transformers.js inference server</span>
 					<Link
 						href="https://github.com/runpod-labs/wandler"
 						className="text-primary hover:underline"
