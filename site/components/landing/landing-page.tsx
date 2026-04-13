@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Terminal } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -193,7 +193,6 @@ print(response)`,
 										onClick={() => handleCopy(quickstart, "qs")}
 										className="w-full flex items-center gap-3 text-left cursor-pointer group"
 									>
-										<Terminal className="w-4 h-4 text-primary shrink-0" />
 										<code className="font-mono text-sm md:text-base text-white">
 											{quickstart}
 										</code>
