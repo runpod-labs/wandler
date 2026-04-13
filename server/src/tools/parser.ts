@@ -92,7 +92,35 @@ function parseQwen(text: string): ToolCall[] | null {
   }
 }
 
-/** Strategy 3: OpenAI JSON format — {"tool_calls": [...]} */
+/** Strategy 3: Gemma format — call:func_name{key:value,key2:value2} (with optional <|tool_call> wrapper) */
+function parseGemma(text: string): ToolCall[] | null {
+  // Strip special tokens if present: <|tool_call>...<tool_call|>
+  const stripped = text.replace(/<\|tool_call>/g, "").replace(/<tool_call\|>/g, "");
+  // Match call:name{...} pattern (one or more)
+  const callPattern = /call:(\w+)\{([^}]*)\}/g;
+  const calls: ToolCall[] = [];
+  let m;
+  while ((m = callPattern.exec(stripped)) !== null) {
+    const name = m[1]!;
+    const argsStr = m[2]!;
+    // Parse key:value pairs (Gemma's custom format, not JSON)
+    const args: Record<string, string> = {};
+    // Split on commas, but respect quoted strings with <|"|>...<|"|>
+    const cleaned = argsStr.replace(/<\|"\|>/g, "");
+    for (const pair of cleaned.split(",")) {
+      const colonIdx = pair.indexOf(":");
+      if (colonIdx > 0) {
+        const key = pair.slice(0, colonIdx).trim();
+        const value = pair.slice(colonIdx + 1).trim();
+        args[key] = value;
+      }
+    }
+    calls.push(toToolCall(name, args));
+  }
+  return calls.length > 0 ? calls : null;
+}
+
+/** Strategy 4: OpenAI JSON format — {"tool_calls": [...]} */
 function parseOpenAiJson(text: string): ToolCall[] | null {
   const match = text.match(/\{[\s\S]*"tool_calls"[\s\S]*\}/);
   if (!match) return null;
@@ -132,6 +160,7 @@ export function parseToolCalls(text: string): ToolCall[] | null {
     parseLfmPythonic(cleaned) ??
     parseLfmJson(cleaned) ??
     parseQwen(cleaned) ??
+    parseGemma(cleaned) ??
     parseOpenAiJson(cleaned)
   );
 }
