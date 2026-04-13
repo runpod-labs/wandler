@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: npm install
@@ -71,10 +72,39 @@ jobs:
             echo "needs_publish=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Exchange OIDC token for npm publish token
+        if: steps.changesets_check.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
+        id: npm_oidc
+        run: |
+          # Get OIDC token from GitHub Actions
+          OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://registry.npmjs.org" | jq -r '.value')
+
+          # Exchange OIDC token for npm publish token
+          NPM_TOKEN=$(curl -sS -X POST "https://registry.npmjs.org/-/npm/v1/security/oidc/token/wandler" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            -d '{}' | jq -r '.token')
+
+          if [ -z "$NPM_TOKEN" ] || [ "$NPM_TOKEN" = "null" ]; then
+            echo "Failed to get npm token via OIDC"
+            # Debug: show the exchange response (without the token)
+            curl -sS -X POST "https://registry.npmjs.org/-/npm/v1/security/oidc/token/wandler" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $OIDC_TOKEN" \
+              -d '{}' | jq 'del(.token)'
+            exit 1
+          fi
+
+          echo "::add-mask::$NPM_TOKEN"
+          echo "npm_token=$NPM_TOKEN" >> $GITHUB_OUTPUT
+
       - name: Publish to npm
         if: steps.changesets_check.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
         working-directory: server
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ steps.npm_oidc.outputs.npm_token }}
 
       - name: Create GitHub Release
         if: steps.changesets_check.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
