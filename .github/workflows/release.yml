@@ -24,7 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: npm install
@@ -41,12 +40,52 @@ jobs:
         run: npm run typecheck
         working-directory: server
 
-      - name: Create Release PR or Publish
+      - name: Check for changesets
         id: changesets
+        run: |
+          if ls .changeset/*.md 1>/dev/null 2>&1 && [ "$(ls .changeset/*.md 2>/dev/null | grep -v README.md)" ]; then
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release PR
+        if: steps.changesets.outputs.has_changesets == 'true'
         uses: changesets/action@v1
         with:
-          publish: npx changeset publish --provenance
           title: "chore: version packages"
           commit: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if version is published
+        if: steps.changesets.outputs.has_changesets == 'false'
+        id: check_publish
+        working-directory: server
+        run: |
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          echo "local_version=$LOCAL_VERSION" >> $GITHUB_OUTPUT
+          if npm view wandler@$LOCAL_VERSION version 2>/dev/null; then
+            echo "needs_publish=false" >> $GITHUB_OUTPUT
+          else
+            echo "needs_publish=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup npm for provenance publishing
+        if: steps.changesets.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=" > ~/.npmrc
+          npm config set registry https://registry.npmjs.org/
+
+      - name: Publish to npm
+        if: steps.changesets.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
+        working-directory: server
+        run: npm publish --provenance --access public
+
+      - name: Create GitHub Release
+        if: steps.changesets.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
+        run: |
+          VERSION=${{ steps.check_publish.outputs.local_version }}
+          gh release create "v$VERSION" --title "v$VERSION" --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
