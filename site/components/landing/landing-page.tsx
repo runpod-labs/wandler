@@ -171,18 +171,12 @@ print(response)`,
 
 								{/* Pills */}
 								<div className="flex flex-wrap justify-center gap-2">
-									{[
-										{ label: "OpenAI API compatible", check: true },
-										{ label: "WebGPU accelerated", check: true },
-										{ label: "local & private", check: true },
-										{ label: "open source", check: true },
-									].map((pill) => (
+									{["OpenAI API", "WebGPU", "ONNX", "TypeScript"].map((label) => (
 										<span
-											key={pill.label}
-											className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-mono border border-primary/30 text-primary"
+											key={label}
+											className="px-2.5 py-0.5 text-xs font-mono border border-primary/30 text-primary"
 										>
-											{pill.check && <Check className="w-3 h-3" />}
-											{pill.label}
+											{label}
 										</span>
 									))}
 								</div>
