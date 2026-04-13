@@ -294,26 +294,29 @@ print(response)`,
 							<table className="w-full text-left">
 								<thead>
 									<tr className="border-b border-primary/30">
-										<th className="py-3 pr-6 text-primary font-mono text-sm">Model</th>
-										<th className="py-3 pr-6 text-primary font-mono text-sm">tok/s</th>
-										<th className="py-3 pr-6 text-primary font-mono text-sm">TTFT</th>
-										<th className="py-3 pr-6 text-primary font-mono text-sm">Load</th>
-										<th className="py-3 text-primary font-mono text-sm">Tools</th>
+										<th className="py-3 pr-4 text-primary font-mono text-sm">Model</th>
+											<th className="py-3 pr-4 text-primary font-mono text-sm">Size</th>
+										<th className="py-3 pr-4 text-primary font-mono text-sm">tok/s</th>
+										<th className="py-3 pr-4 text-primary font-mono text-sm">TTFT</th>
+										<th className="py-3 pr-4 text-primary font-mono text-sm">Load</th>
+										<th className="py-3 text-primary font-mono text-sm">Capabilities</th>
 									</tr>
 								</thead>
 								<tbody className="font-mono text-sm">
 									{[
-										{ model: "LFM2.5-350M", tps: "248", ttft: "16ms", load: "0.5s", tools: "-" },
-										{ model: "LFM2.5-1.2B", tps: "118", ttft: "34ms", load: "1.7s", tools: "yes", highlight: true },
-										{ model: "Qwen3.5-0.8B", tps: "37", ttft: "276ms", load: "1.8s", tools: "partial" },
-										{ model: "Gemma 4 E4B", tps: "20", ttft: "636ms", load: "13.4s", tools: "-" },
+										{ model: "LFM2.5-350M", size: "350M", tps: "248", ttft: "16ms", load: "0.5s", caps: "text" },
+										{ model: "LFM2.5-1.2B", size: "1.2B", tps: "118", ttft: "34ms", load: "1.7s", caps: "text, tools", highlight: true },
+										{ model: "Qwen3.5-0.8B", size: "0.8B", tps: "37", ttft: "276ms", load: "1.8s", caps: "text, tools" },
+										{ model: "Gemma 4 E4B", size: "4B", tps: "20", ttft: "636ms", load: "13.4s", caps: "text, tools, vision*" },
+										{ model: "Gemma 4 E2B", size: "2B", tps: "12", ttft: "890ms", load: "7.0s", caps: "text, tools, vision*" },
 									].map((row) => (
 										<tr key={row.model} className={`border-b border-primary/10 ${row.highlight ? "bg-primary/5" : ""}`}>
-											<td className="py-3 pr-6 text-white">{row.model}</td>
-											<td className={`py-3 pr-6 font-bold ${row.highlight ? "text-primary" : "text-white"}`}>{row.tps}</td>
-											<td className="py-3 pr-6 text-white">{row.ttft}</td>
-											<td className="py-3 pr-6 text-white">{row.load}</td>
-											<td className="py-3 text-white">{row.tools}</td>
+											<td className="py-3 pr-4 text-white">{row.model}</td>
+											<td className="py-3 pr-4 text-white/60">{row.size}</td>
+											<td className={`py-3 pr-4 font-bold ${row.highlight ? "text-primary" : "text-white"}`}>{row.tps}</td>
+											<td className="py-3 pr-4 text-white">{row.ttft}</td>
+											<td className="py-3 pr-4 text-white">{row.load}</td>
+											<td className="py-3 text-white">{row.caps}</td>
 										</tr>
 									))}
 								</tbody>
@@ -331,7 +334,7 @@ print(response)`,
 						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 							{[
 								{ title: "Streaming", desc: "SSE with real-time token generation" },
-								{ title: "Tool Calling", desc: "LFM, Qwen, and OpenAI formats" },
+								{ title: "Tool Calling", desc: "Gemma, LFM, Qwen, and OpenAI formats" },
 								{ title: "Quantized", desc: "q4, q8, fp16, fp32 inference" },
 								{ title: "WebGPU", desc: "GPU acceleration with CPU fallback" },
 								{ title: "Embeddings", desc: "Text embeddings for RAG" },
