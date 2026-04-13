@@ -153,8 +153,8 @@ print(response)`,
 				<section className="relative overflow-hidden flex flex-col justify-center px-4 md:px-0 pt-20 pb-16 md:pt-24 md:pb-20">
 					<div className="container mx-auto">
 						<div className="grid md:grid-cols-[1fr_1fr] gap-8 md:gap-12 items-center">
-							{/* Left: Logo centered + cards */}
-							<div className="flex flex-col items-center space-y-10">
+							{/* Left: Logo centered + pills */}
+							<div className="flex flex-col items-center space-y-6">
 								<Image
 									src="https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/wandler_logo_v5-vJ2L3NmauebkFJs9fOcFe7bPVM14To.svg"
 									alt="wandler"
@@ -164,31 +164,37 @@ print(response)`,
 									priority
 								/>
 
-								<h1 className="text-2xl md:text-4xl font-bold tracking-tighter text-center">
+								<p className="text-xl md:text-2xl tracking-tight text-center text-muted-foreground">
 									<span className="text-primary">transformers.js</span>{" "}
 									inference server
-								</h1>
+								</p>
 
-								{/* Identity cards */}
-								<div className="grid grid-cols-2 gap-4 w-full max-w-md">
-									<div className="cyberpunk-corners bg-secondary p-4 text-center">
-										<div className="text-primary font-bold">OpenAI API</div>
-										<div className="text-xs text-muted-foreground mt-1">compatible</div>
-									</div>
-									<div className="cyberpunk-corners bg-secondary p-4 text-center">
-										<div className="text-primary font-bold">WebGPU</div>
-										<div className="text-xs text-muted-foreground mt-1">accelerated</div>
-									</div>
+								{/* Pills */}
+								<div className="flex flex-wrap justify-center gap-2">
+									{[
+										{ label: "OpenAI API compatible", check: true },
+										{ label: "WebGPU accelerated", check: true },
+										{ label: "local & private", check: true },
+										{ label: "open source", check: true },
+									].map((pill) => (
+										<span
+											key={pill.label}
+											className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-mono border border-primary/30 text-primary"
+										>
+											{pill.check && <Check className="w-3 h-3" />}
+											{pill.label}
+										</span>
+									))}
 								</div>
 
 								{/* Quickstart */}
-								<div className="cyberpunk-corners bg-secondary p-4 w-full max-w-md">
+								<div className="cyberpunk-corners bg-secondary p-4 w-full max-w-lg">
 									<button
 										onClick={() => handleCopy(quickstart, "qs")}
 										className="w-full flex items-center gap-3 text-left cursor-pointer group"
 									>
 										<Terminal className="w-4 h-4 text-primary shrink-0" />
-										<code className="font-mono text-xs md:text-sm text-white truncate">
+										<code className="font-mono text-sm md:text-base text-white">
 											{quickstart}
 										</code>
 										<span className="ml-auto shrink-0">
