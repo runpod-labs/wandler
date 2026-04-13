@@ -32,13 +32,14 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "start": "node dist/cli.js",
     "dev": "tsx --watch src/cli.ts",
     "build": "tsc",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "cp ../README.md . && npm run build",
     "typecheck": "tsc --noEmit",
     "benchmark": "node --expose-gc --import tsx/esm src/benchmark.ts",
     "test": "vitest run",

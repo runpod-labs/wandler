@@ -7,18 +7,19 @@ Think vLLM or llama.cpp, but for the TypeScript ecosystem.
 ## Quickstart
 
 ```bash
-npm install
-npm start          # loads default model, serves on :8000
+npx wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4
 ```
 
 ```bash
-# custom model + device
-MODEL_ID=onnx-community/Qwen3.5-0.8B-Text-ONNX DEVICE=cpu npm start
+# custom model, precision, device, port
+npx wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:fp16 --device cpu --port 3000
 ```
 
 ```bash
-# with embeddings
-EMBEDDING_MODEL_ID=Xenova/all-MiniLM-L6-v2 npm start
+# with embeddings and STT
+npx wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 \
+  --embedding Xenova/all-MiniLM-L6-v2:q8 \
+  --stt onnx-community/whisper-tiny:q4
 ```
 
 Use it with the OpenAI SDK:
@@ -39,6 +40,61 @@ for await (const chunk of response) {
 }
 ```
 
+## CLI
+
+```
+wandler — inference server for transformers.js
+
+Usage:
+  wandler --llm org/repo[:precision] [options]
+
+Model:
+  -l, --llm <id>              LLM model (default: onnx-community/gemma-4-E4B-it-ONNX:q4)
+  -e, --embedding <id>        Embedding model (disabled by default)
+  -s, --stt <id>              STT model (default: onnx-community/whisper-tiny:q4)
+      --no-stt                Disable STT
+  -d, --device <type>         Device: webgpu, cpu, wasm (default: webgpu)
+      --hf-token <token>      HuggingFace token for gated models
+      --cache-dir <path>      Model cache directory
+
+Server:
+  -p, --port <number>         Port (default: 8000)
+      --host <addr>           Bind address (default: 127.0.0.1)
+  -k, --api-key <key>         API key for auth (or WANDLER_API_KEY)
+      --cors-origin <origin>  Allowed CORS origin (default: *)
+      --max-tokens <n>        Max tokens per request (default: 2048)
+      --max-concurrent <n>    Max concurrent requests (default: 1)
+      --timeout <ms>          Request timeout in ms (default: 120000)
+      --log-level <level>     debug, info, warn, error (default: info)
+
+Info:
+  -v, --version               Show version
+  -h, --help                  Show this help
+```
+
+Precision suffixes: `q4`, `q8`, `fp16`, `fp32` (default: `q4`)
+
+## Environment Variables
+
+Every CLI flag has a corresponding environment variable:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WANDLER_LLM` | onnx-community/gemma-4-E4B-it-ONNX:q4 | LLM model with precision |
+| `WANDLER_STT` | onnx-community/whisper-tiny:q4 | Speech-to-text model |
+| `WANDLER_EMBEDDING` | — | Embedding model (disabled by default) |
+| `WANDLER_DEVICE` | webgpu | Device: webgpu, cpu, wasm |
+| `WANDLER_PORT` | 8000 | Server port |
+| `WANDLER_HOST` | 127.0.0.1 | Bind address |
+| `WANDLER_API_KEY` | — | API key for auth |
+| `WANDLER_CORS_ORIGIN` | * | Allowed CORS origin |
+| `WANDLER_MAX_TOKENS` | 2048 | Max tokens per request |
+| `WANDLER_MAX_CONCURRENT` | 1 | Max concurrent requests |
+| `WANDLER_TIMEOUT` | 120000 | Request timeout (ms) |
+| `WANDLER_LOG_LEVEL` | info | Log level |
+| `WANDLER_CACHE_DIR` | — | Model cache directory |
+| `HF_TOKEN` | — | HuggingFace token for gated models |
+
 ## Endpoints
 
 ### LLM
@@ -54,7 +110,7 @@ for await (const chunk of response) {
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/v1/embeddings` | POST | Text embeddings (requires `EMBEDDING_MODEL_ID`) |
+| `/v1/embeddings` | POST | Text embeddings |
 
 ### Audio
 
@@ -69,6 +125,7 @@ for await (const chunk of response) {
 | `/tokenize` | POST | Text to token IDs |
 | `/detokenize` | POST | Token IDs to text |
 | `/health` | GET | Server status |
+| `/admin/metrics` | GET | Request metrics |
 
 ## Parameters
 
@@ -100,8 +157,6 @@ Extended parameters (vLLM/llama.cpp compatible):
 | `repetition_penalty` | float | — | Direct repetition penalty (> 1.0) |
 | `no_repeat_ngram_size` | int | — | Prevent N-gram repetition |
 
-Text completions also support `echo` and `suffix`.
-
 ### Embeddings
 
 | Parameter | Type | Default | Description |
@@ -109,35 +164,19 @@ Text completions also support `echo` and `suffix`.
 | `input` | string \| string[] | required | Text to embed |
 | `encoding_format` | string | "float" | "float" or "base64" |
 
-## Configuration
-
-All via environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | 8000 | Server port |
-| `MODEL_ID` | onnx-community/gemma-4-E4B-it-ONNX | LLM model from HuggingFace |
-| `DTYPE` | q4 | Quantization: q4, q8, fp16, fp32 |
-| `DEVICE` | webgpu | Runtime: webgpu, cpu, wasm |
-| `STT_MODEL_ID` | onnx-community/whisper-tiny | Speech-to-text model |
-| `STT_DTYPE` | q4 | STT quantization |
-| `EMBEDDING_MODEL_ID` | — | Embedding model (empty = disabled) |
-| `EMBEDDING_DTYPE` | q8 | Embedding quantization |
-
 ## Compatible Models
 
 ### LLMs
 
-| Model | ID | Size | Notes |
-|-------|-------|------|-------|
-| Gemma 4 | `onnx-community/gemma-4-E4B-it-ONNX` | ~2B | Default, good general purpose |
-| Qwen 3.5 | `onnx-community/Qwen3.5-0.8B-Text-ONNX` | 0.8B | Fast, good for tool calling |
-| LFM 2.5 | `LiquidAI/LFM2.5-1.2B-Instruct-ONNX` | 1.2B | 82 tok/s on M3 WebGPU |
-| LFM 2.5 | `LiquidAI/LFM2.5-350M-ONNX` | 350M | Ultra-fast, lightweight |
-| SmolLM2 | `HuggingFaceTB/SmolLM2-1.7B-Instruct` | 1.7B | Good instruction following |
-| Phi-2 | `microsoft/phi-2` | 2.7B | Strong reasoning |
+| Model | ID | Size |
+|-------|-------|------|
+| Gemma 4 | `onnx-community/gemma-4-E4B-it-ONNX` | ~2B |
+| Qwen 3.5 | `onnx-community/Qwen3.5-0.8B-Text-ONNX` | 0.8B |
+| LFM 2.5 | `LiquidAI/LFM2.5-1.2B-Instruct-ONNX` | 1.2B |
+| LFM 2.5 | `LiquidAI/LFM2.5-350M-ONNX` | 350M |
+| SmolLM2 | `HuggingFaceTB/SmolLM2-1.7B-Instruct` | 1.7B |
 
-Any ONNX model from the [onnx-community](https://huggingface.co/onnx-community) or [transformers.js compatible models](https://huggingface.co/models?library=transformers.js) should work.
+Any ONNX model from [onnx-community](https://huggingface.co/onnx-community) or [transformers.js compatible models](https://huggingface.co/models?library=transformers.js) should work.
 
 ### Embeddings
 
@@ -146,15 +185,14 @@ Any ONNX model from the [onnx-community](https://huggingface.co/onnx-community) 
 | all-MiniLM-L6-v2 | `Xenova/all-MiniLM-L6-v2` | 384 |
 | bge-small-en-v1.5 | `Xenova/bge-small-en-v1.5` | 384 |
 | nomic-embed-text-v1.5 | `nomic-ai/nomic-embed-text-v1.5` | 768 |
-| mxbai-embed-large-v1 | `mixedbread-ai/mxbai-embed-large-v1` | 1024 |
 
 ### Audio (Speech-to-Text)
 
-| Model | ID | Notes |
-|-------|-------|-------|
-| Whisper Tiny | `onnx-community/whisper-tiny` | Default, fast |
-| Whisper Small | `onnx-community/whisper-small` | Better accuracy |
-| Whisper Base | `onnx-community/whisper-base` | Balance of speed/accuracy |
+| Model | ID |
+|-------|-------|
+| Whisper Tiny | `onnx-community/whisper-tiny` |
+| Whisper Small | `onnx-community/whisper-small` |
+| Whisper Base | `onnx-community/whisper-base` |
 
 ## Tool Calling
 
@@ -165,49 +203,6 @@ wandler parses tool calls from multiple model output formats:
 - **OpenAI JSON**: `{"tool_calls": [...]}`
 
 Thinking blocks (`<think>...</think>`) are automatically stripped before parsing.
-
-## Development
-
-```bash
-npm run dev         # watch mode with hot reload
-npm test            # run all tests (81 tests)
-npm run test:unit   # unit tests only
-npm run test:e2e    # E2E tests only
-npm run typecheck   # TypeScript type checking
-npm run benchmark   # run model benchmarks
-npm run build       # compile to dist/
-```
-
-## Architecture
-
-```
-src/
-├── index.ts              # entry point
-├── config.ts             # env var configuration
-├── server.ts             # HTTP server + routing
-├── routes/
-│   ├── chat.ts           # /v1/chat/completions
-│   ├── completions.ts    # /v1/completions
-│   ├── embeddings.ts     # /v1/embeddings
-│   ├── models.ts         # /v1/models
-│   ├── audio.ts          # /v1/audio/transcriptions
-│   ├── tokenize.ts       # /tokenize, /detokenize
-│   └── health.ts         # /health
-├── generation/
-│   ├── generate.ts       # non-streaming generation
-│   ├── stream.ts         # SSE streaming generation
-│   └── options.ts        # sampling parameter mapping
-├── models/
-│   ├── manager.ts        # model loading (LLM, STT, embeddings)
-│   └── tokenizer.ts      # chat template formatting
-├── tools/
-│   └── parser.ts         # multi-format tool call parser
-├── types/
-│   └── openai.ts         # OpenAI-compatible type definitions
-└── utils/
-    ├── http.ts           # HTTP helpers
-    └── multipart.ts      # multipart form parser
-```
 
 ## License
 
