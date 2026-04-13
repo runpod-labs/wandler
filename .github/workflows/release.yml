@@ -63,6 +63,7 @@ jobs:
         if: steps.changesets_check.outputs.has_changesets == 'false'
         uses: changesets/action@v1
         with:
-          publish: cd server && npm publish --provenance --access public
+          publish: npx changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
