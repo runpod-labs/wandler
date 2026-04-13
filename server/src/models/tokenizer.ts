@@ -25,72 +25,31 @@ function normalizeMessages(messages: ChatMessage[]): ChatMessage[] {
   }));
 }
 
-// ── Gemma chat template (not included in ONNX tokenizer config) ─────────────
-
-export function formatGemmaChat(messages: ChatMessage[]): string {
-  const normalized = normalizeMessages(messages);
-  let prompt = "";
-  let inUserTurn = false; // track if system message started a user turn
-  for (const msg of normalized) {
-    if (msg.role === "system") {
-      // Gemma has no system role — start a user turn and prepend system content
-      prompt += `<start_of_turn>user\n${msg.content}\n`;
-      inUserTurn = true;
-    } else if (msg.role === "user") {
-      if (inUserTurn) {
-        // Continue the user turn started by a system message
-        prompt += msg.content + "<end_of_turn>\n";
-        inUserTurn = false;
-      } else {
-        prompt += `<start_of_turn>user\n${msg.content}<end_of_turn>\n`;
-      }
-    } else if (msg.role === "assistant") {
-      if (inUserTurn) {
-        // Close unclosed user turn before assistant
-        prompt += "<end_of_turn>\n";
-        inUserTurn = false;
-      }
-      prompt += `<start_of_turn>model\n${msg.content}<end_of_turn>\n`;
-    }
-  }
-  prompt += "<start_of_turn>model\n";
-  return prompt;
-}
-
-// ── Generic chat template with fallback ─────────────────────────────────────
+// ── Generic chat template with external template support ────────────────────
 
 export function formatChat(
   tokenizer: Tokenizer,
   messages: ChatMessage[],
-  modelId: string,
+  _modelId: string,
   tools?: Tool[],
+  chatTemplate?: string | null,
 ): string {
   // Normalize multimodal content to strings for tokenization
   const normalized = normalizeMessages(messages);
 
-  try {
-    const opts: Record<string, unknown> = {
-      tokenize: false,
-      add_generation_prompt: true,
-    };
-    if (tools?.length) {
-      opts.tools = tools;
-    }
-    return tokenizer.apply_chat_template(normalized, opts);
-  } catch {
-    // Fallback for models without chat template (e.g. Gemma ONNX exports)
-    if (modelId.toLowerCase().includes("gemma")) {
-      return formatGemmaChat(messages);
-    }
-    // Generic fallback
-    return (
-      normalized
-        .map((m) =>
-          m.role === "assistant"
-            ? `Assistant: ${m.content}`
-            : `User: ${m.content}`,
-        )
-        .join("\n") + "\nAssistant: "
-    );
+  const opts: Record<string, unknown> = {
+    tokenize: false,
+    add_generation_prompt: true,
+  };
+  if (tools?.length) {
+    opts.tools = tools;
   }
+  // Pass external chat template (e.g. from chat_template.jinja) if the
+  // tokenizer doesn't have one built-in. This handles Gemma 4 and any
+  // other model that ships the template as a separate file.
+  if (chatTemplate) {
+    opts.chat_template = chatTemplate;
+  }
+
+  return tokenizer.apply_chat_template(normalized, opts);
 }

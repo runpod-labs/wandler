@@ -11,6 +11,7 @@ import type { Tokenizer } from "./tokenizer.js";
 
 export interface LoadedModels {
   tokenizer: Tokenizer;
+  chatTemplate: string | null;
   model: {
     generate(opts: Record<string, unknown>): Promise<{ dims: number[]; slice(...args: unknown[]): unknown }>;
     dispose?(): Promise<void>;
@@ -43,6 +44,47 @@ async function resolveDevice(requested: string): Promise<DeviceType> {
   return "cpu";
 }
 
+/**
+ * Try to load chat_template.jinja from the model repo if the tokenizer
+ * doesn't have a built-in chat template. This handles models like Gemma 4
+ * where Google ships the template as a separate file.
+ */
+async function loadChatTemplate(
+  tokenizer: Tokenizer,
+  modelId: string,
+): Promise<string | null> {
+  // Check if the tokenizer already has a chat template
+  const tok = tokenizer as unknown as { chat_template?: string | null };
+  if (tok.chat_template) return null; // tokenizer has it, no override needed
+
+  try {
+    // Use transformers.js hub utilities to fetch chat_template.jinja
+    const { getModelText } = await import("@huggingface/transformers/src/utils/hub.js" as string);
+    const template = await (getModelText as (modelPath: string, fileName: string, fatal: boolean) => Promise<string | null>)(
+      modelId, "chat_template.jinja", false,
+    );
+    if (template) {
+      console.log(`[wandler] Loaded chat_template.jinja for ${modelId}`);
+      return template;
+    }
+  } catch {
+    // getModelText not available or file not found — try fetch directly
+    try {
+      const url = `https://huggingface.co/${modelId}/resolve/main/chat_template.jinja`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const template = await res.text();
+        console.log(`[wandler] Loaded chat_template.jinja for ${modelId}`);
+        return template;
+      }
+    } catch {
+      // Failed to fetch — no template available
+    }
+  }
+
+  return null;
+}
+
 export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   // Configure transformers.js environment
   if (config.cacheDir) {
@@ -64,6 +106,9 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
     device,
   });
+
+  // Load external chat template if tokenizer doesn't have one built-in
+  const chatTemplate = await loadChatTemplate(tokenizer, config.modelId);
   console.log(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
   let transcriber: LoadedModels["transcriber"] = null;
@@ -92,6 +137,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
 
   return {
     tokenizer,
+    chatTemplate,
     model: model as unknown as LoadedModels["model"],
     transcriber,
     embedder,

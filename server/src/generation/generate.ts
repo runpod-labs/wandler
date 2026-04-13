@@ -14,7 +14,7 @@ export async function generate(
   genOpts: GenerationOptions,
   tools?: Tool[],
 ): Promise<GenerationResult> {
-  const prompt = formatChat(models.tokenizer, messages, modelId, tools);
+  const prompt = formatChat(models.tokenizer, messages, modelId, tools, models.chatTemplate);
   const inputs = models.tokenizer(prompt, { return_tensors: "pt" });
   const outputIds = await models.model.generate({ ...inputs, ...genOpts });
 
