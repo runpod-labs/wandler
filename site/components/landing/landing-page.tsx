@@ -169,10 +169,6 @@ print(response)`,
 									inference server
 								</p>
 
-								<span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-mono border border-primary/30 text-primary">
-									<Check className="w-3.5 h-3.5" /> WebGPU
-								</span>
-
 								{/* Quickstart */}
 								<div className="cyberpunk-corners bg-secondary p-4 w-full max-w-lg">
 									<button
