@@ -39,7 +39,6 @@
 		"@radix-ui/react-toggle-group": "^1.1.1",
 		"@radix-ui/react-tooltip": "^1.1.7",
 		"@types/mdx": "^2.0.13",
-		"@wandler/react": "^1.0.0-alpha.2",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"lucide-react": "^0.474.0",
@@ -55,8 +54,7 @@
 		"shiki": "^2.3.2",
 		"tailwind-merge": "^3.0.1",
 		"tailwindcss-animate": "^1.0.7",
-		"use-stick-to-bottom": "^1.0.46",
-		"wandler": "^1.0.0-alpha.11"
+		"use-stick-to-bottom": "^1.0.46"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3",
