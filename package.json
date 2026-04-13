@@ -1,7 +1,11 @@
 {
-  "name": "wandler",
+  "name": "@wandler/monorepo",
   "private": true,
-  "workspaces": ["server", "site", "packages/*"],
+  "workspaces": [
+    "server",
+    "site",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
@@ -9,6 +13,7 @@
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "turbo": "^2.5.4"
   }
 }

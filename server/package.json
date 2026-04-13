@@ -1,15 +1,44 @@
 {
-  "name": "@wandler/server",
+  "name": "wandler",
   "version": "0.1.0",
-  "private": true,
+  "description": "Inference server for transformers.js — OpenAI-compatible API for ONNX models",
   "type": "module",
-  "bin": {
-    "wandler": "./node_modules/.bin/tsx src/cli.ts"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/runpod-labs/wandler.git"
   },
+  "keywords": [
+    "inference",
+    "transformers.js",
+    "onnx",
+    "openai",
+    "llm",
+    "webgpu",
+    "server"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "wandler": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "start": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
     "dev": "tsx --watch src/cli.ts",
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "benchmark": "node --expose-gc --import tsx/esm src/benchmark.ts",
     "test": "vitest run",
@@ -20,7 +49,6 @@
   "dependencies": {
     "@hono/node-server": "^1.19.13",
     "@huggingface/transformers": "^4.0.1",
-    "@wandler/types": "*",
     "hono": "^4.7.11",
     "onnxruntime-node": "^1.24.3"
   },

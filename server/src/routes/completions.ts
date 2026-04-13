@@ -26,7 +26,7 @@ export async function completions(c: Context<AppEnv>) {
   const prompts = Array.isArray(params.prompt) ? params.prompt : [params.prompt];
   const id = makeId("cmpl");
   const created = Math.floor(Date.now() / 1000);
-  const genOpts = buildGenOpts(params, models.tokenizer);
+  const genOpts = buildGenOpts(params, models.tokenizer, config.maxTokens);
 
   // Streaming for single prompt
   if (params.stream && prompts.length === 1) {

@@ -5,10 +5,12 @@ import type { Tokenizer } from "../models/tokenizer.js";
  * Build transformers.js generation options from OpenAI-compatible sampling params.
  * Shared by both /v1/chat/completions and /v1/completions.
  */
-export function buildGenOpts(params: SamplingParams, tokenizer: Tokenizer): GenerationOptions {
+export function buildGenOpts(params: SamplingParams, tokenizer: Tokenizer, maxTokensCap?: number): GenerationOptions {
   const temperature = params.temperature ?? 0.7;
+  const serverMax = maxTokensCap || 2048;
+  const requested = params.max_tokens || serverMax;
   const opts: GenerationOptions = {
-    max_new_tokens: params.max_tokens || 2048,
+    max_new_tokens: Math.min(requested, serverMax),
     temperature,
     top_p: params.top_p ?? 0.95,
     do_sample: temperature > 0,

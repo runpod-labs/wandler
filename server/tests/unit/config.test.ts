@@ -1,10 +1,49 @@
 import { describe, expect, it } from "vitest";
-import { loadConfig } from "../../src/config.js";
+import { loadConfig, parseModelRef } from "../../src/config.js";
+
+describe("parseModelRef", () => {
+  it("parses org/repo:precision", () => {
+    expect(parseModelRef("onnx-community/gemma:q4", "q4")).toEqual({
+      id: "onnx-community/gemma",
+      dtype: "q4",
+    });
+  });
+
+  it("parses org/repo:fp16", () => {
+    expect(parseModelRef("LiquidAI/LFM2.5-1.2B-Instruct-ONNX:fp16", "q4")).toEqual({
+      id: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
+      dtype: "fp16",
+    });
+  });
+
+  it("uses default dtype when no suffix", () => {
+    expect(parseModelRef("onnx-community/gemma-4-E4B-it-ONNX", "q4")).toEqual({
+      id: "onnx-community/gemma-4-E4B-it-ONNX",
+      dtype: "q4",
+    });
+  });
+
+  it("handles bare model name without org", () => {
+    expect(parseModelRef("local-model", "fp32")).toEqual({
+      id: "local-model",
+      dtype: "fp32",
+    });
+  });
+
+  it("does not split on colon that appears before slash", () => {
+    // Edge case: no slash in the string, colon present
+    expect(parseModelRef("model:q8", "q4")).toEqual({
+      id: "model:q8",
+      dtype: "q4",
+    });
+  });
+});
 
 describe("loadConfig", () => {
   it("returns defaults when no env vars set", () => {
     const config = loadConfig({});
     expect(config.port).toBe(8000);
+    expect(config.host).toBe("127.0.0.1");
     expect(config.modelId).toBe("onnx-community/gemma-4-E4B-it-ONNX");
     expect(config.modelDtype).toBe("q4");
     expect(config.device).toBe("webgpu");
@@ -13,28 +52,94 @@ describe("loadConfig", () => {
     expect(config.embeddingModelId).toBe("");
     expect(config.embeddingDtype).toBe("q8");
     expect(config.apiKey).toBe("");
+    expect(config.corsOrigin).toBe("*");
+    expect(config.maxTokens).toBe(2048);
+    expect(config.maxConcurrent).toBe(1);
+    expect(config.timeout).toBe(120000);
+    expect(config.logLevel).toBe("info");
+    expect(config.hfToken).toBe("");
+    expect(config.cacheDir).toBe("");
   });
 
-  it("reads from env vars", () => {
+  it("reads WANDLER_ prefixed env vars", () => {
     const config = loadConfig({
-      PORT: "3000",
-      MODEL_ID: "my-model",
-      DTYPE: "fp16",
-      DEVICE: "cpu",
-      STT_MODEL_ID: "my-stt",
-      STT_DTYPE: "q8",
+      WANDLER_LLM: "my-org/my-model:fp16",
+      WANDLER_PORT: "3000",
+      WANDLER_HOST: "0.0.0.0",
+      WANDLER_DEVICE: "cpu",
+      WANDLER_API_KEY: "secret",
+      WANDLER_CORS_ORIGIN: "https://example.com",
+      WANDLER_MAX_TOKENS: "4096",
+      WANDLER_MAX_CONCURRENT: "4",
+      WANDLER_TIMEOUT: "60000",
+      WANDLER_LOG_LEVEL: "debug",
+      WANDLER_CACHE_DIR: "/tmp/models",
+      HF_TOKEN: "hf_abc123",
     });
     expect(config.port).toBe(3000);
-    expect(config.modelId).toBe("my-model");
+    expect(config.host).toBe("0.0.0.0");
+    expect(config.modelId).toBe("my-org/my-model");
     expect(config.modelDtype).toBe("fp16");
     expect(config.device).toBe("cpu");
-    expect(config.sttModelId).toBe("my-stt");
+    expect(config.apiKey).toBe("secret");
+    expect(config.corsOrigin).toBe("https://example.com");
+    expect(config.maxTokens).toBe(4096);
+    expect(config.maxConcurrent).toBe(4);
+    expect(config.timeout).toBe(60000);
+    expect(config.logLevel).toBe("debug");
+    expect(config.cacheDir).toBe("/tmp/models");
+    expect(config.hfToken).toBe("hf_abc123");
+  });
+
+  it("reads legacy env vars as fallback", () => {
+    const config = loadConfig({
+      MODEL_ID: "legacy-org/legacy-model",
+      DTYPE: "q8",
+      DEVICE: "cpu",
+      PORT: "3000",
+      STT_MODEL_ID: "legacy-stt/model",
+      STT_DTYPE: "q8",
+    });
+    expect(config.modelId).toBe("legacy-org/legacy-model");
+    expect(config.modelDtype).toBe("q8");
+    expect(config.device).toBe("cpu");
+    expect(config.port).toBe(3000);
+    expect(config.sttModelId).toBe("legacy-stt/model");
     expect(config.sttDtype).toBe("q8");
   });
 
+  it("WANDLER_ vars take priority over legacy vars", () => {
+    const config = loadConfig({
+      WANDLER_LLM: "new-org/new-model:fp16",
+      MODEL_ID: "old-org/old-model",
+      DTYPE: "q4",
+    });
+    expect(config.modelId).toBe("new-org/new-model");
+    expect(config.modelDtype).toBe("fp16");
+  });
+
+  it("parses precision from model references", () => {
+    const config = loadConfig({
+      WANDLER_LLM: "org/llm:q8",
+      WANDLER_STT: "org/stt:fp16",
+      WANDLER_EMBEDDING: "org/emb:q4",
+    });
+    expect(config.modelId).toBe("org/llm");
+    expect(config.modelDtype).toBe("q8");
+    expect(config.sttModelId).toBe("org/stt");
+    expect(config.sttDtype).toBe("fp16");
+    expect(config.embeddingModelId).toBe("org/emb");
+    expect(config.embeddingDtype).toBe("q4");
+  });
+
   it("handles partial env vars", () => {
-    const config = loadConfig({ PORT: "9090" });
+    const config = loadConfig({ WANDLER_PORT: "9090" });
     expect(config.port).toBe(9090);
-    expect(config.modelId).toBe("onnx-community/gemma-4-E4B-it-ONNX"); // default
+    expect(config.modelId).toBe("onnx-community/gemma-4-E4B-it-ONNX");
+  });
+
+  it("disables STT when empty string", () => {
+    const config = loadConfig({ WANDLER_STT: "" });
+    expect(config.sttModelId).toBe("");
   });
 });

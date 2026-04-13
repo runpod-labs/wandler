@@ -30,8 +30,8 @@ export function createApp(config: ServerConfig, models: LoadedModels) {
     await next();
   });
 
-  // CORS on everything
-  app.use("*", cors());
+  // CORS — configurable origin
+  app.use("*", cors({ origin: config.corsOrigin }));
 
   // Health — always open (load balancers need it)
   app.get("/health", health);
@@ -99,5 +99,5 @@ export function createApp(config: ServerConfig, models: LoadedModels) {
 
 export function startServer(config: ServerConfig, models: LoadedModels) {
   const app = createApp(config, models);
-  return serve({ fetch: app.fetch, port: config.port });
+  return serve({ fetch: app.fetch, port: config.port, hostname: config.host });
 }

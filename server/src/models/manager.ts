@@ -2,6 +2,7 @@ import {
   AutoTokenizer,
   AutoModelForCausalLM,
   pipeline,
+  env as transformersEnv,
 } from "@huggingface/transformers";
 import type { ServerConfig } from "../config.js";
 import type { Tokenizer } from "./tokenizer.js";
@@ -19,6 +20,15 @@ export interface LoadedModels {
 }
 
 export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
+  // Configure transformers.js environment
+  if (config.cacheDir) {
+    transformersEnv.cacheDir = config.cacheDir;
+  }
+  // HF_TOKEN is read automatically by @huggingface/hub (used internally by transformers.js)
+  if (config.hfToken) {
+    process.env.HF_TOKEN = config.hfToken;
+  }
+
   console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, ${config.device})`);
   const t0 = Date.now();
   const tokenizer = await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer;

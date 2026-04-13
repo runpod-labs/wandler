@@ -91,6 +91,7 @@ export function createTestConfig(
 ): ServerConfig {
   return {
     port: 0,
+    host: "127.0.0.1",
     modelId: "mock-model/test",
     modelDtype: "q4",
     device: "cpu",
@@ -99,6 +100,13 @@ export function createTestConfig(
     embeddingModelId: "mock-embedding/test",
     embeddingDtype: "q8",
     apiKey: "",
+    corsOrigin: "*",
+    maxTokens: 2048,
+    maxConcurrent: 1,
+    timeout: 120000,
+    logLevel: "info",
+    hfToken: "",
+    cacheDir: "",
     ...overrides,
   };
 }
