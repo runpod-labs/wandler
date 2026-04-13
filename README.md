@@ -2,7 +2,7 @@
 
 OpenAI-compatible inference server powered by [transformers.js](https://huggingface.co/docs/transformers.js). Run ONNX models locally with WebGPU acceleration or CPU — no Python, no CUDA required.
 
-Think vLLM or llama.cpp, but for the TypeScript ecosystem.
+Think vLLM or llama.cpp, but for the ts crowd.
 
 ## Quickstart
 
