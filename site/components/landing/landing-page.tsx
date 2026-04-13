@@ -307,8 +307,8 @@ print(response)`,
 										{ model: "LFM2.5-350M", size: "350M", tps: "248", ttft: "16ms", load: "0.5s", caps: "text" },
 										{ model: "LFM2.5-1.2B", size: "1.2B", tps: "118", ttft: "34ms", load: "1.7s", caps: "text, tools", highlight: true },
 										{ model: "Qwen3.5-0.8B", size: "0.8B", tps: "37", ttft: "276ms", load: "1.8s", caps: "text, tools" },
-										{ model: "Gemma 4 E4B", size: "4B", tps: "20", ttft: "636ms", load: "13.4s", caps: "text, tools, vision*" },
-										{ model: "Gemma 4 E2B", size: "2B", tps: "12", ttft: "890ms", load: "7.0s", caps: "text, tools, vision*" },
+										{ model: "Gemma 4 E4B", size: "4B", tps: "20", ttft: "636ms", load: "13.4s", caps: "text, tools, vision" },
+										{ model: "Gemma 4 E2B", size: "2B", tps: "12", ttft: "890ms", load: "7.0s", caps: "text, tools, vision" },
 									].map((row) => (
 										<tr key={row.model} className={`border-b border-primary/10 ${row.highlight ? "bg-primary/5" : ""}`}>
 											<td className="py-3 pr-4 text-white">{row.model}</td>
