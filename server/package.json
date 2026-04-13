@@ -1,6 +1,6 @@
 {
   "name": "wandler",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Inference server for transformers.js — OpenAI-compatible API for ONNX models",
   "type": "module",
   "license": "MIT",
