@@ -76,20 +76,23 @@ jobs:
         if: steps.changesets_check.outputs.has_changesets == 'false' && steps.check_publish.outputs.needs_publish == 'true'
         id: npm_oidc
         run: |
-          # Get OIDC token from GitHub Actions
-          OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://registry.npmjs.org" | jq -r '.value')
+          # Get OIDC token from GitHub Actions (audience must be npm:<registry-host>)
+          OIDC_TOKEN=$(curl -sS \
+            -H "Accept: application/json" \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=npm:registry.npmjs.org" | jq -r '.value')
 
           # Exchange OIDC token for npm publish token
-          NPM_TOKEN=$(curl -sS -X POST "https://registry.npmjs.org/-/npm/v1/security/oidc/token/wandler" \
+          NPM_TOKEN=$(curl -sS -X POST \
+            "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/wandler" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $OIDC_TOKEN" \
             -d '{}' | jq -r '.token')
 
           if [ -z "$NPM_TOKEN" ] || [ "$NPM_TOKEN" = "null" ]; then
             echo "Failed to get npm token via OIDC"
-            # Debug: show the exchange response (without the token)
-            curl -sS -X POST "https://registry.npmjs.org/-/npm/v1/security/oidc/token/wandler" \
+            curl -sS -X POST \
+              "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/wandler" \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $OIDC_TOKEN" \
               -d '{}' | jq 'del(.token)'
