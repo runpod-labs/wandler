@@ -14,7 +14,6 @@ metadata:
 # returns: type, size, precision, capabilities, repo:precision, name
 # --type: llm | embedding | stt
 wandler models
-wandler models --type llm
 
 # LLM
 wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4
