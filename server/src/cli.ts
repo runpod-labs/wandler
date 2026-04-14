@@ -3,6 +3,20 @@ import { parseArgs } from "node:util";
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// ── Subcommand: models ──────────────────────────────────────────────────────
+
+if (process.argv[2] === "models") {
+  const { runModelsCommand } = await import("./catalog/models-command.js");
+  const args = process.argv.slice(3);
+  await runModelsCommand(args);
+  process.exit(0);
+}
+
+// ── Server mode (default) ───────────────────────────────────────────────────
+
 import { loadConfig } from "./config.js";
 import { loadModels } from "./models/manager.js";
 import { startServer } from "./server.js";
@@ -32,7 +46,6 @@ const { values } = parseArgs({
 });
 
 if (values.version) {
-  const __dirname = dirname(fileURLToPath(import.meta.url));
   const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "package.json"), "utf-8"));
   console.log(pkg.version);
   process.exit(0);
@@ -44,8 +57,12 @@ wandler — inference server for transformers.js
 
 Usage:
   wandler --llm org/repo[:precision] [options]
+  wandler models [--type <type>]
 
 At least one model (--llm, --embedding, or --stt) is required.
+
+Commands:
+  models                    List available models from the catalog
 
 Model:
   -l, --llm <id>              LLM model
@@ -83,6 +100,8 @@ Examples:
   wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:fp16 --device cpu --port 3000
   wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX --api-key secret123
   wandler --llm onnx-community/gemma-4-E4B-it-ONNX --embedding Xenova/all-MiniLM-L6-v2:q8
+  wandler models
+  wandler models --type llm
 `);
   process.exit(0);
 }

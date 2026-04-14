@@ -1,0 +1,10 @@
+{
+  "id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+  "name": "SmolLM2 1.7B",
+  "type": "llm",
+  "size": "1.7B",
+  "precisions": ["q4", "q8", "fp16", "fp32"],
+  "defaultPrecision": "q4",
+  "capabilities": ["chat"],
+  "status": "stable"
+}

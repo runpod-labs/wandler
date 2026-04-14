@@ -1,0 +1,11 @@
+{
+  "id": "Xenova/all-MiniLM-L6-v2",
+  "name": "all-MiniLM-L6-v2",
+  "type": "embedding",
+  "size": "22M",
+  "precisions": ["q8", "fp32"],
+  "defaultPrecision": "q8",
+  "capabilities": ["embedding"],
+  "dimensions": 384,
+  "status": "stable"
+}

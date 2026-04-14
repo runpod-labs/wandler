@@ -1,0 +1,11 @@
+{
+  "id": "Xenova/bge-small-en-v1.5",
+  "name": "BGE Small EN v1.5",
+  "type": "embedding",
+  "size": "33M",
+  "precisions": ["q8", "fp32"],
+  "defaultPrecision": "q8",
+  "capabilities": ["embedding"],
+  "dimensions": 384,
+  "status": "stable"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
+  "name": "LFM 2.5 1.2B",
+  "type": "llm",
+  "size": "1.2B",
+  "precisions": ["q4", "q8", "fp16", "fp32"],
+  "defaultPrecision": "q4",
+  "capabilities": ["chat", "tool-calling"],
+  "status": "stable"
+}

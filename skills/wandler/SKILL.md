@@ -9,6 +9,31 @@ metadata:
 
 `npm install -g wandler` or `npx wandler --llm <org/repo:precision>`
 
+## List available models
+
+```bash
+# list all verified models
+wandler models
+
+# filter by type
+wandler models --type llm
+wandler models --type embedding
+wandler models --type stt
+```
+
+Output shows type, size, default precision, capabilities, and the exact `repo:precision` value to use with `--llm`, `--embedding`, or `--stt`.
+
+Example output:
+
+```
+type      | size  | prec | capabilities             | repo:precision                                   | name
+------------------------------------------------------------------------------------------------------------------------
+llm       | 2B    | q4   | chat, tool-calling       | onnx-community/gemma-4-E4B-it-ONNX:q4            | Gemma 4 E4B
+llm       | 1.2B  | q4   | chat, tool-calling       | LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4            | LFM 2.5 1.2B
+embedding | 22M   | q8   | embedding                | Xenova/all-MiniLM-L6-v2:q8                       | all-MiniLM-L6-v2
+stt       | 39M   | q4   | transcription            | onnx-community/whisper-tiny:q4                   | Whisper Tiny
+```
+
 ## Usage
 
 ```bash
