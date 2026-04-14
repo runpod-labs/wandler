@@ -1,5 +1,15 @@
 # wandler
 
+## 2.2.0
+
+### Minor Changes
+
+- ce983d0: Remove default LLM and STT models. At least one model flag (`--llm`, `--embedding`, or `--stt`) is now required. Any combination is valid.
+
+### Patch Changes
+
+- a764328: Delegate device auto-detection to transformers.js instead of custom resolveDevice. With `--device auto` (the default), the best GPU backend is now selected per platform: CoreML on macOS, CUDA on Linux, DirectML on Windows, with WebGPU and CPU as fallbacks.
+
 ## 2.1.0
 
 ### Minor Changes
