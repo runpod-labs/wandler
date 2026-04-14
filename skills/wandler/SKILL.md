@@ -22,7 +22,6 @@ wandler --llm onnx-community/gemma-4-E4B-it-ONNX:fp16 --port 3000 --host 0.0.0.0
 # --embedding <id>     Embedding model
 # --stt <id>           STT/Whisper model
 # --no-stt             Disable STT
-# At least one model (--llm, --embedding, or --stt) is required.
 # --device <type>      auto | webgpu | cpu | wasm (default: auto)
 # --port <n>           Default: 8000
 # --host <addr>        Default: 127.0.0.1
