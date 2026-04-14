@@ -1,6 +1,6 @@
 ---
 name: wandler
-description: Run ONNX models locally with an OpenAI-compatible API. LLM, embeddings, and speech-to-text — no Python, no CUDA.
+description: OpenAI-compatible inference server powered by transformers.js. Run ONNX models locally with WebGPU or CPU — no Python, no CUDA.
 metadata:
   author: runpod
 ---
