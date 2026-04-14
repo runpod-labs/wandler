@@ -10,26 +10,24 @@ import { Toaster } from "@/components/ui/toaster";
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "wandler",
+	title: "wandler — inference server for transformers.js",
 	description:
-		"run ai in your browser. inspired by the ▲ AI SDK and build on top of 🤗 transformers.js",
-
+		"Run ONNX models locally with WebGPU acceleration. Drop-in replacement for OpenAI API. No Python, no CUDA — just npx wandler.",
+	metadataBase: new URL("https://wandler.ai"),
 	openGraph: {
-		images: [
-			"https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/wandler_banner_v1-DmmG40A1TwkpZiQiBxqsmHyXwrmSSS.jpg",
-		],
+		title: "wandler — inference server for transformers.js",
+		description:
+			"OpenAI-compatible. WebGPU accelerated. Zero config. Run ONNX models locally with npx wandler.",
 		url: "https://wandler.ai",
+		siteName: "wandler",
+		type: "website",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "wandler",
-		description: "run ai in your browser",
-		siteId: "",
+		title: "wandler — inference server for transformers.js",
+		description:
+			"OpenAI-compatible. WebGPU accelerated. Zero config. Run ONNX models locally with npx wandler.",
 		creator: "@wandler________",
-		creatorId: "",
-		images: [
-			"https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/wandler_banner_v1-DmmG40A1TwkpZiQiBxqsmHyXwrmSSS.jpg",
-		],
 	},
 };
 
