@@ -40,7 +40,7 @@ export async function embeddings(c: Context<AppEnv>) {
 
   for (let i = 0; i < inputs.length; i++) {
     const text = inputs[i]!;
-    const tokens = models.tokenizer(text, { return_tensors: "pt" });
+    const tokens = models.tokenizer!(text, { return_tensors: "pt" });
     totalTokens += tokens.input_ids.dims[1]!;
 
     const result = await models.embedder(text, { pooling: "mean", normalize: true });

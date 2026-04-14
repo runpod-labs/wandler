@@ -4,6 +4,14 @@ import type { TokenizeRequest, DetokenizeRequest } from "../types/openai.js";
 
 export async function tokenize(c: Context<AppEnv>) {
   const models = c.get("models");
+
+  if (!models.tokenizer) {
+    return c.json(
+      { error: { message: "No LLM loaded. Start wandler with --llm to enable this endpoint.", type: "invalid_request_error", param: null, code: null } },
+      400,
+    );
+  }
+
   const params = await c.req.json<TokenizeRequest>();
 
   if (!params.input) {
@@ -25,6 +33,14 @@ export async function tokenize(c: Context<AppEnv>) {
 
 export async function detokenize(c: Context<AppEnv>) {
   const models = c.get("models");
+
+  if (!models.tokenizer) {
+    return c.json(
+      { error: { message: "No LLM loaded. Start wandler with --llm to enable this endpoint.", type: "invalid_request_error", param: null, code: null } },
+      400,
+    );
+  }
+
   const params = await c.req.json<DetokenizeRequest>();
 
   if (!params.tokens?.length) {

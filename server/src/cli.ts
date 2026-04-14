@@ -45,10 +45,12 @@ wandler — inference server for transformers.js
 Usage:
   wandler --llm org/repo[:precision] [options]
 
+At least one model (--llm, --embedding, or --stt) is required.
+
 Model:
-  -l, --llm <id>              LLM model (default: onnx-community/gemma-4-E4B-it-ONNX:q4)
-  -e, --embedding <id>        Embedding model (disabled by default)
-  -s, --stt <id>              STT model (default: onnx-community/whisper-tiny:q4)
+  -l, --llm <id>              LLM model
+  -e, --embedding <id>        Embedding model
+  -s, --stt <id>              STT model
       --no-stt                Disable STT
   -d, --device <type>         Device: auto, cpu, cuda, coreml, dml, webgpu, wasm (default: auto)
       --hf-token <token>      HuggingFace token for gated models
@@ -103,11 +105,16 @@ const config = loadConfig({
   WANDLER_CACHE_DIR: values["cache-dir"] ?? process.env.WANDLER_CACHE_DIR,
 });
 
+if (!config.modelId && !config.embeddingModelId && !config.sttModelId) {
+  console.error("[wandler] Error: at least one model is required (--llm, --embedding, or --stt)");
+  process.exit(1);
+}
+
 const models = await loadModels(config);
 startServer(config, models);
 
 console.log(`[wandler] http://${config.host}:${config.port}`);
-console.log(`[wandler] LLM: ${config.modelId} (${config.modelDtype}, ${config.device})`);
+if (config.modelId) console.log(`[wandler] LLM: ${config.modelId} (${config.modelDtype}, ${config.device})`);
 if (config.sttModelId) console.log(`[wandler] STT: ${config.sttModelId} (${config.sttDtype})`);
 if (config.embeddingModelId) console.log(`[wandler] Embedding: ${config.embeddingModelId} (${config.embeddingDtype})`);
 if (config.apiKey) console.log(`[wandler] API key auth enabled`);

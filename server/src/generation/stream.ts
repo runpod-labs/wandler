@@ -15,8 +15,8 @@ export async function generateStreamTokens(
   onToken: (token: string) => void | Promise<void>,
   tools?: Tool[],
 ): Promise<{ promptTokens: number; completionTokens: number }> {
-  const prompt = formatChat(models.tokenizer, messages, modelId, tools, models.chatTemplate);
-  const inputs = models.tokenizer(prompt, { return_tensors: "pt" });
+  const prompt = formatChat(models.tokenizer!, messages, modelId, tools, models.chatTemplate);
+  const inputs = models.tokenizer!(prompt, { return_tensors: "pt" });
   const promptTokens = inputs.input_ids.dims[1]!;
   let completionTokens = 0;
 
@@ -31,7 +31,7 @@ export async function generateStreamTokens(
     },
   );
 
-  await models.model.generate({ ...inputs, ...genOpts, streamer });
+  await models.model!.generate({ ...inputs, ...genOpts, streamer });
 
   return { promptTokens, completionTokens };
 }

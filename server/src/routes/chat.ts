@@ -44,6 +44,13 @@ export async function chatCompletions(c: Context<AppEnv>) {
   const models = c.get("models");
   const modelId = config.modelId;
 
+  if (!models.model || !models.tokenizer) {
+    return c.json(
+      { error: { message: "No LLM loaded. Start wandler with --llm to enable this endpoint.", type: "invalid_request_error", param: null, code: null } },
+      400,
+    );
+  }
+
   const params = await c.req.json<ChatCompletionRequest>();
 
   if (!params.messages?.length) {

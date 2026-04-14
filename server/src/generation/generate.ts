@@ -75,7 +75,7 @@ export async function generate(
     if (imageUrls.length > 0) {
       const { inputs, batchDecode } = await prepareVisionInputs(models, messages, modelId, tools);
       const inputIds = inputs.input_ids as { dims: number[] };
-      const outputIds = await models.model.generate({ ...inputs, ...genOpts });
+      const outputIds = await models.model!.generate({ ...inputs, ...genOpts });
 
       const promptTokens = inputIds.dims[1]!;
       const completionTokens = outputIds.dims[1]! - promptTokens;
@@ -86,13 +86,13 @@ export async function generate(
   }
 
   // Text-only path (default)
-  const prompt = formatChat(models.tokenizer, messages, modelId, tools, models.chatTemplate);
-  const inputs = models.tokenizer(prompt, { return_tensors: "pt" });
-  const outputIds = await models.model.generate({ ...inputs, ...genOpts });
+  const prompt = formatChat(models.tokenizer!, messages, modelId, tools, models.chatTemplate);
+  const inputs = models.tokenizer!(prompt, { return_tensors: "pt" });
+  const outputIds = await models.model!.generate({ ...inputs, ...genOpts });
 
   const promptTokens = inputs.input_ids.dims[1]!;
   const completionTokens = outputIds.dims[1]! - promptTokens;
   const newIds = outputIds.slice(null, [promptTokens, null]);
-  const text = models.tokenizer.batch_decode(newIds, { skip_special_tokens: true })[0]!;
+  const text = models.tokenizer!.batch_decode(newIds, { skip_special_tokens: true })[0]!;
   return { text, promptTokens, completionTokens };
 }
