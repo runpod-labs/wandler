@@ -1,6 +1,6 @@
 ---
 name: wandler
-description: OpenAI-compatible inference server powered by transformers.js. Run ONNX models locally with WebGPU or CPU — no Python, no CUDA.
+description: Inference server powered by transformers.js.
 metadata:
   author: runpod
 ---
