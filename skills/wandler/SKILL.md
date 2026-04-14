@@ -13,7 +13,7 @@ metadata:
 # list all models from the wandler registry
 # returns: type, size, precision, capabilities, repo:precision, name
 # --type: llm | embedding | stt
-wandler models
+wandler model ls
 
 # LLM
 wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4

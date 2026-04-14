@@ -47,7 +47,7 @@ wandler — inference server for transformers.js
 
 Usage:
   wandler --llm org/repo[:precision] [options]
-  wandler models [--type <type>]
+  wandler model ls [--type <type>]
 
 Commands:
   models                    List available models from the catalog
@@ -173,7 +173,7 @@ Extended parameters (vLLM/llama.cpp compatible):
 List all verified models with their capabilities:
 
 ```bash
-wandler models
+wandler model ls
 ```
 
 ```
@@ -195,9 +195,9 @@ stt       | 244M  | q4   | transcription            | onnx-community/whisper-sma
 Filter by type:
 
 ```bash
-wandler models --type llm
-wandler models --type embedding
-wandler models --type stt
+wandler model ls --type llm
+wandler model ls --type embedding
+wandler model ls --type stt
 ```
 
 Use the `repo:precision` value directly with `--llm`, `--embedding`, or `--stt`.
