@@ -12,14 +12,14 @@ import type { Tokenizer } from "./tokenizer.js";
 // ── Model manager — loads and holds references to models ────────────────────
 
 export interface LoadedModels {
-  tokenizer: Tokenizer;
+  tokenizer: Tokenizer | null;
   chatTemplate: string | null;
   processor: unknown | null;
   isVision: boolean;
   model: {
     generate(opts: Record<string, unknown>): Promise<{ dims: number[]; slice(...args: unknown[]): unknown }>;
     dispose?(): Promise<void>;
-  };
+  } | null;
   transcriber: ((input: Float32Array) => Promise<{ text: string }>) | null;
   embedder: ((input: string, opts: Record<string, unknown>) => Promise<{ data: Float32Array }>) | null;
 }
@@ -77,40 +77,44 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
 
   const device = config.device || "auto";
 
-  console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
-  const t0 = Date.now();
-
-  // Try loading as a vision model first (AutoModelForImageTextToText),
-  // fall back to text-only (AutoModelForCausalLM)
-  let model: LoadedModels["model"];
+  let model: LoadedModels["model"] = null;
+  let tokenizer: Tokenizer | null = null;
   let processor: unknown | null = null;
   let isVision = false;
+  let chatTemplate: string | null = null;
 
-  try {
-    const { AutoModelForImageTextToText: VisionModel } = await import("@huggingface/transformers");
-    model = await VisionModel.from_pretrained(config.modelId, {
-      dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
-      device,
-    }) as unknown as LoadedModels["model"];
+  if (config.modelId) {
+    console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
+    const t0 = Date.now();
 
-    // If vision model loaded, also load the processor
-    processor = await AutoProcessor.from_pretrained(config.modelId);
-    isVision = true;
-    console.log(`[wandler] Loaded as vision model`);
-  } catch {
-    // Not a vision model or vision files not available — load as text-only
-    model = await AutoModelForCausalLM.from_pretrained(config.modelId, {
-      dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
-      device,
-    }) as unknown as LoadedModels["model"];
+    // Try loading as a vision model first (AutoModelForImageTextToText),
+    // fall back to text-only (AutoModelForCausalLM)
+    try {
+      const { AutoModelForImageTextToText: VisionModel } = await import("@huggingface/transformers");
+      model = await VisionModel.from_pretrained(config.modelId, {
+        dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
+        device: device as "auto" | "cpu" | "cuda" | "coreml" | "dml" | "webgpu" | "wasm",
+      }) as unknown as LoadedModels["model"];
+
+      // If vision model loaded, also load the processor
+      processor = await AutoProcessor.from_pretrained(config.modelId);
+      isVision = true;
+      console.log(`[wandler] Loaded as vision model`);
+    } catch {
+      // Not a vision model or vision files not available — load as text-only
+      model = await AutoModelForCausalLM.from_pretrained(config.modelId, {
+        dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
+        device: device as "auto" | "cpu" | "cuda" | "coreml" | "dml" | "webgpu" | "wasm",
+      }) as unknown as LoadedModels["model"];
+    }
+
+    tokenizer = isVision && processor
+      ? (processor as { tokenizer: Tokenizer }).tokenizer ?? await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer
+      : await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer;
+
+    chatTemplate = await loadChatTemplate(tokenizer, config.modelId);
+    console.log(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   }
-
-  const tokenizer = isVision && processor
-    ? (processor as { tokenizer: Tokenizer }).tokenizer ?? await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer
-    : await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer;
-
-  const chatTemplate = await loadChatTemplate(tokenizer, config.modelId);
-  console.log(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
   let transcriber: LoadedModels["transcriber"] = null;
   if (config.sttModelId) {

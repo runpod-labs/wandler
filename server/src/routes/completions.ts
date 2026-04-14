@@ -14,6 +14,13 @@ export async function completions(c: Context<AppEnv>) {
   const models = c.get("models");
   const modelId = config.modelId;
 
+  if (!models.model || !models.tokenizer) {
+    return c.json(
+      { error: { message: "No LLM loaded. Start wandler with --llm to enable this endpoint.", type: "invalid_request_error", param: null, code: null } },
+      400,
+    );
+  }
+
   const params = await c.req.json<CompletionRequest>();
 
   if (!params.prompt) {
@@ -26,13 +33,13 @@ export async function completions(c: Context<AppEnv>) {
   const prompts = Array.isArray(params.prompt) ? params.prompt : [params.prompt];
   const id = makeId("cmpl");
   const created = Math.floor(Date.now() / 1000);
-  const genOpts = buildGenOpts(params, models.tokenizer, config.maxTokens);
+  const genOpts = buildGenOpts(params, models.tokenizer!, config.maxTokens);
 
   // Streaming for single prompt
   if (params.stream && prompts.length === 1) {
     const includeUsage = params.stream_options?.include_usage ?? true;
     const prompt = prompts[0]!;
-    const inputs = models.tokenizer(prompt, { return_tensors: "pt" });
+    const inputs = models.tokenizer!(prompt, { return_tensors: "pt" });
     const promptTokens = inputs.input_ids.dims[1]!;
 
     return streamSSE(c, async (stream) => {
@@ -40,7 +47,7 @@ export async function completions(c: Context<AppEnv>) {
       let completionTokens = 0;
 
       const streamer = new TextStreamer(
-        models.tokenizer as unknown as ConstructorParameters<typeof TextStreamer>[0],
+        models.tokenizer! as unknown as ConstructorParameters<typeof TextStreamer>[0],
         {
           skip_prompt: true,
           callback_function: (token: string) => {
@@ -53,7 +60,7 @@ export async function completions(c: Context<AppEnv>) {
         },
       );
 
-      await models.model.generate({ ...inputs, ...genOpts, streamer });
+      await models.model!.generate({ ...inputs, ...genOpts, streamer });
 
       const finalChunk: CompletionChunk = {
         id, object: "text_completion", created, model: modelId,
@@ -74,13 +81,13 @@ export async function completions(c: Context<AppEnv>) {
 
   for (let i = 0; i < prompts.length; i++) {
     const prompt = prompts[i]!;
-    const inputs = models.tokenizer(prompt, { return_tensors: "pt" });
-    const outputIds = await models.model.generate({ ...inputs, ...genOpts });
+    const inputs = models.tokenizer!(prompt, { return_tensors: "pt" });
+    const outputIds = await models.model!.generate({ ...inputs, ...genOpts });
 
     const promptTokens = inputs.input_ids.dims[1]!;
     const completionTokens = outputIds.dims[1]! - promptTokens;
     const newIds = outputIds.slice(null, [promptTokens, null]);
-    let text = models.tokenizer.batch_decode(newIds, { skip_special_tokens: true })[0]!;
+    let text = models.tokenizer!.batch_decode(newIds, { skip_special_tokens: true })[0]!;
 
     if (params.echo) text = prompt + text;
     if (params.suffix) text = text + params.suffix;

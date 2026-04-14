@@ -18,10 +18,11 @@ wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --embedding Xenova/all-MiniL
 wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8 --stt onnx-community/whisper-tiny:q4  # all three
 wandler --llm onnx-community/gemma-4-E4B-it-ONNX:fp16 --port 3000 --host 0.0.0.0 --api-key mysecret  # fp16, custom port, auth
 
-# --llm <id>           LLM model (default: onnx-community/gemma-4-E4B-it-ONNX:q4)
+# --llm <id>           LLM model
 # --embedding <id>     Embedding model
-# --stt <id>           STT/Whisper (default: onnx-community/whisper-tiny:q4)
+# --stt <id>           STT/Whisper model
 # --no-stt             Disable STT
+# At least one model (--llm, --embedding, or --stt) is required.
 # --device <type>      auto | webgpu | cpu | wasm (default: auto)
 # --port <n>           Default: 8000
 # --host <addr>        Default: 127.0.0.1
@@ -47,6 +48,5 @@ Server at `http://127.0.0.1:8000`. OpenAI-compatible — set `baseURL` in any Op
 
 ## Gotchas
 
-- STT (Whisper) loads by default — use `--no-stt` to skip it.
 - Tool calling disables true streaming — full response generated first, then sent as SSE.
 - `stop` sequences only match on the last token. Multi-token stops won't match exactly.

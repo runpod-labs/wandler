@@ -397,7 +397,7 @@ async function main() {
     server.close();
 
     // Free model memory before loading the next one
-    try { await loadedModels.model.dispose?.(); } catch { /* ignore */ }
+    try { await loadedModels.model?.dispose?.(); } catch { /* ignore */ }
 
     // Force garbage collection to actually reclaim memory between models.
     // Without this, the old model's weights stay in memory while the next loads,

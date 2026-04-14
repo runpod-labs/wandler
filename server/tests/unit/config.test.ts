@@ -44,10 +44,10 @@ describe("loadConfig", () => {
     const config = loadConfig({});
     expect(config.port).toBe(8000);
     expect(config.host).toBe("127.0.0.1");
-    expect(config.modelId).toBe("onnx-community/gemma-4-E4B-it-ONNX");
+    expect(config.modelId).toBe("");
     expect(config.modelDtype).toBe("q4");
     expect(config.device).toBe("auto");
-    expect(config.sttModelId).toBe("onnx-community/whisper-tiny");
+    expect(config.sttModelId).toBe("");
     expect(config.sttDtype).toBe("q4");
     expect(config.embeddingModelId).toBe("");
     expect(config.embeddingDtype).toBe("q8");
@@ -135,7 +135,7 @@ describe("loadConfig", () => {
   it("handles partial env vars", () => {
     const config = loadConfig({ WANDLER_PORT: "9090" });
     expect(config.port).toBe(9090);
-    expect(config.modelId).toBe("onnx-community/gemma-4-E4B-it-ONNX");
+    expect(config.modelId).toBe("");
   });
 
   it("disables STT when empty string", () => {

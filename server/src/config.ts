@@ -38,8 +38,8 @@ export function parseModelRef(ref: string, defaultDtype: string): { id: string; 
 export function loadConfig(env: Record<string, string | undefined> = process.env): ServerConfig {
   const DEFAULT_DTYPE = "q4";
 
-  const llmRaw = env.WANDLER_LLM ?? env.MODEL_ID ?? "onnx-community/gemma-4-E4B-it-ONNX:q4";
-  const sttRaw = env.WANDLER_STT ?? env.STT_MODEL_ID ?? "onnx-community/whisper-tiny:q4";
+  const llmRaw = env.WANDLER_LLM ?? env.MODEL_ID ?? "";
+  const sttRaw = env.WANDLER_STT ?? env.STT_MODEL_ID ?? "";
   const embRaw = env.WANDLER_EMBEDDING ?? env.EMBEDDING_MODEL_ID ?? "";
 
   const llm = parseModelRef(llmRaw, env.DTYPE || DEFAULT_DTYPE);
