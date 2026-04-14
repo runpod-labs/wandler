@@ -25,7 +25,7 @@ wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 -
 
 # --llm <id>           LLM model
 # --embedding <id>     Embedding model
-# --stt <id>           STT/Whisper model
+# --stt <id>           STT model
 # --no-stt             Disable STT
 # --device <type>      auto | webgpu | cpu | wasm (default: auto)
 # --port <n>           Default: 8000
@@ -48,7 +48,7 @@ Server at `http://127.0.0.1:8000`.
 - `POST /v1/chat/completions` — streaming + non-streaming
 - `POST /v1/completions`
 - `POST /v1/embeddings`
-- `POST /v1/audio/transcriptions` — Whisper
+- `POST /v1/audio/transcriptions`
 - `GET /v1/models`
 - `POST /tokenize`
 - `POST /detokenize`
