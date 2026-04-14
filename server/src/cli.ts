@@ -50,7 +50,7 @@ Model:
   -e, --embedding <id>        Embedding model (disabled by default)
   -s, --stt <id>              STT model (default: onnx-community/whisper-tiny:q4)
       --no-stt                Disable STT
-  -d, --device <type>         Device: auto, webgpu, cpu, wasm (default: auto)
+  -d, --device <type>         Device: auto, cpu, cuda, coreml, dml, webgpu, wasm (default: auto)
       --hf-token <token>      HuggingFace token for gated models
       --cache-dir <path>      Model cache directory
 

@@ -24,29 +24,6 @@ export interface LoadedModels {
   embedder: ((input: string, opts: Record<string, unknown>) => Promise<{ data: Float32Array }>) | null;
 }
 
-type DeviceType = "webgpu" | "cpu" | "wasm";
-
-/**
- * Resolve "auto" device to the best available: webgpu > cpu.
- * If a specific device is requested, use it as-is.
- */
-async function resolveDevice(requested: string): Promise<DeviceType> {
-  if (requested !== "auto") return requested as DeviceType;
-
-  try {
-    const gpu = (globalThis as Record<string, unknown>).gpu as { requestAdapter?: () => Promise<unknown> } | undefined;
-    if (gpu?.requestAdapter) {
-      const adapter = await gpu.requestAdapter();
-      if (adapter) return "webgpu";
-    }
-  } catch {
-    // WebGPU not available
-  }
-
-  console.log("[wandler] WebGPU not available, falling back to cpu");
-  return "cpu";
-}
-
 /**
  * Try to load chat_template.jinja from the model repo if the tokenizer
  * doesn't have a built-in chat template.
@@ -98,10 +75,9 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     process.env.HF_TOKEN = config.hfToken;
   }
 
-  const device = await resolveDevice(config.device);
-  config.device = device;
+  const device = config.device || "auto";
 
-  console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, ${device})`);
+  console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
   const t0 = Date.now();
 
   // Try loading as a vision model first (AutoModelForImageTextToText),
