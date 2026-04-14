@@ -12,11 +12,16 @@ metadata:
 ## Usage
 
 ```bash
-wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4                          # default
-wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --device cpu             # CPU only
-wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8  # + embeddings
-wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8 --stt onnx-community/whisper-tiny:q4  # all three
-wandler --llm onnx-community/gemma-4-E4B-it-ONNX:fp16 --port 3000 --host 0.0.0.0 --api-key mysecret  # fp16, custom port, auth
+# LLM
+wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4
+# LLM on CPU with fp16
+wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:fp16 --device cpu
+# LLM + embeddings
+wandler --llm onnx-community/Qwen3.5-0.8B-Text-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8
+# LLM + embeddings + STT
+wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8 --stt onnx-community/whisper-tiny:q4
+# custom port, auth, listen on all interfaces
+wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 --api-key mysecret
 
 # --llm <id>           LLM model
 # --embedding <id>     Embedding model
@@ -40,15 +45,15 @@ Server at `http://127.0.0.1:8000`.
 
 ## API (OpenAI-compatible)
 
-- `POST /v1/chat/completions` — chat (streaming + non-streaming)
-- `POST /v1/completions` — text completions
-- `POST /v1/embeddings` — embeddings
-- `POST /v1/audio/transcriptions` — speech-to-text (Whisper)
-- `GET  /v1/models` — list loaded models
-- `POST /tokenize` — tokenize text
-- `POST /detokenize` — detokenize token IDs
-- `GET  /admin/metrics` — request metrics
-- `GET  /health` — health check
+- `POST /v1/chat/completions` — streaming + non-streaming
+- `POST /v1/completions`
+- `POST /v1/embeddings`
+- `POST /v1/audio/transcriptions` — Whisper
+- `GET /v1/models`
+- `POST /tokenize`
+- `POST /detokenize`
+- `GET /admin/metrics`
+- `GET /health`
 
 ## Gotchas
 
