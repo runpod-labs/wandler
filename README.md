@@ -56,7 +56,6 @@ Model:
   -l, --llm <id>              LLM model
   -e, --embedding <id>        Embedding model
   -s, --stt <id>              STT model
-      --no-stt                Disable STT
   -d, --device <type>         Device: auto, cpu, cuda, coreml, dml, webgpu, wasm (default: auto)
       --hf-token <token>      HuggingFace token for gated models
       --cache-dir <path>      Model cache directory

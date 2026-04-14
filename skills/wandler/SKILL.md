@@ -29,7 +29,6 @@ wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 -
 # --llm <id>           LLM model
 # --embedding <id>     Embedding model
 # --stt <id>           STT model
-# --no-stt             Disable STT
 # --device <type>      auto | webgpu | cpu | wasm (default: auto)
 # --port <n>           Default: 8000
 # --host <addr>        Default: 127.0.0.1

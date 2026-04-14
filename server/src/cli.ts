@@ -34,7 +34,6 @@ program
   .option("-l, --llm <id>", "LLM model")
   .option("-e, --embedding <id>", "Embedding model")
   .option("-s, --stt <id>", "STT model")
-  .option("--no-stt", "Disable STT")
   .option("-d, --device <type>", "Device: auto, cpu, cuda, coreml, dml, webgpu, wasm")
   .option("-p, --port <number>", "Port")
   .option("--host <addr>", "Bind address")
@@ -49,7 +48,7 @@ program
   .action(async (opts) => {
     const config = loadConfig({
       WANDLER_LLM: opts.llm ?? process.env.WANDLER_LLM ?? process.env.MODEL_ID,
-      WANDLER_STT: opts.stt === false ? "" : (opts.stt ?? process.env.WANDLER_STT ?? process.env.STT_MODEL_ID),
+      WANDLER_STT: opts.stt ?? process.env.WANDLER_STT ?? process.env.STT_MODEL_ID,
       WANDLER_EMBEDDING: opts.embedding ?? process.env.WANDLER_EMBEDDING ?? process.env.EMBEDDING_MODEL_ID,
       WANDLER_DEVICE: opts.device ?? process.env.WANDLER_DEVICE ?? process.env.DEVICE,
       WANDLER_PORT: opts.port ?? process.env.WANDLER_PORT ?? process.env.PORT,
