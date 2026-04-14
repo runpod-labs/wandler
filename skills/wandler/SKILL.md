@@ -36,14 +36,19 @@ wandler --llm onnx-community/gemma-4-E4B-it-ONNX:fp16 --port 3000 --host 0.0.0.0
 # Precision suffixes:  q4 (default) | q8 | fp16 | fp32
 ```
 
-Server at `http://127.0.0.1:8000`. OpenAI-compatible — set `baseURL` in any OpenAI SDK.
+Server at `http://127.0.0.1:8000`.
 
-## Endpoints
+## API (OpenAI-compatible)
 
 - `POST /v1/chat/completions` — chat (streaming + non-streaming)
 - `POST /v1/completions` — text completions
 - `POST /v1/embeddings` — embeddings
 - `POST /v1/audio/transcriptions` — speech-to-text (Whisper)
+- `GET  /v1/models` — list loaded models
+- `POST /tokenize` — tokenize text
+- `POST /detokenize` — detokenize token IDs
+- `GET  /admin/metrics` — request metrics
+- `GET  /health` — health check
 
 ## Gotchas
 
