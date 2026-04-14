@@ -10,7 +10,7 @@ metadata:
 `npm install -g wandler` or `npx wandler --llm <org/repo:precision>`
 
 ```bash
-# list verified models
+# list all models from the wandler registry
 # returns: type, size, precision, capabilities, repo:precision, name
 # --type: llm | embedding | stt
 wandler models
