@@ -1,0 +1,10 @@
+{
+  "id": "onnx-community/whisper-small",
+  "name": "Whisper Small",
+  "type": "stt",
+  "size": "244M",
+  "precisions": ["q4", "q8", "fp32"],
+  "defaultPrecision": "q4",
+  "capabilities": ["transcription"],
+  "status": "stable"
+}

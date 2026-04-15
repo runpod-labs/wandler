@@ -47,13 +47,16 @@ wandler — transformers.js inference server
 
 Usage:
   wandler --llm org/repo[:precision] [options]
+  wandler model ls [--type <type>]
+
+Commands:
+  models                    List available models from the catalog
 
 Model:
-  -l, --llm <id>              LLM model (default: onnx-community/gemma-4-E4B-it-ONNX:q4)
-  -e, --embedding <id>        Embedding model (disabled by default)
-  -s, --stt <id>              STT model (default: onnx-community/whisper-tiny:q4)
-      --no-stt                Disable STT
-  -d, --device <type>         Device: webgpu, cpu, wasm (default: webgpu)
+  -l, --llm <id>              LLM model
+  -e, --embedding <id>        Embedding model
+  -s, --stt <id>              STT model
+  -d, --device <type>         Device: auto, cpu, cuda, coreml, dml, webgpu, wasm (default: auto)
       --hf-token <token>      HuggingFace token for gated models
       --cache-dir <path>      Model cache directory
 
@@ -166,33 +169,39 @@ Extended parameters (vLLM/llama.cpp compatible):
 
 ## Compatible Models
 
-### LLMs
+List all verified models with their capabilities:
 
-| Model | ID | Size |
-|-------|-------|------|
-| Gemma 4 | `onnx-community/gemma-4-E4B-it-ONNX` | ~2B |
-| Qwen 3.5 | `onnx-community/Qwen3.5-0.8B-Text-ONNX` | 0.8B |
-| LFM 2.5 | `LiquidAI/LFM2.5-1.2B-Instruct-ONNX` | 1.2B |
-| LFM 2.5 | `LiquidAI/LFM2.5-350M-ONNX` | 350M |
-| SmolLM2 | `HuggingFaceTB/SmolLM2-1.7B-Instruct` | 1.7B |
+```bash
+wandler model ls
+```
 
-Any ONNX model from [onnx-community](https://huggingface.co/onnx-community) or [transformers.js compatible models](https://huggingface.co/models?library=transformers.js) should work.
+```
+type      | size  | prec | capabilities             | repo:precision                                   | name
+------------------------------------------------------------------------------------------------------------------------
+llm       | 2B    | q4   | chat, tool-calling       | onnx-community/gemma-4-E4B-it-ONNX:q4            | Gemma 4 E4B
+llm       | 1.2B  | q4   | chat, tool-calling       | LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4            | LFM 2.5 1.2B
+llm       | 350M  | q4   | chat, tool-calling       | LiquidAI/LFM2.5-350M-ONNX:q4                     | LFM 2.5 350M
+llm       | 0.8B  | q4   | chat, tool-calling       | onnx-community/Qwen3.5-0.8B-Text-ONNX:q4         | Qwen 3.5 0.8B
+llm       | 1.7B  | q4   | chat                     | HuggingFaceTB/SmolLM2-1.7B-Instruct:q4           | SmolLM2 1.7B
+embedding | 22M   | q8   | embedding                | Xenova/all-MiniLM-L6-v2:q8                       | all-MiniLM-L6-v2
+embedding | 33M   | q8   | embedding                | Xenova/bge-small-en-v1.5:q8                      | BGE Small EN v1.5
+embedding | 137M  | q8   | embedding                | nomic-ai/nomic-embed-text-v1.5:q8                | Nomic Embed Text v1.5
+stt       | 39M   | q4   | transcription            | onnx-community/whisper-tiny:q4                   | Whisper Tiny
+stt       | 74M   | q4   | transcription            | onnx-community/whisper-base:q4                   | Whisper Base
+stt       | 244M  | q4   | transcription            | onnx-community/whisper-small:q4                  | Whisper Small
+```
 
-### Embeddings
+Filter by type:
 
-| Model | ID | Dimensions |
-|-------|-------|------------|
-| all-MiniLM-L6-v2 | `Xenova/all-MiniLM-L6-v2` | 384 |
-| bge-small-en-v1.5 | `Xenova/bge-small-en-v1.5` | 384 |
-| nomic-embed-text-v1.5 | `nomic-ai/nomic-embed-text-v1.5` | 768 |
+```bash
+wandler model ls --type llm
+wandler model ls --type embedding
+wandler model ls --type stt
+```
 
-### Audio (Speech-to-Text)
+Use the `repo:precision` value directly with `--llm`, `--embedding`, or `--stt`.
 
-| Model | ID |
-|-------|-------|
-| Whisper Tiny | `onnx-community/whisper-tiny` |
-| Whisper Small | `onnx-community/whisper-small` |
-| Whisper Base | `onnx-community/whisper-base` |
+Any ONNX model from [onnx-community](https://huggingface.co/onnx-community) or [transformers.js compatible models](https://huggingface.co/models?library=transformers.js) should work beyond the verified catalog.
 
 ## Tool Calling
 

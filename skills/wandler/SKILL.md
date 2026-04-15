@@ -9,8 +9,6 @@ metadata:
 
 `npm install -g wandler` or `npx wandler --llm <org/repo:precision>`
 
-## Usage
-
 ```bash
 # LLM
 wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4
@@ -26,7 +24,6 @@ wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 -
 # --llm <id>           LLM model
 # --embedding <id>     Embedding model
 # --stt <id>           STT model
-# --no-stt             Disable STT
 # --device <type>      auto | webgpu | cpu | wasm (default: auto)
 # --port <n>           Default: 8000
 # --host <addr>        Default: 127.0.0.1
@@ -39,6 +36,11 @@ wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 -
 # --log-level <l>      debug | info | warn | error (default: info)
 # --cache-dir <path>   Model cache directory
 # Precision suffixes:  q4 (default) | q8 | fp16 | fp32
+
+# list all models from the wandler registry
+# returns: type, size, precision, capabilities, repo:precision, name
+# --type: llm | embedding | stt
+wandler model ls
 ```
 
 Server at `http://127.0.0.1:8000`.

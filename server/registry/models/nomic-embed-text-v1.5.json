@@ -1,0 +1,11 @@
+{
+  "id": "nomic-ai/nomic-embed-text-v1.5",
+  "name": "Nomic Embed Text v1.5",
+  "type": "embedding",
+  "size": "137M",
+  "precisions": ["q8", "fp32"],
+  "defaultPrecision": "q8",
+  "capabilities": ["embedding"],
+  "dimensions": 768,
+  "status": "stable"
+}

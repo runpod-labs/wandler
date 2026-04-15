@@ -1,0 +1,10 @@
+{
+  "id": "onnx-community/whisper-base",
+  "name": "Whisper Base",
+  "type": "stt",
+  "size": "74M",
+  "precisions": ["q4", "q8", "fp32"],
+  "defaultPrecision": "q4",
+  "capabilities": ["transcription"],
+  "status": "stable"
+}
