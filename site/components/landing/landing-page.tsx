@@ -57,6 +57,9 @@ export function LandingPage() {
 
 	const quickstart = "npx wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX";
 
+	type AgentTab = "hermes";
+	const [activeAgentTab, setActiveAgentTab] = useState<AgentTab>("hermes");
+
 	type SdkTab = "openai" | "ai-sdk" | "langchain" | "llamaindex" | "curl";
 	const [activeTab, setActiveTab] = useState<SdkTab>("openai");
 
@@ -245,14 +248,15 @@ print(response)`,
 				{/* ── Hazard divider ── */}
 				<div className="w-full h-3 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg" />
 
-				{/* ── Get Started ── */}
+				{/* ── Use it in your app ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-10">
-							get started
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
+							use it in your app
 						</h2>
-
-						<p className="text-lg text-white mb-4">use it with any OpenAI-compatible SDK</p>
+						<p className="text-muted-foreground mb-8">
+							drop-in replacement for any OpenAI-compatible SDK
+						</p>
 
 						<div className="bg-[#0a0a0a] border border-white/[0.06] overflow-hidden max-w-4xl">
 							{/* Tab bar */}
@@ -287,6 +291,85 @@ print(response)`,
 								</button>
 								<SdkCodeBlock code={sdkExamples[activeTab].code} lang={sdkExamples[activeTab].lang} />
 							</div>
+						</div>
+					</div>
+				</section>
+
+				{/* ── Thin accent line ── */}
+				<div className="w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+
+				{/* ── Use it with your agent ── */}
+				<section className="py-20 md:py-28 relative overflow-hidden">
+					<div className="container mx-auto px-4 relative z-10">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
+							use it with your agent
+						</h2>
+						<p className="text-muted-foreground mb-8">
+							point your agent to wandler. works with any agent that supports custom OpenAI endpoints
+						</p>
+
+						<div className="bg-[#0a0a0a] border border-white/[0.06] overflow-hidden max-w-4xl">
+							{/* Agent tab bar */}
+							<div className="flex border-b border-white/[0.06] bg-[#080808] overflow-x-auto">
+								{([
+									{ key: "hermes" as AgentTab, label: "⚕ Hermes" },
+								]).map((tab) => (
+									<button
+										key={tab.key}
+										className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors ${
+											activeAgentTab === tab.key
+												? "text-primary bg-primary/5 border-b-2 border-primary"
+												: "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
+										}`}
+										onClick={() => setActiveAgentTab(tab.key)}
+									>
+										{tab.label}
+									</button>
+								))}
+							</div>
+
+							{/* Tab content */}
+							{activeAgentTab === "hermes" && (
+								<div className="p-4 md:p-6 space-y-6">
+									<div>
+										<p className="text-white text-sm mb-3">
+											set the base URL in <code className="font-mono text-primary">~/.hermes/config.yaml</code>
+										</p>
+										<div className="bg-black border border-white/[0.04] overflow-hidden">
+											<div className="relative p-4">
+												<button
+													onClick={() => handleCopy(`model:\n  default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"\n  provider: "custom"\n  base_url: "http://localhost:8000/v1"\n  api_key: "-"`, "hermes")}
+													className="absolute top-3 right-3 p-2 text-muted-foreground hover:text-primary transition-colors z-10"
+													title="Copy to clipboard"
+												>
+													{copied === "hermes" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+												</button>
+												<SdkCodeBlock code={`model:
+  default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"
+  provider: "custom"
+  base_url: "http://localhost:8000/v1"
+  api_key: "-"`} lang="bash" />
+											</div>
+										</div>
+									</div>
+
+									<div>
+										<p className="text-white text-sm mb-3">or configure it via the CLI</p>
+										<div className="bg-black border border-white/[0.04] p-4">
+											<button
+												onClick={() => handleCopy("hermes config set model.base_url http://localhost:8000/v1", "hermes-cli")}
+												className="w-full flex items-center gap-3 text-left cursor-pointer group"
+											>
+												<span className="text-primary/50 font-mono text-sm select-none">$</span>
+												<code className="font-mono text-sm text-white">hermes config set model.base_url http://localhost:8000/v1</code>
+												<span className="ml-auto shrink-0">
+													{copied === "hermes-cli" ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />}
+												</span>
+											</button>
+										</div>
+									</div>
+								</div>
+							)}
 						</div>
 					</div>
 				</section>
@@ -493,7 +576,7 @@ print(response)`,
 
 			<footer className="py-8 bg-[#050505]">
 				<div className="container mx-auto px-4 flex justify-between items-center text-muted-foreground text-sm">
-					<span className="font-mono text-xs">wandler — transformers.js inference server</span>
+					<span className="font-mono text-xs">wandler // transformers.js inference server</span>
 					<Link
 						href="https://github.com/runpod-labs/wandler"
 						className="text-primary hover:underline font-mono text-xs"
