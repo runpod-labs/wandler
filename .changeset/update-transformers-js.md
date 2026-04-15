@@ -1,5 +1,0 @@
----
-"wandler": patch
----
-
-update @huggingface/transformers from 4.0.1 to 4.1.0

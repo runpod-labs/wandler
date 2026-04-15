@@ -1,5 +1,11 @@
 # wandler
 
+## 2.3.2
+
+### Patch Changes
+
+- 231cd87: update @huggingface/transformers from 4.0.1 to 4.1.0
+
 ## 2.3.1
 
 ### Patch Changes
