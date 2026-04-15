@@ -9,9 +9,12 @@ metadata:
 
 `npm install -g wandler` or `npx wandler --llm <org/repo:precision>`
 
-## Usage
-
 ```bash
+# list all models from the wandler registry
+# returns: type, size, precision, capabilities, repo:precision, name
+# --type: llm | embedding | stt
+wandler model ls
+
 # LLM
 wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4
 # LLM on CPU with fp16
@@ -26,7 +29,6 @@ wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 -
 # --llm <id>           LLM model
 # --embedding <id>     Embedding model
 # --stt <id>           STT model
-# --no-stt             Disable STT
 # --device <type>      auto | webgpu | cpu | wasm (default: auto)
 # --port <n>           Default: 8000
 # --host <addr>        Default: 127.0.0.1

@@ -1,0 +1,10 @@
+{
+  "id": "onnx-community/whisper-tiny",
+  "name": "Whisper Tiny",
+  "type": "stt",
+  "size": "39M",
+  "precisions": ["q4", "q8", "fp32"],
+  "defaultPrecision": "q4",
+  "capabilities": ["transcription"],
+  "status": "stable"
+}

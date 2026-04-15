@@ -33,12 +33,14 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "registry"
   ],
   "scripts": {
     "start": "node dist/cli.js",
     "dev": "tsx --watch src/cli.ts",
-    "build": "tsc",
+    "build": "tsc && npm run catalog:build",
+    "catalog:build": "tsx scripts/build-catalog.ts",
     "prepublishOnly": "cp ../README.md . && npm run build",
     "typecheck": "tsc --noEmit",
     "benchmark": "node --expose-gc --import tsx/esm src/benchmark.ts",
@@ -50,6 +52,7 @@
   "dependencies": {
     "@hono/node-server": "^1.19.13",
     "@huggingface/transformers": "^4.0.1",
+    "commander": "^14.0.3",
     "hono": "^4.7.11",
     "onnxruntime-node": "^1.24.3"
   },
