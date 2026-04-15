@@ -12,7 +12,7 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "package.json"), "u
 
 const program = new Command()
   .name("wandler")
-  .description("Inference server for transformers.js")
+  .description("transformers.js inference server")
   .version(pkg.version, "-v, --version");
 
 // ── wandler model ls ────────────────────────────────────────────────────────

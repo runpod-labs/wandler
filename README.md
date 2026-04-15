@@ -43,7 +43,7 @@ for await (const chunk of response) {
 ## CLI
 
 ```
-wandler — inference server for transformers.js
+wandler — transformers.js inference server
 
 Usage:
   wandler --llm org/repo[:precision] [options]
