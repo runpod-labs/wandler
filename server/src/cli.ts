@@ -40,7 +40,7 @@ if (values.version) {
 
 if (values.help) {
   console.log(`
-wandler — inference server for transformers.js
+wandler — transformers.js inference server
 
 Usage:
   wandler --llm org/repo[:precision] [options]

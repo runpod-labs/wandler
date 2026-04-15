@@ -10,12 +10,12 @@ import { Toaster } from "@/components/ui/toaster";
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "wandler — inference server for transformers.js",
+	title: "wandler — transformers.js inference server",
 	description:
 		"Run ONNX models locally with WebGPU acceleration. Drop-in replacement for OpenAI API. No Python, no CUDA — just npx wandler.",
 	metadataBase: new URL("https://wandler.ai"),
 	openGraph: {
-		title: "wandler — inference server for transformers.js",
+		title: "wandler — transformers.js inference server",
 		description:
 			"OpenAI-compatible. WebGPU accelerated. Zero config. Run ONNX models locally with npx wandler.",
 		url: "https://wandler.ai",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "wandler — inference server for transformers.js",
+		title: "wandler — transformers.js inference server",
 		description:
 			"OpenAI-compatible. WebGPU accelerated. Zero config. Run ONNX models locally with npx wandler.",
 		creator: "@wandler________",

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "wandler — OpenAI-compatible inference server for transformers.js";
+export const alt = "wandler — transformers.js inference server";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -128,7 +128,7 @@ export default async function Image() {
 						letterSpacing: "0.02em",
 					}}
 				>
-					OpenAI-compatible inference server
+					transformers.js inference server
 				</div>
 
 				{/* Powered by line */}
