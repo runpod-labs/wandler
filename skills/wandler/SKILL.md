@@ -10,11 +10,6 @@ metadata:
 `npm install -g wandler` or `npx wandler --llm <org/repo:precision>`
 
 ```bash
-# list all models from the wandler registry
-# returns: type, size, precision, capabilities, repo:precision, name
-# --type: llm | embedding | stt
-wandler model ls
-
 # LLM
 wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4
 # LLM on CPU with fp16
@@ -25,6 +20,11 @@ wandler --llm onnx-community/Qwen3.5-0.8B-Text-ONNX:q4 --embedding Xenova/all-Mi
 wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8 --stt onnx-community/whisper-tiny:q4
 # custom port, auth, listen on all interfaces
 wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 --api-key mysecret
+
+# list all models from the wandler registry
+# returns: type, size, precision, capabilities, repo:precision, name
+# --type: llm | embedding | stt
+wandler model ls
 
 # --llm <id>           LLM model
 # --embedding <id>     Embedding model
