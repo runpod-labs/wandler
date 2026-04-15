@@ -66,6 +66,93 @@ export async function loadImage(url: string): Promise<unknown> {
   return RawImage.read(url);
 }
 
+type DeviceType = "auto" | "cpu" | "cuda" | "coreml" | "dml" | "webgpu" | "wasm";
+type DtypeType = "q4" | "q8" | "fp16" | "fp32";
+
+// All device types in preference order (best perf first, cpu last).
+// onnxruntime may crash instead of falling back between providers
+// (e.g. CUDA missing libcudnn, Vulkan unavailable in Docker), so when
+// device="auto" fails we walk this list ourselves.  Devices that don't
+// apply to the current platform fail instantly via transformers.js
+// ("Unsupported device") — no model loading, no GPU probing.
+//
+// Ideally we'd import this from @huggingface/transformers, but
+// deviceToExecutionProviders / supportedDevices aren't exported.
+// See: https://github.com/huggingface/transformers.js/issues/1645
+// Source: node_modules/@huggingface/transformers/src/backends/onnx.js
+const DEVICE_FALLBACK_ORDER: DeviceType[] = ["cuda", "coreml", "dml", "webgpu", "cpu"];
+
+/**
+ * Load the model, walking the device fallback chain when needed.
+ * For device="auto": try each device individually until one works.
+ * For an explicit device: try it, then fall back to cpu.
+ */
+async function loadLLM(
+  modelId: string,
+  dtype: string,
+  device: string,
+): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean }> {
+  // Explicit device (not "auto") — try it, fall back to cpu.
+  if (device !== "auto") {
+    try {
+      return await loadLLMWithDevice(modelId, dtype, device as DeviceType);
+    } catch (err) {
+      if (device !== "cpu") {
+        console.warn(
+          `[wandler] device=${device} failed: ${err instanceof Error ? err.message : err}`,
+        );
+        console.warn(`[wandler] Falling back to device=cpu`);
+        return await loadLLMWithDevice(modelId, dtype, "cpu");
+      }
+      throw err;
+    }
+  }
+
+  // device="auto" — walk the fallback chain.
+  for (let i = 0; i < DEVICE_FALLBACK_ORDER.length; i++) {
+    const dev = DEVICE_FALLBACK_ORDER[i]!;
+    try {
+      return await loadLLMWithDevice(modelId, dtype, dev);
+    } catch (err) {
+      const isLast = i === DEVICE_FALLBACK_ORDER.length - 1;
+      if (isLast) throw err;
+      console.warn(
+        `[wandler] device=${dev} failed: ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
+
+  // Unreachable — chain always ends with "cpu", but satisfy TS.
+  throw new Error("No usable device found");
+}
+
+async function loadLLMWithDevice(
+  modelId: string,
+  dtype: string,
+  device: DeviceType,
+): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean }> {
+  // Try loading as a vision model first (AutoModelForImageTextToText),
+  // fall back to text-only (AutoModelForCausalLM)
+  try {
+    const { AutoModelForImageTextToText: VisionModel } = await import("@huggingface/transformers");
+    const model = await VisionModel.from_pretrained(modelId, {
+      dtype: dtype as DtypeType,
+      device,
+    }) as unknown as LoadedModels["model"];
+
+    const processor = await AutoProcessor.from_pretrained(modelId);
+    console.log(`[wandler] Loaded as vision model (device=${device})`);
+    return { model, processor, isVision: true };
+  } catch {
+    // Not a vision model or vision files not available — load as text-only
+    const model = await AutoModelForCausalLM.from_pretrained(modelId, {
+      dtype: dtype as DtypeType,
+      device,
+    }) as unknown as LoadedModels["model"];
+    return { model, processor: null, isVision: false };
+  }
+}
+
 export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   // Configure transformers.js environment
   if (config.cacheDir) {
@@ -87,26 +174,10 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
     const t0 = Date.now();
 
-    // Try loading as a vision model first (AutoModelForImageTextToText),
-    // fall back to text-only (AutoModelForCausalLM)
-    try {
-      const { AutoModelForImageTextToText: VisionModel } = await import("@huggingface/transformers");
-      model = await VisionModel.from_pretrained(config.modelId, {
-        dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
-        device: device as "auto" | "cpu" | "cuda" | "coreml" | "dml" | "webgpu" | "wasm",
-      }) as unknown as LoadedModels["model"];
-
-      // If vision model loaded, also load the processor
-      processor = await AutoProcessor.from_pretrained(config.modelId);
-      isVision = true;
-      console.log(`[wandler] Loaded as vision model`);
-    } catch {
-      // Not a vision model or vision files not available — load as text-only
-      model = await AutoModelForCausalLM.from_pretrained(config.modelId, {
-        dtype: config.modelDtype as "q4" | "q8" | "fp16" | "fp32",
-        device: device as "auto" | "cpu" | "cuda" | "coreml" | "dml" | "webgpu" | "wasm",
-      }) as unknown as LoadedModels["model"];
-    }
+    const result = await loadLLM(config.modelId, config.modelDtype, device);
+    model = result.model;
+    processor = result.processor;
+    isVision = result.isVision;
 
     tokenizer = isVision && processor
       ? (processor as { tokenizer: Tokenizer }).tokenizer ?? await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer
