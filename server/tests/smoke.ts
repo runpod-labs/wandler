@@ -4,24 +4,29 @@
  *
  * Downloads and loads a real ONNX model, then tests all endpoints.
  */
+import { serve } from "@hono/node-server";
 import { loadConfig } from "../src/config.js";
 import { loadModels } from "../src/models/manager.js";
-import { createServer } from "../src/server.js";
+import { createApp } from "../src/server.js";
 import OpenAI from "openai";
 
 const MODEL_ID = process.env.MODEL_ID || "LiquidAI/LFM2.5-350M-ONNX";
+const EMBEDDING_MODEL_ID = process.env.EMBEDDING_MODEL_ID || "";
+const STT_MODEL_ID = process.env.STT_MODEL_ID || "";
 const DEVICE = process.env.DEVICE || "cpu";
 
 async function main() {
-  console.log(`\n=== Smoke Test: ${MODEL_ID} (${DEVICE}) ===\n`);
+  console.log(`\n=== Smoke Test: ${MODEL_ID || EMBEDDING_MODEL_ID || STT_MODEL_ID} (${DEVICE}) ===\n`);
 
   // Load config and models
   const config = loadConfig({
     MODEL_ID: MODEL_ID,
     DTYPE: "q4",
     DEVICE: DEVICE,
-    STT_MODEL_ID: "", // skip STT for speed
-    EMBEDDING_MODEL_ID: "",
+    STT_MODEL_ID: STT_MODEL_ID,
+    STT_DTYPE: "q4",
+    EMBEDDING_MODEL_ID: EMBEDDING_MODEL_ID,
+    EMBEDDING_DTYPE: "q8",
   });
 
   console.log("[smoke] Loading model...");
@@ -31,8 +36,9 @@ async function main() {
   console.log(`[smoke] Model loaded in ${loadTime}s\n`);
 
   // Start server
-  const server = createServer(config, models);
-  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const app = createApp(config, models);
+  const server = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" });
+  await new Promise<void>((resolve) => server.once("listening", resolve));
   const port = (server.address() as { port: number }).port;
   const baseUrl = `http://localhost:${port}`;
   console.log(`[smoke] Server running at ${baseUrl}\n`);
@@ -60,87 +66,116 @@ async function main() {
   }
 
   // Test 3: Chat completion (non-streaming)
-  try {
-    const t1 = Date.now();
-    const completion = await client.chat.completions.create({
-      model: MODEL_ID,
-      messages: [{ role: "user", content: "What is 2+2? Answer in one word." }],
-      max_tokens: 20,
-      temperature: 0.1,
-    });
-    const elapsed = Date.now() - t1;
-    const text = completion.choices[0]?.message.content ?? "";
-    const usage = completion.usage;
-    const tps = usage ? (usage.completion_tokens / (elapsed / 1000)).toFixed(1) : "?";
-    results.push({
-      test: "POST /v1/chat/completions",
-      status: text.length > 0 ? "PASS" : "FAIL",
-      detail: `"${text.slice(0, 80)}" | ${usage?.prompt_tokens}p/${usage?.completion_tokens}c tok | ${tps} tok/s | ${elapsed}ms`,
-    });
-  } catch (e) {
-    results.push({ test: "POST /v1/chat/completions", status: "FAIL", detail: (e as Error).message });
+  if (MODEL_ID) {
+    try {
+      const t1 = Date.now();
+      const completion = await client.chat.completions.create({
+        model: MODEL_ID,
+        messages: [{ role: "user", content: "What is 2+2? Answer in one word." }],
+        max_tokens: 20,
+        temperature: 0.1,
+      });
+      const elapsed = Date.now() - t1;
+      const text = completion.choices[0]?.message.content ?? "";
+      const usage = completion.usage;
+      const tps = usage ? (usage.completion_tokens / (elapsed / 1000)).toFixed(1) : "?";
+      results.push({
+        test: "POST /v1/chat/completions",
+        status: text.length > 0 ? "PASS" : "FAIL",
+        detail: `"${text.slice(0, 80)}" | ${usage?.prompt_tokens}p/${usage?.completion_tokens}c tok | ${tps} tok/s | ${elapsed}ms`,
+      });
+    } catch (e) {
+      results.push({ test: "POST /v1/chat/completions", status: "FAIL", detail: (e as Error).message });
+    }
   }
 
   // Test 4: Chat completion (streaming)
-  try {
-    const t2 = Date.now();
-    const stream = await client.chat.completions.create({
-      model: MODEL_ID,
-      messages: [{ role: "user", content: "Say hello in French." }],
-      max_tokens: 20,
-      temperature: 0.1,
-      stream: true,
-    });
-    let text = "";
-    let ttft: number | null = null;
-    for await (const chunk of stream) {
-      if (ttft === null) ttft = Date.now() - t2;
-      text += chunk.choices[0]?.delta?.content ?? "";
+  if (MODEL_ID) {
+    try {
+      const t2 = Date.now();
+      const stream = await client.chat.completions.create({
+        model: MODEL_ID,
+        messages: [{ role: "user", content: "Say hello in French." }],
+        max_tokens: 20,
+        temperature: 0.1,
+        stream: true,
+      });
+      let text = "";
+      let ttft: number | null = null;
+      for await (const chunk of stream) {
+        if (ttft === null) ttft = Date.now() - t2;
+        text += chunk.choices[0]?.delta?.content ?? "";
+      }
+      const elapsed = Date.now() - t2;
+      results.push({
+        test: "POST /v1/chat/completions (stream)",
+        status: text.length > 0 ? "PASS" : "FAIL",
+        detail: `"${text.slice(0, 80)}" | TTFT ${ttft}ms | total ${elapsed}ms`,
+      });
+    } catch (e) {
+      results.push({ test: "POST /v1/chat/completions (stream)", status: "FAIL", detail: (e as Error).message });
     }
-    const elapsed = Date.now() - t2;
-    results.push({
-      test: "POST /v1/chat/completions (stream)",
-      status: text.length > 0 ? "PASS" : "FAIL",
-      detail: `"${text.slice(0, 80)}" | TTFT ${ttft}ms | total ${elapsed}ms`,
-    });
-  } catch (e) {
-    results.push({ test: "POST /v1/chat/completions (stream)", status: "FAIL", detail: (e as Error).message });
   }
 
   // Test 5: Text completion
-  try {
-    const completion = await client.completions.create({
-      model: MODEL_ID,
-      prompt: "The capital of France is",
-      max_tokens: 10,
-      temperature: 0.1,
-    });
-    const text = completion.choices[0]?.text ?? "";
-    results.push({
-      test: "POST /v1/completions",
-      status: text.length > 0 ? "PASS" : "FAIL",
-      detail: `"${text.slice(0, 80)}"`,
-    });
-  } catch (e) {
-    results.push({ test: "POST /v1/completions", status: "FAIL", detail: (e as Error).message });
+  if (MODEL_ID) {
+    try {
+      const completion = await client.completions.create({
+        model: MODEL_ID,
+        prompt: "The capital of France is",
+        max_tokens: 10,
+        temperature: 0.1,
+      });
+      const text = completion.choices[0]?.text ?? "";
+      results.push({
+        test: "POST /v1/completions",
+        status: text.length > 0 ? "PASS" : "FAIL",
+        detail: `"${text.slice(0, 80)}"`,
+      });
+    } catch (e) {
+      results.push({ test: "POST /v1/completions", status: "FAIL", detail: (e as Error).message });
+    }
   }
 
   // Test 6: Tokenize
-  try {
-    const res = await fetch(`${baseUrl}/tokenize`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input: "Hello world" }),
-    });
-    const body = await res.json() as { count: number };
-    results.push({ test: "POST /tokenize", status: body.count > 0 ? "PASS" : "FAIL", detail: `${body.count} tokens` });
-  } catch (e) {
-    results.push({ test: "POST /tokenize", status: "FAIL", detail: (e as Error).message });
+  if (MODEL_ID) {
+    try {
+      const res = await fetch(`${baseUrl}/tokenize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: "Hello world" }),
+      });
+      const body = await res.json() as { count: number };
+      results.push({ test: "POST /tokenize", status: body.count > 0 ? "PASS" : "FAIL", detail: `${body.count} tokens` });
+    } catch (e) {
+      results.push({ test: "POST /tokenize", status: "FAIL", detail: (e as Error).message });
+    }
+  }
+
+  // Test 7: Embeddings
+  if (EMBEDDING_MODEL_ID) {
+    try {
+      const res = await fetch(`${baseUrl}/v1/embeddings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: EMBEDDING_MODEL_ID, input: "Hello world" }),
+      });
+      const body = await res.json() as { data: Array<{ embedding: number[] }> };
+      const dim = body.data?.[0]?.embedding?.length ?? 0;
+      results.push({
+        test: "POST /v1/embeddings",
+        status: dim > 0 ? "PASS" : "FAIL",
+        detail: `${dim} dimensions`,
+      });
+    } catch (e) {
+      results.push({ test: "POST /v1/embeddings", status: "FAIL", detail: (e as Error).message });
+    }
   }
 
   // Print results
+  const label = MODEL_ID || EMBEDDING_MODEL_ID || STT_MODEL_ID;
   console.log("\n" + "=".repeat(70));
-  console.log(`RESULTS: ${MODEL_ID} (${DEVICE})`);
+  console.log(`RESULTS: ${label} (${DEVICE})`);
   console.log("=".repeat(70));
   let passed = 0;
   let failed = 0;
