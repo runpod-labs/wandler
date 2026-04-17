@@ -3,7 +3,7 @@
 import { Check, Copy } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { createHighlighter, type Highlighter } from "shiki";
 
 import { Header } from "@/components/header";
@@ -47,6 +47,55 @@ function SdkCodeBlock({ code, lang }: { code: string; lang: string }) {
 	);
 }
 
+function InlineCode({ children }: { children: ReactNode }) {
+	return (
+		<code className="font-mono text-[13px] bg-white/[0.08] text-white px-1.5 py-0.5 rounded">
+			{children}
+		</code>
+	);
+}
+
+function CodeLine({
+	cmd,
+	id,
+	handleCopy,
+	copied,
+}: {
+	cmd: string;
+	id: string;
+	handleCopy: (text: string, id: string) => void;
+	copied: string | null;
+}) {
+	const html = useHighlightedCode(cmd, "bash");
+	return (
+		<div className="bg-[#0a0a0a] border border-white/[0.08] rounded-md p-4">
+			<button
+				onClick={() => handleCopy(cmd, id)}
+				className="w-full flex items-start gap-3 text-left cursor-pointer group"
+			>
+				<span className="text-white/40 font-mono text-sm select-none shrink-0">$</span>
+				<div className="flex-1 min-w-0 font-mono text-sm">
+					{html ? (
+						<div
+							className="[&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!m-0 [&_pre]:whitespace-pre-wrap [&_pre]:break-all"
+							dangerouslySetInnerHTML={{ __html: html }}
+						/>
+					) : (
+						<code className="text-white break-all">{cmd}</code>
+					)}
+				</div>
+				<span className="shrink-0">
+					{copied === id ? (
+						<Check className="w-4 h-4 text-primary" />
+					) : (
+						<Copy className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
+					)}
+				</span>
+			</button>
+		</div>
+	);
+}
+
 export function LandingPage() {
 	const [copied, setCopied] = useState<string | null>(null);
 
@@ -63,6 +112,40 @@ export function LandingPage() {
 
 	type SdkTab = "openai" | "ai-sdk" | "langchain" | "llamaindex" | "curl";
 	const [activeTab, setActiveTab] = useState<SdkTab>("openai");
+
+	type SetupTab = "text" | "embedding" | "stt" | "cpu" | "auth";
+	const [activeSetupTab, setActiveSetupTab] = useState<SetupTab>("text");
+
+	const setupExamples: Record<SetupTab, { label: string; code: string }> = {
+		text: {
+			label: "text",
+			code: "wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
+		},
+		embedding: {
+			label: "embedding",
+			code: `wandler \\
+  --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
+  --embedding Xenova/all-MiniLM-L6-v2:q8`,
+		},
+		stt: {
+			label: "speech-to-text",
+			code: `wandler \\
+  --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
+  --stt onnx-community/whisper-tiny:q4`,
+		},
+		cpu: {
+			label: "CPU",
+			code: "wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:fp16 --device cpu",
+		},
+		auth: {
+			label: "auth",
+			code: `wandler \\
+  --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
+  --port 3000 \\
+  --host 0.0.0.0 \\
+  --api-key mysecret`,
+		},
+	};
 
 	const sdkExamples: Record<SdkTab, { label: string; lang: string; code: string }> = {
 		openai: {
@@ -217,142 +300,118 @@ print(response)`,
 				{/* ── Hazard divider ── */}
 				<div className="w-full h-3 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg" />
 
-				{/* ── CLI ── */}
+				{/* ── Quickstart ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
-						<div className="max-w-4xl">
-							<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">CLI</h2>
-							<p className="text-muted-foreground mb-12">
-								run the server from the command line. install globally, or invoke directly via{" "}
-								<code className="font-mono text-primary">npx</code>
+						<div className="max-w-3xl">
+							<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-8">quickstart</h2>
+
+							<p className="text-white/90 text-base leading-relaxed mb-8">
+								wandler is an OpenAI-compatible inference server powered by transformers.js.
 							</p>
 
-							{/* Install */}
-							<div className="mb-12">
-								<div className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Install</div>
-								<div className="grid md:grid-cols-2 gap-4">
-									{[
-										{ label: "global", cmd: "npm install -g wandler", id: "cli-g" },
-										{ label: "no install", cmd: "npx wandler --llm <org/repo:precision>", id: "cli-npx" },
-									].map((item) => (
-										<div key={item.id}>
-											<div className="text-[11px] text-muted-foreground font-mono mb-2 uppercase tracking-[0.15em]">{item.label}</div>
-											<div className="bg-black border border-white/[0.06] p-4">
-												<button
-													onClick={() => handleCopy(item.cmd, item.id)}
-													className="w-full flex items-center gap-3 text-left cursor-pointer group"
-												>
-													<span className="text-primary/50 font-mono text-sm select-none">$</span>
-													<code className="font-mono text-sm text-white break-all">{item.cmd}</code>
-													<span className="ml-auto shrink-0">
-														{copied === item.id ? (
-															<Check className="w-3.5 h-3.5 text-primary" />
-														) : (
-															<Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />
-														)}
-													</span>
-												</button>
-											</div>
-										</div>
-									))}
-								</div>
+							<p className="text-white/90 text-base leading-relaxed mb-3">
+								you can install it globally and run it directly:
+							</p>
+							<div className="mb-8">
+								<CodeLine cmd="npm install -g wandler" id="qs-install" handleCopy={handleCopy} copied={copied} />
 							</div>
 
-							{/* Examples */}
-							<div className="mb-12">
-								<div className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Examples</div>
-								<div className="space-y-3">
-									{[
-										{ desc: "LLM", cmd: "wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4" },
-										{ desc: "LLM on CPU with fp16", cmd: "wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:fp16 --device cpu" },
-										{ desc: "LLM + embeddings", cmd: "wandler --llm onnx-community/Qwen3.5-0.8B-Text-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8" },
-										{ desc: "LLM + embeddings + STT", cmd: "wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8 --stt onnx-community/whisper-tiny:q4" },
-										{ desc: "custom port, auth, listen on all interfaces", cmd: "wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 --api-key mysecret" },
-									].map((ex, i) => (
-										<div key={i} className="bg-[#0a0a0a] border border-white/[0.04] p-4">
-											<div className="text-xs text-muted-foreground mb-2">{ex.desc}</div>
-											<button
-												onClick={() => handleCopy(ex.cmd, `cli-ex-${i}`)}
-												className="w-full flex items-start gap-3 text-left cursor-pointer group"
-											>
-												<span className="text-primary/50 font-mono text-sm select-none mt-0.5">$</span>
-												<code className="font-mono text-sm text-white/90 break-all flex-1">{ex.cmd}</code>
-												<span className="shrink-0 mt-0.5">
-													{copied === `cli-ex-${i}` ? (
-														<Check className="w-3.5 h-3.5 text-primary" />
-													) : (
-														<Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />
-													)}
-												</span>
-											</button>
-										</div>
-									))}
-								</div>
+							<p className="text-white/90 text-base leading-relaxed mb-3">
+								or use <InlineCode>npx</InlineCode> to skip the install:
+							</p>
+							<div className="mb-8">
+								<CodeLine cmd="npx wandler --llm <org/repo:precision>" id="qs-npx" handleCopy={handleCopy} copied={copied} />
 							</div>
 
-							{/* Flags */}
-							<div className="mb-12">
-								<div className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Flags</div>
-								<div>
-									{[
-										{ flag: "--llm", type: "id", required: true, desc: "LLM model (org/repo[:precision])" },
-										{ flag: "--embedding", type: "id", required: false, desc: "Embedding model" },
-										{ flag: "--stt", type: "id", required: false, desc: "Speech-to-text model" },
-										{ flag: "--device", type: "type", required: false, desc: "auto | webgpu | cpu | wasm. Default: auto" },
-										{ flag: "--port", type: "n", required: false, desc: "Default: 8000" },
-										{ flag: "--host", type: "addr", required: false, desc: "Default: 127.0.0.1" },
-										{ flag: "--api-key", type: "key", required: false, desc: "Bearer auth (or env WANDLER_API_KEY)" },
-										{ flag: "--hf-token", type: "token", required: false, desc: "HuggingFace token for gated models" },
-										{ flag: "--cors-origin", type: "origin", required: false, desc: "Allowed CORS origin. Default: *" },
-										{ flag: "--max-tokens", type: "n", required: false, desc: "Max tokens per request. Default: 2048" },
-										{ flag: "--max-concurrent", type: "n", required: false, desc: "Concurrent requests. Default: 1" },
-										{ flag: "--timeout", type: "ms", required: false, desc: "Request timeout. Default: 120000" },
-										{ flag: "--log-level", type: "level", required: false, desc: "debug | info | warn | error. Default: info" },
-										{ flag: "--cache-dir", type: "path", required: false, desc: "Model cache directory" },
-									].map((f) => (
-										<div key={f.flag} className="py-3 border-t border-white/[0.04]">
-											<div className="flex items-center gap-2 flex-wrap">
-												<code className="font-mono text-[13px] text-white font-medium">{f.flag}</code>
-												<span className="font-mono text-[11px] text-muted-foreground bg-white/[0.06] px-1.5 py-0.5 rounded-sm">{f.type}</span>
-												{f.required && <span className="text-[11px] text-primary/70">Required</span>}
-											</div>
-											<p className="text-muted-foreground text-sm mt-1">{f.desc}</p>
-										</div>
+							<p className="text-white/90 text-base leading-relaxed mb-6">
+								once installed, start the server with one of these setups:
+							</p>
+
+							<div className="bg-[#0a0a0a] border border-white/[0.06] overflow-hidden mb-6">
+								<div className="flex border-b border-white/[0.06] bg-[#080808] overflow-x-auto">
+									{(Object.keys(setupExamples) as SetupTab[]).map((tab) => (
+										<button
+											key={tab}
+											className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors ${
+												activeSetupTab === tab
+													? "text-primary bg-primary/5 border-b-2 border-primary"
+													: "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
+											}`}
+											onClick={() => setActiveSetupTab(tab)}
+										>
+											{setupExamples[tab].label}
+										</button>
 									))}
 								</div>
-								<p className="text-muted-foreground text-xs mt-6 font-mono">
-									precision suffixes:{" "}
-									<span className="text-primary">q4</span> (default){" · "}
-									<span className="text-primary">q8</span>{" · "}
-									<span className="text-primary">fp16</span>{" · "}
-									<span className="text-primary">fp32</span>
-								</p>
-							</div>
-
-							{/* Subcommands */}
-							<div>
-								<div className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Subcommands</div>
-								<div className="bg-[#0a0a0a] border border-white/[0.04] p-4 mb-3">
+								<div className="relative p-4 md:p-6 min-h-[11.5rem]">
 									<button
-										onClick={() => handleCopy("wandler model ls", "cli-model-ls")}
-										className="w-full flex items-center gap-3 text-left cursor-pointer group"
+										onClick={() => handleCopy(setupExamples[activeSetupTab].code, "setup")}
+										className="absolute top-3 right-3 p-2 text-muted-foreground hover:text-primary transition-colors z-10"
+										title="Copy to clipboard"
 									>
-										<span className="text-primary/50 font-mono text-sm select-none">$</span>
-										<code className="font-mono text-sm text-white">wandler model ls</code>
-										<span className="ml-auto shrink-0">
-											{copied === "cli-model-ls" ? (
-												<Check className="w-3.5 h-3.5 text-primary" />
-											) : (
-												<Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />
-											)}
-										</span>
+										{copied === "setup" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
 									</button>
+									<SdkCodeBlock code={setupExamples[activeSetupTab].code} lang="bash" />
 								</div>
-								<p className="text-muted-foreground text-sm">
-									list all models from the wandler registry. returns type, size, precision, capabilities, repo:precision, name.
-									filter with <code className="font-mono text-primary text-xs">--type llm | embedding | stt</code>
-								</p>
 							</div>
+
+							<p className="text-white/90 text-base leading-relaxed mb-6">
+								the server listens on <InlineCode>http://127.0.0.1:8000</InlineCode> and speaks the OpenAI API,
+								so any OpenAI client works out of the box.
+							</p>
+
+							<p className="text-white/90 text-base leading-relaxed mb-6">
+								here is every flag <InlineCode>wandler</InlineCode> accepts:
+							</p>
+
+							<div className="grid grid-cols-1 md:grid-cols-[max-content_1fr] gap-x-10 gap-y-6 mb-8">
+								{([
+									{ flag: "--llm", arg: "<id>", desc: "LLM model.", meta: <>format: <InlineCode>org/repo[:precision]</InlineCode></> },
+									{ flag: "--embedding", arg: "<id>", desc: "Embedding model." },
+									{ flag: "--stt", arg: "<id>", desc: "Speech-to-text model." },
+									{ flag: "--device", arg: "<type>", desc: "Inference device.", meta: <>default: <InlineCode>auto</InlineCode> · options: <InlineCode>auto</InlineCode>, <InlineCode>webgpu</InlineCode>, <InlineCode>cpu</InlineCode>, <InlineCode>wasm</InlineCode></> },
+									{ flag: "--port", arg: "<n>", desc: "Server port.", meta: <>default: <InlineCode>8000</InlineCode></> },
+									{ flag: "--host", arg: "<addr>", desc: "Bind address.", meta: <>default: <InlineCode>127.0.0.1</InlineCode></> },
+									{ flag: "--api-key", arg: "<key>", desc: "Bearer auth token.", meta: <>reads env <InlineCode>WANDLER_API_KEY</InlineCode></> },
+									{ flag: "--hf-token", arg: "<token>", desc: "HuggingFace token for gated models." },
+									{ flag: "--cors-origin", arg: "<origin>", desc: "Allowed CORS origin.", meta: <>default: <InlineCode>*</InlineCode></> },
+									{ flag: "--max-tokens", arg: "<n>", desc: "Max tokens per request.", meta: <>default: <InlineCode>2048</InlineCode></> },
+									{ flag: "--max-concurrent", arg: "<n>", desc: "Concurrent requests.", meta: <>default: <InlineCode>1</InlineCode></> },
+									{ flag: "--timeout", arg: "<ms>", desc: "Request timeout in milliseconds.", meta: <>default: <InlineCode>120000</InlineCode></> },
+									{ flag: "--log-level", arg: "<level>", desc: "Log verbosity.", meta: <>default: <InlineCode>info</InlineCode> · options: <InlineCode>debug</InlineCode>, <InlineCode>info</InlineCode>, <InlineCode>warn</InlineCode>, <InlineCode>error</InlineCode></> },
+									{ flag: "--cache-dir", arg: "<path>", desc: "Model cache directory." },
+								] as const).flatMap((o) => [
+									<div key={`${o.flag}-l`} className="font-mono text-[13px] whitespace-nowrap pt-0.5">
+										<span className="text-primary">{o.flag}</span>
+										{" "}
+										<span className="text-white/50">{o.arg}</span>
+									</div>,
+									<div key={`${o.flag}-r`} className="text-white/90 text-base leading-relaxed">
+										{o.desc}
+										{"meta" in o && o.meta && (
+											<div className="text-white/50 text-sm mt-1">{o.meta}</div>
+										)}
+									</div>,
+								])}
+							</div>
+
+							<p className="text-white/90 text-base leading-relaxed mb-20">
+								precision suffixes: <InlineCode>q4</InlineCode> (default),
+								{" "}
+								<InlineCode>q8</InlineCode>, <InlineCode>fp16</InlineCode>, <InlineCode>fp32</InlineCode>.
+							</p>
+
+							<h3 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">discover models</h3>
+							<p className="text-white/90 text-base leading-relaxed mb-6">
+								list every model in the wandler registry with type, size, precision and capabilities:
+							</p>
+							<div className="mb-6">
+								<CodeLine cmd="wandler model ls" id="cli-model-ls" handleCopy={handleCopy} copied={copied} />
+							</div>
+							<p className="text-white/90 text-base leading-relaxed">
+								filter by type with <InlineCode>--type llm</InlineCode>, <InlineCode>--type embedding</InlineCode>, or <InlineCode>--type stt</InlineCode>.
+							</p>
 						</div>
 					</div>
 				</section>
