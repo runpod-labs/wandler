@@ -89,9 +89,6 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-bold text-primary hover:underline underline-offset-4 decoration-2"
-                style={{
-                  textShadow: "0 0 20px rgba(255,236,25,0.55)",
-                }}
               >
                 transformers.js
               </a>{" "}

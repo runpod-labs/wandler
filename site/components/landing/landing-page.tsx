@@ -389,7 +389,7 @@ print(response)`,
 									{ flag: "--max-concurrent", arg: "<n>", desc: "Concurrent requests.", meta: <>default: <InlineCode>1</InlineCode></> },
 									{ flag: "--timeout", arg: "<ms>", desc: "Request timeout in milliseconds.", meta: <>default: <InlineCode>120000</InlineCode></> },
 									{ flag: "--log-level", arg: "<level>", desc: "Log verbosity.", meta: <>default: <InlineCode>info</InlineCode> · options: <InlineCode>debug</InlineCode>, <InlineCode>info</InlineCode>, <InlineCode>warn</InlineCode>, <InlineCode>error</InlineCode></> },
-									{ flag: "--cache-dir", arg: "<path>", desc: "Model cache directory." },
+									{ flag: "--cache-dir", arg: "<path>", desc: "Model cache directory.", meta: <>default: <InlineCode>.cache/</InlineCode> inside the <InlineCode>@huggingface/transformers</InlineCode> package (i.e. <InlineCode>node_modules/@huggingface/transformers/.cache/</InlineCode>)</> },
 								] as const).flatMap((o) => [
 									<div key={`${o.flag}-l`} className="font-mono text-[13px] whitespace-nowrap pt-0.5">
 										<span className="text-primary">{o.flag}</span>
@@ -456,11 +456,11 @@ print(response)`,
 									</thead>
 									<tbody className="font-mono text-sm">
 										{[
-											{ org: "LiquidAI", model: "LFM2.5-350M-ONNX", repo: "LiquidAI/LFM2.5-350M-ONNX", params: "350M", weights: "~200 MB", context: "32K", tps: "248", ttft: "16ms", load: "0.5s", caps: "text" },
-											{ org: "LiquidAI", model: "LFM2.5-1.2B-Instruct-ONNX", repo: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX", params: "1.2B", weights: "~700 MB", context: "32K", tps: "118", ttft: "34ms", load: "1.7s", caps: "text, tools" },
-											{ org: "onnx-community", model: "Qwen3.5-0.8B-Text-ONNX", repo: "onnx-community/Qwen3.5-0.8B-Text-ONNX", params: "0.8B", weights: "~500 MB", context: "32K", tps: "37", ttft: "276ms", load: "1.8s", caps: "text, tools" },
-											{ org: "onnx-community", model: "gemma-4-E4B-it-ONNX", repo: "onnx-community/gemma-4-E4B-it-ONNX", params: "4B", weights: "~2.5 GB", context: "32K", tps: "20", ttft: "636ms", load: "13.4s", caps: "text, tools, vision" },
-											{ org: "onnx-community", model: "gemma-4-E2B-it-ONNX", repo: "onnx-community/gemma-4-E2B-it-ONNX", params: "2B", weights: "~1.2 GB", context: "32K", tps: "12", ttft: "890ms", load: "7.0s", caps: "text, tools, vision" },
+											{ org: "LiquidAI", model: "LFM2.5-350M-ONNX", repo: "LiquidAI/LFM2.5-350M-ONNX", params: "350M", weights: "~200 MB", context: "128K", tps: "248", ttft: "16ms", load: "0.5s", caps: "text" },
+											{ org: "LiquidAI", model: "LFM2.5-1.2B-Instruct-ONNX", repo: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX", params: "1.2B", weights: "~700 MB", context: "128K", tps: "118", ttft: "34ms", load: "1.7s", caps: "text, tools" },
+											{ org: "onnx-community", model: "Qwen3.5-0.8B-Text-ONNX", repo: "onnx-community/Qwen3.5-0.8B-Text-ONNX", params: "0.8B", weights: "~500 MB", context: "256K", tps: "37", ttft: "276ms", load: "1.8s", caps: "text, tools" },
+											{ org: "onnx-community", model: "gemma-4-E4B-it-ONNX", repo: "onnx-community/gemma-4-E4B-it-ONNX", params: "4B", weights: "~2.5 GB", context: "128K", tps: "20", ttft: "636ms", load: "13.4s", caps: "text, tools, vision" },
+											{ org: "onnx-community", model: "gemma-4-E2B-it-ONNX", repo: "onnx-community/gemma-4-E2B-it-ONNX", params: "2B", weights: "~1.2 GB", context: "128K", tps: "12", ttft: "890ms", load: "7.0s", caps: "text, tools, vision" },
 										].map((row) => (
 											<tr key={row.model} className="border-b border-white/[0.04]">
 												<td className="py-3 px-4">
