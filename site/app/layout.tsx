@@ -1,13 +1,18 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Instrument_Serif, Space_Grotesk } from "next/font/google";
 import type React from "react";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
+const instrumentSerif = Instrument_Serif({
+	weight: "400",
+	subsets: ["latin"],
+	variable: "--font-display",
+});
 
 export const metadata: Metadata = {
 	title: "wandler — transformers.js inference server",
@@ -35,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head />
-			<body className={`${spaceGrotesk.className} bg-black text-white`}>
+			<body className={`${spaceGrotesk.className} ${instrumentSerif.variable} bg-black text-white`}>
 				<ThemeProvider
 					attribute="class"
 					defaultTheme="dark"

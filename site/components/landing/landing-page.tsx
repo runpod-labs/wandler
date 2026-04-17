@@ -574,17 +574,44 @@ print(response)`,
 				<div className="w-full h-3 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg" />
 			</main>
 
-			<footer className="py-8 bg-[#050505]">
-				<div className="container mx-auto px-4 flex justify-between items-center text-muted-foreground text-sm">
-					<span className="font-mono text-xs">wandler // transformers.js inference server</span>
-					<Link
-						href="https://github.com/runpod-labs/wandler"
-						className="text-primary hover:underline font-mono text-xs"
-						target="_blank"
+			<footer className="px-6 pb-16 pt-12 flex flex-col items-center gap-2 bg-[#050505]">
+				<a
+					href="https://github.com/runpod-labs/wandler"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+				>
+					provided by
+				</a>
+				<a
+					href="https://labs.runpod.io"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="flex items-center gap-2.5 group"
+				>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
+						src="/assets/runpod-icon.svg"
+						alt=""
+						width={20}
+						height={21}
+						className="opacity-70 group-hover:opacity-100 transition-opacity"
+					/>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
+						src="/assets/runpod-wordmark-text.webp"
+						alt="RunPod"
+						width={90}
+						height={20}
+						className="opacity-70 group-hover:opacity-100 transition-opacity"
+					/>
+					<span
+						className="italic text-base text-[#a78bfa] opacity-70 group-hover:opacity-100 transition-opacity"
+						style={{ fontFamily: "var(--font-display)" }}
 					>
-						github
-					</Link>
-				</div>
+						Labs
+					</span>
+				</a>
 			</footer>
 		</div>
 	);
