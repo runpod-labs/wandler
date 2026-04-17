@@ -14,24 +14,34 @@ const instrumentSerif = Instrument_Serif({
 	variable: "--font-display",
 });
 
+const TITLE = "wandler by Runpod Labs";
+const DESCRIPTION =
+	"transformers.js inference server, OpenAI-compatible API, works on Mac, Linux & Windows";
+
 export const metadata: Metadata = {
-	title: "wandler — transformers.js inference server",
-	description:
-		"Run ONNX models locally with WebGPU acceleration. Drop-in replacement for OpenAI API. No Python, no CUDA — just npx wandler.",
+	title: TITLE,
+	description: DESCRIPTION,
 	metadataBase: new URL("https://wandler.ai"),
 	openGraph: {
-		title: "wandler — transformers.js inference server",
-		description:
-			"OpenAI-compatible. WebGPU accelerated. Zero config. Run ONNX models locally with npx wandler.",
+		title: TITLE,
+		description: DESCRIPTION,
 		url: "https://wandler.ai",
 		siteName: "wandler",
 		type: "website",
+		images: [
+			{
+				url: "/og.jpg",
+				width: 1200,
+				height: 630,
+				alt: TITLE,
+			},
+		],
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "wandler — transformers.js inference server",
-		description:
-			"OpenAI-compatible. WebGPU accelerated. Zero config. Run ONNX models locally with npx wandler.",
+		title: TITLE,
+		description: DESCRIPTION,
+		images: ["/og.jpg"],
 		creator: "@wandler________",
 	},
 };
