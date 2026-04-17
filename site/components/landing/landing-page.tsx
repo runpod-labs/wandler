@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { createHighlighter, type Highlighter } from "shiki";
 
 import { Header } from "@/components/header";
+import { CyberpunkHero } from "@/components/landing/cyberpunk-hero";
 
 let highlighterPromise: Promise<Highlighter> | null = null;
 function getHighlighter() {
@@ -151,102 +152,213 @@ print(response)`,
 			<Header />
 
 			<main className="flex-grow">
-				{/* ── Hero ── */}
-				<section className="relative overflow-hidden flex flex-col justify-center px-4 pt-24 pb-20 md:pt-32 md:pb-28 min-h-[85vh]">
-					{/* Background grid */}
-					<div className="absolute inset-0 opacity-[0.04]" style={{
-						backgroundImage: "linear-gradient(hsl(58 96% 51%) 1px, transparent 1px), linear-gradient(90deg, hsl(58 96% 51%) 1px, transparent 1px)",
-						backgroundSize: "48px 48px",
-					}} />
-					{/* Radial fade */}
-					<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,black_80%)]" />
+				{/* ── 3D Cyberpunk Hero ── */}
+				<CyberpunkHero>
+					{/* Run the server — cyan neon with L-bracket corners */}
+					<div className="w-full pt-5">
+						<div className="relative">
+							<div className="absolute bottom-full translate-y-px left-0 z-10 bg-black/90 border border-[#00ffff]/30 px-2 py-0.5">
+								<span className="font-mono text-[11px] text-[#00ffff] uppercase tracking-[0.2em] drop-shadow-[0_0_8px_rgba(0,255,255,0.6)]">run the server</span>
+							</div>
+							{/* L-bracket top-right */}
+							<div className="absolute -top-[2px] -right-[2px] w-4 h-4 z-10 border-t-2 border-r-2 border-[#00ffff]" />
+							{/* L-bracket bottom-left */}
+							<div className="absolute -bottom-[2px] -left-[2px] w-4 h-4 z-10 border-b-2 border-l-2 border-[#00ffff]" />
+							{/* L-bracket bottom-right */}
+							<div className="absolute -bottom-[2px] -right-[2px] w-4 h-4 z-10 border-b-2 border-r-2 border-[#00ffff]" />
+							<button
+								onClick={() => handleCopy(quickstart, "qs")}
+								className="w-full bg-black/90 border border-[#00ffff]/30 px-5 py-5 flex items-center gap-3 text-left cursor-pointer group shadow-[0_0_20px_rgba(0,255,255,0.06),inset_0_0_30px_rgba(0,255,255,0.02)]"
+							>
+								<span className="text-[#00ffff]/60 font-mono text-sm select-none">$</span>
+								<code className="font-mono text-sm text-white/80">{quickstart}</code>
+								<span className="ml-auto shrink-0">
+									{copied === "qs" ? <Check className="w-4 h-4 text-[#00ffff]" /> : <Copy className="w-4 h-4 text-white/20 group-hover:text-[#00ffff] transition-colors" />}
+								</span>
+							</button>
+						</div>
+					</div>
 
-					<div className="container mx-auto relative z-10">
-						<div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
-							{/* Logo */}
-							<Image
-								src="https://5xvkmufwzznj1ey2.public.blob.vercel-storage.com/wandler_logo_v5-vJ2L3NmauebkFJs9fOcFe7bPVM14To.svg"
-								alt="wandler"
-								width={700}
-								height={140}
-								className="w-[340px] md:w-[520px] lg:w-[640px] h-auto"
-								priority
-							/>
+					{/* Let your agent do it — magenta neon with crosshairs */}
+					<div className="w-full pt-5">
+						<div className="relative">
+							<div className="absolute bottom-full translate-y-px left-0 z-10 bg-black/90 border border-[#ff00ff]/30 px-2 py-0.5">
+								<span className="font-mono text-[11px] text-[#ff00ff] uppercase tracking-[0.2em] drop-shadow-[0_0_8px_rgba(255,0,255,0.6)]">let your agent run the server</span>
+							</div>
+							{/* Crosshair top-right */}
+							<div className="absolute -top-[6px] -right-[6px] w-[12px] h-[12px] z-10">
+								<div className="absolute top-1/2 left-0 w-full h-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
+								<div className="absolute left-1/2 top-0 h-full w-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
+							</div>
+							{/* Crosshair bottom-left */}
+							<div className="absolute -bottom-[6px] -left-[6px] w-[12px] h-[12px] z-10">
+								<div className="absolute top-1/2 left-0 w-full h-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
+								<div className="absolute left-1/2 top-0 h-full w-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
+							</div>
+							{/* Crosshair bottom-right */}
+							<div className="absolute -bottom-[6px] -right-[6px] w-[12px] h-[12px] z-10">
+								<div className="absolute top-1/2 left-0 w-full h-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
+								<div className="absolute left-1/2 top-0 h-full w-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
+							</div>
+							<button
+								onClick={() => handleCopy("npx skills add https://github.com/runpod-labs/wandler --skill wandler", "qs-hero-skill")}
+								className="w-full bg-black/90 border border-[#ff00ff]/30 px-5 py-5 flex items-center gap-3 text-left cursor-pointer group shadow-[0_0_20px_rgba(255,0,255,0.06),inset_0_0_30px_rgba(255,0,255,0.02)]"
+							>
+								<span className="text-[#ff00ff]/60 font-mono text-sm select-none">$</span>
+								<code className="font-mono text-sm text-white/80">npx skills add https://github.com/runpod-labs/wandler --skill wandler</code>
+								<span className="ml-auto shrink-0">
+									{copied === "qs-hero-skill" ? <Check className="w-4 h-4 text-[#ff00ff]" /> : <Copy className="w-4 h-4 text-white/20 group-hover:text-[#ff00ff] transition-colors" />}
+								</span>
+							</button>
+						</div>
+					</div>
+				</CyberpunkHero>
 
-							{/* Identity */}
-							<div className="space-y-3">
-								<p className="text-xl md:text-2xl lg:text-3xl tracking-tight">
-									<span className="text-primary font-bold">transformers.js</span>{" "}
-									inference server
-								</p>
-								<p className="text-sm md:text-base text-muted-foreground tracking-wide">
-									OpenAI-compatible API{" · "}supports Mac, Linux & Windows
+				{/* ── Hazard divider ── */}
+				<div className="w-full h-3 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg" />
+
+				{/* ── CLI ── */}
+				<section className="py-20 md:py-28 relative overflow-hidden">
+					<div className="container mx-auto px-4 relative z-10">
+						<div className="max-w-4xl">
+							<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">CLI</h2>
+							<p className="text-muted-foreground mb-12">
+								run the server from the command line. install globally, or invoke directly via{" "}
+								<code className="font-mono text-primary">npx</code>
+							</p>
+
+							{/* Install */}
+							<div className="mb-12">
+								<div className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Install</div>
+								<div className="grid md:grid-cols-2 gap-4">
+									{[
+										{ label: "global", cmd: "npm install -g wandler", id: "cli-g" },
+										{ label: "no install", cmd: "npx wandler --llm <org/repo:precision>", id: "cli-npx" },
+									].map((item) => (
+										<div key={item.id}>
+											<div className="text-[11px] text-muted-foreground font-mono mb-2 uppercase tracking-[0.15em]">{item.label}</div>
+											<div className="bg-black border border-white/[0.06] p-4">
+												<button
+													onClick={() => handleCopy(item.cmd, item.id)}
+													className="w-full flex items-center gap-3 text-left cursor-pointer group"
+												>
+													<span className="text-primary/50 font-mono text-sm select-none">$</span>
+													<code className="font-mono text-sm text-white break-all">{item.cmd}</code>
+													<span className="ml-auto shrink-0">
+														{copied === item.id ? (
+															<Check className="w-3.5 h-3.5 text-primary" />
+														) : (
+															<Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />
+														)}
+													</span>
+												</button>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+
+							{/* Examples */}
+							<div className="mb-12">
+								<div className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Examples</div>
+								<div className="space-y-3">
+									{[
+										{ desc: "LLM", cmd: "wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4" },
+										{ desc: "LLM on CPU with fp16", cmd: "wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:fp16 --device cpu" },
+										{ desc: "LLM + embeddings", cmd: "wandler --llm onnx-community/Qwen3.5-0.8B-Text-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8" },
+										{ desc: "LLM + embeddings + STT", cmd: "wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --embedding Xenova/all-MiniLM-L6-v2:q8 --stt onnx-community/whisper-tiny:q4" },
+										{ desc: "custom port, auth, listen on all interfaces", cmd: "wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 --api-key mysecret" },
+									].map((ex, i) => (
+										<div key={i} className="bg-[#0a0a0a] border border-white/[0.04] p-4">
+											<div className="text-xs text-muted-foreground mb-2">{ex.desc}</div>
+											<button
+												onClick={() => handleCopy(ex.cmd, `cli-ex-${i}`)}
+												className="w-full flex items-start gap-3 text-left cursor-pointer group"
+											>
+												<span className="text-primary/50 font-mono text-sm select-none mt-0.5">$</span>
+												<code className="font-mono text-sm text-white/90 break-all flex-1">{ex.cmd}</code>
+												<span className="shrink-0 mt-0.5">
+													{copied === `cli-ex-${i}` ? (
+														<Check className="w-3.5 h-3.5 text-primary" />
+													) : (
+														<Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />
+													)}
+												</span>
+											</button>
+										</div>
+									))}
+								</div>
+							</div>
+
+							{/* Flags */}
+							<div className="mb-12">
+								<div className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Flags</div>
+								<div>
+									{[
+										{ flag: "--llm", type: "id", required: true, desc: "LLM model (org/repo[:precision])" },
+										{ flag: "--embedding", type: "id", required: false, desc: "Embedding model" },
+										{ flag: "--stt", type: "id", required: false, desc: "Speech-to-text model" },
+										{ flag: "--device", type: "type", required: false, desc: "auto | webgpu | cpu | wasm. Default: auto" },
+										{ flag: "--port", type: "n", required: false, desc: "Default: 8000" },
+										{ flag: "--host", type: "addr", required: false, desc: "Default: 127.0.0.1" },
+										{ flag: "--api-key", type: "key", required: false, desc: "Bearer auth (or env WANDLER_API_KEY)" },
+										{ flag: "--hf-token", type: "token", required: false, desc: "HuggingFace token for gated models" },
+										{ flag: "--cors-origin", type: "origin", required: false, desc: "Allowed CORS origin. Default: *" },
+										{ flag: "--max-tokens", type: "n", required: false, desc: "Max tokens per request. Default: 2048" },
+										{ flag: "--max-concurrent", type: "n", required: false, desc: "Concurrent requests. Default: 1" },
+										{ flag: "--timeout", type: "ms", required: false, desc: "Request timeout. Default: 120000" },
+										{ flag: "--log-level", type: "level", required: false, desc: "debug | info | warn | error. Default: info" },
+										{ flag: "--cache-dir", type: "path", required: false, desc: "Model cache directory" },
+									].map((f) => (
+										<div key={f.flag} className="py-3 border-t border-white/[0.04]">
+											<div className="flex items-center gap-2 flex-wrap">
+												<code className="font-mono text-[13px] text-white font-medium">{f.flag}</code>
+												<span className="font-mono text-[11px] text-muted-foreground bg-white/[0.06] px-1.5 py-0.5 rounded-sm">{f.type}</span>
+												{f.required && <span className="text-[11px] text-primary/70">Required</span>}
+											</div>
+											<p className="text-muted-foreground text-sm mt-1">{f.desc}</p>
+										</div>
+									))}
+								</div>
+								<p className="text-muted-foreground text-xs mt-6 font-mono">
+									precision suffixes:{" "}
+									<span className="text-primary">q4</span> (default){" · "}
+									<span className="text-primary">q8</span>{" · "}
+									<span className="text-primary">fp16</span>{" · "}
+									<span className="text-primary">fp32</span>
 								</p>
 							</div>
 
-							{/* Quickstart commands */}
-							<div className="w-full max-w-2xl mt-6 space-y-8">
-								{/* Run the server — yellow neon with L-bracket corners */}
-								<div className="relative">
-									<div className="absolute -top-3 left-0 z-10 bg-black pr-2">
-										<span className="font-mono text-[11px] text-primary uppercase tracking-[0.2em] drop-shadow-[0_0_8px_rgba(255,236,25,0.6)]">run the server</span>
-									</div>
-									{/* L-bracket top-right */}
-									<div className="absolute -top-[2px] -right-[2px] w-4 h-4 z-10 border-t-2 border-r-2 border-primary shadow-[2px_-2px_6px_rgba(255,236,25,0.3)]" />
-									{/* L-bracket bottom-left */}
-									<div className="absolute -bottom-[2px] -left-[2px] w-4 h-4 z-10 border-b-2 border-l-2 border-primary shadow-[-2px_2px_6px_rgba(255,236,25,0.3)]" />
-									{/* L-bracket bottom-right */}
-									<div className="absolute -bottom-[2px] -right-[2px] w-4 h-4 z-10 border-b-2 border-r-2 border-primary shadow-[2px_2px_6px_rgba(255,236,25,0.3)]" />
+							{/* Subcommands */}
+							<div>
+								<div className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Subcommands</div>
+								<div className="bg-[#0a0a0a] border border-white/[0.04] p-4 mb-3">
 									<button
-										onClick={() => handleCopy(quickstart, "qs")}
-										className="w-full bg-black/80 border border-primary/30 px-5 py-5 pt-6 flex items-center gap-3 text-left cursor-pointer group shadow-[0_0_20px_rgba(255,236,25,0.06),inset_0_0_30px_rgba(255,236,25,0.02)]"
+										onClick={() => handleCopy("wandler model ls", "cli-model-ls")}
+										className="w-full flex items-center gap-3 text-left cursor-pointer group"
 									>
-										<span className="text-primary/60 font-mono text-sm select-none">$</span>
-										<code className="font-mono text-sm text-white/80">{quickstart}</code>
+										<span className="text-primary/50 font-mono text-sm select-none">$</span>
+										<code className="font-mono text-sm text-white">wandler model ls</code>
 										<span className="ml-auto shrink-0">
-											{copied === "qs" ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-white/20 group-hover:text-primary transition-colors" />}
+											{copied === "cli-model-ls" ? (
+												<Check className="w-3.5 h-3.5 text-primary" />
+											) : (
+												<Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />
+											)}
 										</span>
 									</button>
 								</div>
-
-								{/* Let your agent do it — magenta neon with crosshairs */}
-								<div className="relative">
-									<div className="absolute -top-3 left-0 z-10 bg-black pr-2">
-										<span className="font-mono text-[11px] text-[#ff00ff] uppercase tracking-[0.2em] drop-shadow-[0_0_8px_rgba(255,0,255,0.6)]">let ur agent run the server</span>
-									</div>
-									{/* Crosshair top-right */}
-									<div className="absolute -top-[6px] -right-[6px] w-[12px] h-[12px] z-10">
-										<div className="absolute top-1/2 left-0 w-full h-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
-										<div className="absolute left-1/2 top-0 h-full w-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
-									</div>
-									{/* Crosshair bottom-left */}
-									<div className="absolute -bottom-[6px] -left-[6px] w-[12px] h-[12px] z-10">
-										<div className="absolute top-1/2 left-0 w-full h-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
-										<div className="absolute left-1/2 top-0 h-full w-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
-									</div>
-									{/* Crosshair bottom-right */}
-									<div className="absolute -bottom-[6px] -right-[6px] w-[12px] h-[12px] z-10">
-										<div className="absolute top-1/2 left-0 w-full h-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
-										<div className="absolute left-1/2 top-0 h-full w-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
-									</div>
-									<button
-										onClick={() => handleCopy("npx add runpod-labs/wandler --skill wandler", "qs-hero-skill")}
-										className="w-full bg-black/80 border border-[#ff00ff]/30 px-5 py-5 pt-6 flex items-center gap-3 text-left cursor-pointer group shadow-[0_0_20px_rgba(255,0,255,0.06),inset_0_0_30px_rgba(255,0,255,0.02)]"
-									>
-										<span className="text-[#ff00ff]/60 font-mono text-sm select-none">$</span>
-										<code className="font-mono text-sm text-white/80">npx add runpod-labs/wandler --skill wandler</code>
-										<span className="ml-auto shrink-0">
-											{copied === "qs-hero-skill" ? <Check className="w-4 h-4 text-[#ff00ff]" /> : <Copy className="w-4 h-4 text-white/20 group-hover:text-[#ff00ff] transition-colors" />}
-										</span>
-									</button>
-								</div>
+								<p className="text-muted-foreground text-sm">
+									list all models from the wandler registry. returns type, size, precision, capabilities, repo:precision, name.
+									filter with <code className="font-mono text-primary text-xs">--type llm | embedding | stt</code>
+								</p>
 							</div>
 						</div>
 					</div>
 				</section>
 
-				{/* ── Hazard divider ── */}
-				<div className="w-full h-3 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg" />
+				{/* ── Thin accent line ── */}
+				<div className="w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
 				{/* ── Use it in your app ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
