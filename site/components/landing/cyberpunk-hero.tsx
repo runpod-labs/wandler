@@ -59,14 +59,17 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
       {/* CRT effect overlay */}
       <CRTOverlay />
 
+      {/* Bottom fade into next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 sm:h-56 md:h-72 bg-gradient-to-b from-transparent to-black z-[3] pointer-events-none" />
+
       {/* Centered content */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
         <div className="relative flex flex-col items-center w-full max-w-3xl mx-auto px-4">
           {/* Viewfinder brackets */}
-          <div className="absolute -top-12 -left-[141px] w-6 h-6 border-t border-l border-white/20 pointer-events-none z-20" />
-          <div className="absolute -top-12 -right-[141px] w-6 h-6 border-t border-r border-white/20 pointer-events-none z-20" />
-          <div className="absolute -bottom-12 -left-[141px] w-6 h-6 border-b border-l border-white/20 pointer-events-none z-20" />
-          <div className="absolute -bottom-12 -right-[141px] w-6 h-6 border-b border-r border-white/20 pointer-events-none z-20" />
+          <div className="absolute -top-8 -left-2 sm:-top-10 sm:-left-8 md:-top-12 md:-left-12 lg:-left-[141px] w-6 h-6 border-t border-l border-white/20 pointer-events-none z-20" />
+          <div className="absolute -top-8 -right-2 sm:-top-10 sm:-right-8 md:-top-12 md:-right-12 lg:-right-[141px] w-6 h-6 border-t border-r border-white/20 pointer-events-none z-20" />
+          <div className="absolute -bottom-8 -left-2 sm:-bottom-10 sm:-left-8 md:-bottom-12 md:-left-12 lg:-left-[141px] w-6 h-6 border-b border-l border-white/20 pointer-events-none z-20" />
+          <div className="absolute -bottom-8 -right-2 sm:-bottom-10 sm:-right-8 md:-bottom-12 md:-right-12 lg:-right-[141px] w-6 h-6 border-b border-r border-white/20 pointer-events-none z-20" />
 
           {/* Logo */}
           <Image
@@ -74,13 +77,13 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
             alt="wandler"
             width={700}
             height={180}
-            className="w-[500px] md:w-[750px] lg:w-[950px] max-w-none h-auto"
+            className="w-[260px] sm:w-[400px] md:w-[600px] lg:w-[950px] max-w-none h-auto"
             priority
           />
 
           {/* Identity text */}
           <div className="text-center space-y-6 mt-6">
-            <p className="text-2xl md:text-3xl lg:text-4xl tracking-tight">
+            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-tight">
               <a
                 href="https://github.com/huggingface/transformers.js"
                 target="_blank"

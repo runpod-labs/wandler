@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { ArrowUpRight, Check, Copy } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
@@ -297,21 +297,17 @@ print(response)`,
 					</div>
 				</CyberpunkHero>
 
-				{/* ── Hazard divider ── */}
-				<div className="w-full h-3 bg-[repeating-linear-gradient(45deg,#000,#000_10px,hsl(58_96%_51%)_10px,hsl(58_96%_51%)_20px)] animate-experimental-bg" />
-
-				{/* ── Quickstart ── */}
+				{/* ── Setup ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">setup</h2>
+						<p className="text-muted-foreground mb-8">
+							wandler is an OpenAI-compatible inference server powered by transformers.js
+						</p>
+
 						<div className="max-w-3xl">
-							<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-8">quickstart</h2>
-
-							<p className="text-white/90 text-base leading-relaxed mb-8">
-								wandler is an OpenAI-compatible inference server powered by transformers.js.
-							</p>
-
 							<p className="text-white/90 text-base leading-relaxed mb-3">
-								you can install it globally and run it directly:
+								install it globally and run it directly:
 							</p>
 							<div className="mb-8">
 								<CodeLine cmd="npm install -g wandler" id="qs-install" handleCopy={handleCopy} copied={copied} />
@@ -320,14 +316,25 @@ print(response)`,
 							<p className="text-white/90 text-base leading-relaxed mb-3">
 								or use <InlineCode>npx</InlineCode> to skip the install:
 							</p>
-							<div className="mb-8">
+							<div>
 								<CodeLine cmd="npx wandler --llm <org/repo:precision>" id="qs-npx" handleCopy={handleCopy} copied={copied} />
 							</div>
+						</div>
+					</div>
+				</section>
 
-							<p className="text-white/90 text-base leading-relaxed mb-6">
-								once installed, start the server with one of these setups:
-							</p>
+				{/* ── Thin accent line ── */}
+				<div className="w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
+				{/* ── Run the server ── */}
+				<section className="py-20 md:py-28 relative overflow-hidden">
+					<div className="container mx-auto px-4 relative z-10">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">run the server</h2>
+						<p className="text-muted-foreground mb-8">
+							pick a setup, run the command, and point any OpenAI client at the server
+						</p>
+
+						<div className="max-w-3xl">
 							<div className="bg-[#0a0a0a] border border-white/[0.06] overflow-hidden mb-6">
 								<div className="flex border-b border-white/[0.06] bg-[#080808] overflow-x-auto">
 									{(Object.keys(setupExamples) as SetupTab[]).map((tab) => (
@@ -352,11 +359,13 @@ print(response)`,
 									>
 										{copied === "setup" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
 									</button>
-									<SdkCodeBlock code={setupExamples[activeSetupTab].code} lang="bash" />
+									<div className="[&_pre]:whitespace-pre-wrap [&_pre]:break-all pr-8">
+										<SdkCodeBlock code={setupExamples[activeSetupTab].code} lang="bash" />
+									</div>
 								</div>
 							</div>
 
-							<p className="text-white/90 text-base leading-relaxed mb-6">
+							<p className="text-white/90 text-base leading-relaxed mb-10">
 								the server listens on <InlineCode>http://127.0.0.1:8000</InlineCode> and speaks the OpenAI API,
 								so any OpenAI client works out of the box.
 							</p>
@@ -396,22 +405,110 @@ print(response)`,
 								])}
 							</div>
 
-							<p className="text-white/90 text-base leading-relaxed mb-20">
+							<p className="text-white/90 text-base leading-relaxed">
 								precision suffixes: <InlineCode>q4</InlineCode> (default),
 								{" "}
 								<InlineCode>q8</InlineCode>, <InlineCode>fp16</InlineCode>, <InlineCode>fp32</InlineCode>.
 							</p>
+						</div>
+					</div>
+				</section>
 
-							<h3 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">discover models</h3>
-							<p className="text-white/90 text-base leading-relaxed mb-6">
-								list every model in the wandler registry with type, size, precision and capabilities:
-							</p>
+				{/* ── Thin accent line ── */}
+				<div className="w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+
+				{/* ── Discover models ── */}
+				<section className="py-20 md:py-28 relative overflow-hidden">
+					<div className="container mx-auto px-4 relative z-10">
+						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">discover models</h2>
+						<p className="text-muted-foreground mb-8">
+							list every model in the wandler registry with type, size, precision and capabilities
+						</p>
+
+						<div className="max-w-3xl mb-20">
 							<div className="mb-6">
 								<CodeLine cmd="wandler model ls" id="cli-model-ls" handleCopy={handleCopy} copied={copied} />
 							</div>
 							<p className="text-white/90 text-base leading-relaxed">
 								filter by type with <InlineCode>--type llm</InlineCode>, <InlineCode>--type embedding</InlineCode>, or <InlineCode>--type stt</InlineCode>.
 							</p>
+						</div>
+
+						<h3 className="text-xl md:text-2xl font-bold tracking-tight mb-2">benchmarks</h3>
+						<p className="text-muted-foreground mb-6 font-mono text-sm">
+							WebGPU · q4 quantization · 10 runs per scenario
+						</p>
+
+						<div className="border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
+							<div className="overflow-x-auto">
+								<table className="w-full text-left">
+									<thead>
+										<tr className="border-b border-white/[0.08] bg-[#080808]">
+											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Model</th>
+											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Params</th>
+											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Weights</th>
+											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Context</th>
+											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">tok/s</th>
+											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">TTFT</th>
+											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Load</th>
+											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Capabilities</th>
+										</tr>
+									</thead>
+									<tbody className="font-mono text-sm">
+										{[
+											{ org: "LiquidAI", model: "LFM2.5-350M-ONNX", repo: "LiquidAI/LFM2.5-350M-ONNX", params: "350M", weights: "~200 MB", context: "32K", tps: "248", ttft: "16ms", load: "0.5s", caps: "text" },
+											{ org: "LiquidAI", model: "LFM2.5-1.2B-Instruct-ONNX", repo: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX", params: "1.2B", weights: "~700 MB", context: "32K", tps: "118", ttft: "34ms", load: "1.7s", caps: "text, tools" },
+											{ org: "onnx-community", model: "Qwen3.5-0.8B-Text-ONNX", repo: "onnx-community/Qwen3.5-0.8B-Text-ONNX", params: "0.8B", weights: "~500 MB", context: "32K", tps: "37", ttft: "276ms", load: "1.8s", caps: "text, tools" },
+											{ org: "onnx-community", model: "gemma-4-E4B-it-ONNX", repo: "onnx-community/gemma-4-E4B-it-ONNX", params: "4B", weights: "~2.5 GB", context: "32K", tps: "20", ttft: "636ms", load: "13.4s", caps: "text, tools, vision" },
+											{ org: "onnx-community", model: "gemma-4-E2B-it-ONNX", repo: "onnx-community/gemma-4-E2B-it-ONNX", params: "2B", weights: "~1.2 GB", context: "32K", tps: "12", ttft: "890ms", load: "7.0s", caps: "text, tools, vision" },
+										].map((row) => (
+											<tr key={row.model} className="border-b border-white/[0.04]">
+												<td className="py-3 px-4">
+													<div className="flex items-center gap-2">
+														<a
+															href={`https://huggingface.co/${row.repo}`}
+															target="_blank"
+															rel="noopener noreferrer"
+															className="hover:text-primary transition-colors"
+														>
+															<span className="text-white/40">{row.org}/</span><span className="text-white font-medium">{row.model}</span>
+														</a>
+														<button
+															onClick={() => handleCopy(row.repo, `bench-${row.model}`)}
+															className="shrink-0 text-white/20 hover:text-white/50 transition-colors cursor-pointer"
+															title={`Copy ${row.repo}`}
+														>
+															{copied === `bench-${row.model}` ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
+														</button>
+													</div>
+												</td>
+												<td className="py-3 px-4 text-white/50">{row.params}</td>
+												<td className="py-3 px-4 text-white/50">{row.weights}</td>
+												<td className="py-3 px-4 text-white/50">{row.context}</td>
+												<td className="py-3 px-4 text-white font-bold">{row.tps}</td>
+												<td className="py-3 px-4 text-white/70">{row.ttft}</td>
+												<td className="py-3 px-4 text-white/70">{row.load}</td>
+												<td className="py-3 px-4 text-white/70">{row.caps}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</div>
+
+						<div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+							<p className="text-muted-foreground text-sm">
+								these are the ones we tested. any transformers.js-compatible model on Hugging Face works.
+							</p>
+							<a
+								href="https://huggingface.co/models?library=transformers.js"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-black font-bold text-sm tracking-tight hover:bg-primary/90 transition-colors self-start sm:self-auto whitespace-nowrap"
+							>
+								find more on Hugging Face
+								<ArrowUpRight className="w-4 h-4" />
+							</a>
 						</div>
 					</div>
 				</section>
@@ -548,107 +645,6 @@ print(response)`,
 				{/* ── Thin accent line ── */}
 				<div className="w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
-				{/* ── Benchmarks ── */}
-				<section className="py-20 md:py-28 relative">
-					<div className="container mx-auto px-4 relative z-10">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
-							benchmarks
-						</h2>
-						<p className="text-muted-foreground mb-8 font-mono text-sm">
-							WebGPU · q4 quantization · 10 runs per scenario
-						</p>
-
-						<div className="border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
-							<div className="overflow-x-auto">
-								<table className="w-full text-left">
-									<thead>
-										<tr className="border-b border-white/[0.08] bg-[#080808]">
-											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Model</th>
-											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Params</th>
-											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Weights</th>
-											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Context</th>
-											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">tok/s</th>
-											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">TTFT</th>
-											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Load</th>
-											<th className="py-3 px-4 text-white/40 font-mono text-xs tracking-wider uppercase">Capabilities</th>
-										</tr>
-									</thead>
-									<tbody className="font-mono text-sm">
-										{[
-											{ org: "LiquidAI", model: "LFM2.5-350M-ONNX", repo: "LiquidAI/LFM2.5-350M-ONNX", params: "350M", weights: "~200 MB", context: "32K", tps: "248", ttft: "16ms", load: "0.5s", caps: "text" },
-											{ org: "LiquidAI", model: "LFM2.5-1.2B-Instruct-ONNX", repo: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX", params: "1.2B", weights: "~700 MB", context: "32K", tps: "118", ttft: "34ms", load: "1.7s", caps: "text, tools" },
-											{ org: "onnx-community", model: "Qwen3.5-0.8B-Text-ONNX", repo: "onnx-community/Qwen3.5-0.8B-Text-ONNX", params: "0.8B", weights: "~500 MB", context: "32K", tps: "37", ttft: "276ms", load: "1.8s", caps: "text, tools" },
-											{ org: "onnx-community", model: "gemma-4-E4B-it-ONNX", repo: "onnx-community/gemma-4-E4B-it-ONNX", params: "4B", weights: "~2.5 GB", context: "32K", tps: "20", ttft: "636ms", load: "13.4s", caps: "text, tools, vision" },
-											{ org: "onnx-community", model: "gemma-4-E2B-it-ONNX", repo: "onnx-community/gemma-4-E2B-it-ONNX", params: "2B", weights: "~1.2 GB", context: "32K", tps: "12", ttft: "890ms", load: "7.0s", caps: "text, tools, vision" },
-										].map((row) => (
-											<tr key={row.model} className="border-b border-white/[0.04]">
-												<td className="py-3 px-4">
-													<div className="flex items-center gap-2">
-														<a
-															href={`https://huggingface.co/${row.repo}`}
-															target="_blank"
-															rel="noopener noreferrer"
-															className="hover:text-primary transition-colors"
-														>
-															<span className="text-white/40">{row.org}/</span><span className="text-white font-medium">{row.model}</span>
-														</a>
-														<button
-															onClick={() => handleCopy(row.repo, `bench-${row.model}`)}
-															className="shrink-0 text-white/20 hover:text-white/50 transition-colors cursor-pointer"
-															title={`Copy ${row.repo}`}
-														>
-															{copied === `bench-${row.model}` ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
-														</button>
-													</div>
-												</td>
-												<td className="py-3 px-4 text-white/50">{row.params}</td>
-												<td className="py-3 px-4 text-white/50">{row.weights}</td>
-												<td className="py-3 px-4 text-white/50">{row.context}</td>
-												<td className="py-3 px-4 text-white font-bold">{row.tps}</td>
-												<td className="py-3 px-4 text-white/70">{row.ttft}</td>
-												<td className="py-3 px-4 text-white/70">{row.load}</td>
-												<td className="py-3 px-4 text-white/70">{row.caps}</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
-				</section>
-
-				{/* ── Thin accent line ── */}
-				<div className="w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-
-				{/* ── Features ── */}
-				<section className="py-20 md:py-28">
-					<div className="container mx-auto px-4">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-12">
-							features
-						</h2>
-						<div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-							{[
-								{ title: "Streaming", desc: "SSE with real-time token generation" },
-								{ title: "Tool Calling", desc: "LFM, Qwen, Gemma, and OpenAI formats" },
-								{ title: "Quantized", desc: "q4, q8, fp16, fp32 inference" },
-								{ title: "WebGPU", desc: "GPU acceleration with CPU fallback" },
-								{ title: "Embeddings", desc: "Text embeddings for RAG" },
-								{ title: "Speech-to-Text", desc: "Whisper transcription" },
-								{ title: "Auth", desc: "API key authentication" },
-								{ title: "Metrics", desc: "Admin monitoring endpoint" },
-							].map((f) => (
-								<div key={f.title} className="group border border-white/[0.04] bg-[#0a0a0a] p-4 transition-all hover:border-primary/20 hover:bg-primary/[0.02]">
-									<div className="text-primary font-bold text-sm mb-1">{f.title}</div>
-									<div className="text-muted-foreground text-xs leading-relaxed">{f.desc}</div>
-								</div>
-							))}
-						</div>
-					</div>
-				</section>
-
-				{/* ── Thin accent line ── */}
-				<div className="w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-
 				{/* ── API Reference (always expanded, no collapse) ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
@@ -666,8 +662,8 @@ print(response)`,
 										{ name: "top_p", type: "float", required: false, desc: "Nucleus sampling threshold. Default 0.95" },
 										{ name: "max_tokens", type: "int", required: false, desc: "Maximum tokens to generate" },
 										{ name: "stream", type: "boolean", required: false, desc: "Enable SSE streaming. Default false" },
-										{ name: "stop", type: "string | string[]", required: false, desc: "Stop sequences" },
-										{ name: "tools", type: "array", required: false, desc: "Function calling tool definitions" },
+										{ name: "stop", type: "string | string[]", required: false, desc: "Stop sequences", note: "Only the final token of each stop string triggers stopping. Multi-token sequences are not matched exactly." },
+										{ name: "tools", type: "array", required: false, desc: "Function calling tool definitions", note: "When set, streaming is emulated. The full response is generated first, then re-chunked as SSE." },
 										{ name: "response_format", type: "object", required: false, desc: '{"type": "json_object"} for JSON mode' },
 										{ name: "top_k", type: "int", required: false, desc: "Top-k sampling" },
 										{ name: "min_p", type: "float", required: false, desc: "Minimum probability threshold" },
@@ -682,7 +678,7 @@ print(response)`,
 										{ name: "temperature", type: "float", required: false, desc: "Sampling temperature, 0-2. Default 0.7" },
 										{ name: "max_tokens", type: "int", required: false, desc: "Maximum tokens to generate" },
 										{ name: "stream", type: "boolean", required: false, desc: "Enable SSE streaming. Default false" },
-										{ name: "stop", type: "string | string[]", required: false, desc: "Stop sequences" },
+										{ name: "stop", type: "string | string[]", required: false, desc: "Stop sequences", note: "Only the final token of each stop string triggers stopping. Multi-token sequences are not matched exactly." },
 										{ name: "echo", type: "boolean", required: false, desc: "Echo the prompt in the response" },
 										{ name: "suffix", type: "string", required: false, desc: "Text to append after completion" },
 									],
@@ -731,6 +727,9 @@ print(response)`,
 														{p.required && <span className="text-[11px] text-primary/70">Required</span>}
 													</div>
 													<p className="text-muted-foreground text-sm mt-1">{p.desc}</p>
+													{"note" in p && p.note && (
+														<p className="text-white/40 text-xs italic mt-1.5 border-l-2 border-white/10 pl-3">{p.note}</p>
+													)}
 												</div>
 											))}
 										</div>
