@@ -591,6 +591,14 @@ print(response)`,
 				>
 					{/* eslint-disable-next-line @next/next/no-img-element */}
 					<img
+						src="/assets/runpod-icon.svg"
+						alt=""
+						width={20}
+						height={21}
+						className="opacity-70 group-hover:opacity-100 transition-opacity"
+					/>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
 						src="/assets/runpod-wordmark-text.webp"
 						alt="RunPod"
 						width={90}
