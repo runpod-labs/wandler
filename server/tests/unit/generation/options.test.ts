@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildGenOpts } from "../../../src/generation/options.js";
+import { buildGenOpts, FALLBACK_MAX_TOKENS } from "../../../src/generation/options.js";
 import type { Tokenizer } from "../../../src/models/tokenizer.js";
 import type { SamplingParams } from "../../../src/types/openai.js";
 
@@ -14,9 +14,9 @@ const mockTokenizer = Object.assign(
 ) as unknown as Tokenizer;
 
 describe("buildGenOpts", () => {
-  it("returns defaults for empty params", () => {
+  it("falls back to FALLBACK_MAX_TOKENS when no server cap and no model context", () => {
     const opts = buildGenOpts({}, mockTokenizer);
-    expect(opts.max_new_tokens).toBe(2048);
+    expect(opts.max_new_tokens).toBe(FALLBACK_MAX_TOKENS);
     expect(opts.temperature).toBe(0.7);
     expect(opts.top_p).toBe(0.95);
     expect(opts.do_sample).toBe(true);
@@ -80,5 +80,44 @@ describe("buildGenOpts", () => {
       mockTokenizer,
     );
     expect(opts.repetition_penalty).toBeUndefined();
+  });
+
+  // ── max_new_tokens resolution ──────────────────────────────────────────
+
+  it("uses model max context when server cap is unset", () => {
+    const opts = buildGenOpts({}, mockTokenizer, null, 32768);
+    expect(opts.max_new_tokens).toBe(32768);
+  });
+
+  it("uses explicit server cap when set (takes precedence over model context)", () => {
+    const opts = buildGenOpts({}, mockTokenizer, 4096, 131072);
+    expect(opts.max_new_tokens).toBe(4096);
+  });
+
+  it("honors client max_tokens below the effective cap", () => {
+    const opts = buildGenOpts({ max_tokens: 100 }, mockTokenizer, null, 131072);
+    expect(opts.max_new_tokens).toBe(100);
+  });
+
+  it("caps client max_tokens that exceeds the server cap", () => {
+    const opts = buildGenOpts({ max_tokens: 999999 }, mockTokenizer, 4096, 131072);
+    expect(opts.max_new_tokens).toBe(4096);
+  });
+
+  it("caps client max_tokens that exceeds the model context", () => {
+    const opts = buildGenOpts({ max_tokens: 999999 }, mockTokenizer, null, 131072);
+    expect(opts.max_new_tokens).toBe(131072);
+  });
+
+  it("treats undefined server cap and model context as fallback", () => {
+    const opts = buildGenOpts({ max_tokens: 500 }, mockTokenizer, undefined, undefined);
+    expect(opts.max_new_tokens).toBe(500);
+  });
+
+  it("max_tokens=0 from the client is treated as 0, not 'unset'", () => {
+    // Using `??` instead of `||` so explicit 0 is respected rather than
+    // silently replaced with the effective cap.
+    const opts = buildGenOpts({ max_tokens: 0 }, mockTokenizer, null, 131072);
+    expect(opts.max_new_tokens).toBe(0);
   });
 });

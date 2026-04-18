@@ -22,6 +22,28 @@ export interface LoadedModels {
   } | null;
   transcriber: ((input: Float32Array) => Promise<{ text: string }>) | null;
   embedder: ((input: string, opts: Record<string, unknown>) => Promise<{ data: Float32Array }>) | null;
+  /**
+   * Max context length (`max_position_embeddings`) read from the loaded LLM's
+   * config at startup. Used as the default max-tokens ceiling when the
+   * operator hasn't set `--max-tokens` explicitly. `null` when no LLM is
+   * loaded or the model doesn't expose the field.
+   */
+  maxContextLength: number | null;
+}
+
+/**
+ * Read `max_position_embeddings` from the loaded model's config. Vision/
+ * multimodal models nest it under `text_config`; text-only models expose it
+ * at the top level. Returns `null` when the field is missing or non-numeric.
+ */
+function readMaxContextLength(
+  model: unknown,
+): number | null {
+  const config = (model as { config?: Record<string, unknown> }).config;
+  if (!config) return null;
+  const textConfig = (config.text_config as Record<string, unknown> | undefined) ?? config;
+  const mpe = textConfig.max_position_embeddings;
+  return typeof mpe === "number" && mpe > 0 ? mpe : null;
 }
 
 /**
@@ -169,6 +191,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   let processor: unknown | null = null;
   let isVision = false;
   let chatTemplate: string | null = null;
+  let maxContextLength: number | null = null;
 
   if (config.modelId) {
     console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
@@ -184,6 +207,10 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
       : await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer;
 
     chatTemplate = await loadChatTemplate(tokenizer, config.modelId);
+    maxContextLength = readMaxContextLength(model);
+    if (maxContextLength) {
+      console.log(`[wandler] Model context: ${maxContextLength} tokens`);
+    }
     console.log(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   }
 
@@ -219,5 +246,6 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     model,
     transcriber,
     embedder,
+    maxContextLength,
   };
 }
