@@ -1,16 +1,32 @@
 import type { GenerationOptions, SamplingParams } from "../types/openai.js";
 import type { Tokenizer } from "../models/tokenizer.js";
 
+// Hard fallback when neither an explicit `--max-tokens` cap nor a model
+// context length is available (e.g. loaded via a custom pipeline that
+// doesn't expose `max_position_embeddings`). Exported so tests can assert it.
+export const FALLBACK_MAX_TOKENS = 2048;
+
 /**
  * Build transformers.js generation options from OpenAI-compatible sampling params.
  * Shared by both /v1/chat/completions and /v1/completions.
+ *
+ * `max_new_tokens` is picked in this order of precedence:
+ *   1. explicit server cap from `--max-tokens` (when operator set it)
+ *   2. the loaded model's `max_position_embeddings`
+ *   3. `FALLBACK_MAX_TOKENS` (2048) as a last-resort safety default
+ * The client's `params.max_tokens` is then capped at that ceiling.
  */
-export function buildGenOpts(params: SamplingParams, tokenizer: Tokenizer, maxTokensCap?: number): GenerationOptions {
+export function buildGenOpts(
+  params: SamplingParams,
+  tokenizer: Tokenizer,
+  maxTokensCap?: number | null,
+  modelMaxContext?: number | null,
+): GenerationOptions {
   const temperature = params.temperature ?? 0.7;
-  const serverMax = maxTokensCap || 2048;
-  const requested = params.max_tokens || serverMax;
+  const hardCap = maxTokensCap ?? modelMaxContext ?? FALLBACK_MAX_TOKENS;
+  const requested = params.max_tokens ?? hardCap;
   const opts: GenerationOptions = {
-    max_new_tokens: Math.min(requested, serverMax),
+    max_new_tokens: Math.min(requested, hardCap),
     temperature,
     top_p: params.top_p ?? 0.95,
     do_sample: temperature > 0,

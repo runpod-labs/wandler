@@ -53,7 +53,9 @@ describe("loadConfig", () => {
     expect(config.embeddingDtype).toBe("q8");
     expect(config.apiKey).toBe("");
     expect(config.corsOrigin).toBe("*");
-    expect(config.maxTokens).toBe(2048);
+    // null means "no server-side cap" — the effective cap is the loaded
+    // model's max_position_embeddings, resolved in buildGenOpts.
+    expect(config.maxTokens).toBeNull();
     expect(config.maxConcurrent).toBe(1);
     expect(config.timeout).toBe(120000);
     expect(config.logLevel).toBe("info");
