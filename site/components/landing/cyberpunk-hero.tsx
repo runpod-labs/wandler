@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 // ── CRT overlay (vignette + chromatic aberration only) ──
@@ -30,11 +30,31 @@ function CRTOverlay() {
 // ── Main Hero Component ──
 export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Fade in
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 100);
     return () => clearTimeout(timer);
+  }, []);
+
+  // iOS Safari autoplay: React's `muted` JSX prop doesn't reliably map to
+  // the DOM property, which makes Safari block autoplay and surface its
+  // native play button. Force the property + legacy `webkit-playsinline`
+  // attribute, then kick off .play() explicitly.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("webkit-playsinline", "true");
+    const attempt = video.play();
+    if (attempt && typeof attempt.catch === "function") {
+      attempt.catch(() => {
+        // Autoplay blocked (e.g. iOS Low Power Mode). Leave the first frame
+        // showing; nothing we can do without user interaction.
+      });
+    }
   }, []);
 
   return (
@@ -43,10 +63,15 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
     >
       {/* Video background */}
       <video
+        ref={videoRef}
         autoPlay
         loop
         muted
         playsInline
+        preload="auto"
+        disableRemotePlayback
+        // `webkit-playsinline` (legacy iOS Safari) is set via the ref effect
+        // below so TS/React don't complain about unknown attributes.
         className="absolute inset-0 z-[1] w-full h-full object-cover"
         style={{ filter: "brightness(0.5) saturate(1.3)" }}
       >
