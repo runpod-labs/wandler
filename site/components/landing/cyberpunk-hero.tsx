@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 
 // ── CRT overlay (vignette + chromatic aberration only) ──
@@ -29,38 +29,56 @@ function CRTOverlay() {
 
 // ── Main Hero Component ──
 export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
-  const [loaded, setLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Fade in
-  useEffect(() => {
-    const timer = setTimeout(() => setLoaded(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // iOS Safari autoplay: React's `muted` JSX prop doesn't reliably map to
-  // the DOM property, which makes Safari block autoplay and surface its
-  // native play button. Force the property + legacy `webkit-playsinline`
-  // attribute, then kick off .play() explicitly.
+  // iOS Safari autoplay is finicky:
+  //   - React's `muted` JSX prop doesn't reliably set the DOM `muted` property
+  //     before iOS evaluates autoplay, so Safari blocks playback and overlays
+  //     its native "tap to play" button.
+  //   - Even when muted is set right, the first .play() call can reject if
+  //     the media isn't fully ready yet.
+  // Strategy: force the property, set the legacy `webkit-playsinline`
+  // attribute, and retry .play() at three points: immediately on mount,
+  // when the media signals `canplay`, and on the first user interaction
+  // anywhere on the page as a last resort.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
     video.muted = true;
     video.defaultMuted = true;
+    video.playsInline = true;
     video.setAttribute("webkit-playsinline", "true");
-    const attempt = video.play();
-    if (attempt && typeof attempt.catch === "function") {
-      attempt.catch(() => {
-        // Autoplay blocked (e.g. iOS Low Power Mode). Leave the first frame
-        // showing; nothing we can do without user interaction.
-      });
-    }
+
+    const tryPlay = () => {
+      const attempt = video.play();
+      if (attempt && typeof attempt.catch === "function") {
+        attempt.catch(() => {
+          // Will be retried on `canplay` and / or first user interaction.
+        });
+      }
+    };
+
+    tryPlay();
+    video.addEventListener("canplay", tryPlay);
+
+    const onInteraction = () => {
+      tryPlay();
+      window.removeEventListener("touchstart", onInteraction);
+      window.removeEventListener("pointerdown", onInteraction);
+    };
+    window.addEventListener("touchstart", onInteraction, { once: true, passive: true });
+    window.addEventListener("pointerdown", onInteraction, { once: true });
+
+    return () => {
+      video.removeEventListener("canplay", tryPlay);
+      window.removeEventListener("touchstart", onInteraction);
+      window.removeEventListener("pointerdown", onInteraction);
+    };
   }, []);
 
   return (
-    <section
-      className={`relative w-full h-screen overflow-hidden bg-black transition-opacity duration-1000 ${loaded ? "opacity-100" : "opacity-0"}`}
-    >
+    <section className="relative w-full h-screen overflow-hidden bg-black">
       {/* Video background */}
       <video
         ref={videoRef}
