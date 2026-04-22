@@ -12,7 +12,14 @@ export interface ServerConfig {
   embeddingDtype: string;
   apiKey: string;
   corsOrigin: string;
-  maxTokens: number;
+  /**
+   * Optional hard cap on `max_new_tokens` per request.
+   * When `null` (the default), the effective cap is derived from the loaded
+   * model's `max_position_embeddings`. Set `--max-tokens <n>` on the CLI /
+   * `WANDLER_MAX_TOKENS=<n>` in the env to opt into an explicit cap — useful
+   * for shared deployments where you want to protect the host.
+   */
+  maxTokens: number | null;
   maxConcurrent: number;
   timeout: number;
   logLevel: string;
@@ -58,7 +65,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     embeddingDtype: emb.dtype,
     apiKey: env.WANDLER_API_KEY || "",
     corsOrigin: env.WANDLER_CORS_ORIGIN || "*",
-    maxTokens: parseInt(env.WANDLER_MAX_TOKENS || "2048", 10),
+    maxTokens: env.WANDLER_MAX_TOKENS ? parseInt(env.WANDLER_MAX_TOKENS, 10) : null,
     maxConcurrent: parseInt(env.WANDLER_MAX_CONCURRENT || "1", 10),
     timeout: parseInt(env.WANDLER_TIMEOUT || "120000", 10),
     logLevel: env.WANDLER_LOG_LEVEL || "info",

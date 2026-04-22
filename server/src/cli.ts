@@ -39,7 +39,7 @@ program
   .option("--host <addr>", "Bind address")
   .option("-k, --api-key <key>", "API key for auth")
   .option("--cors-origin <origin>", "Allowed CORS origin")
-  .option("--max-tokens <n>", "Max tokens per request")
+  .option("--max-tokens <n>", "Max tokens per request (default: model's max context)")
   .option("--max-concurrent <n>", "Max concurrent requests")
   .option("--timeout <ms>", "Request timeout in ms")
   .option("--log-level <level>", "debug, info, warn, error")
