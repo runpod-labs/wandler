@@ -226,4 +226,135 @@ describe("formatChat", () => {
     // Content should be normalized to string (text parts only)
     expect(capturedMessages![0]!.content).toBe("What is this?");
   });
+
+  it("recursively defaults nested object properties without type", () => {
+    const { tokenizer, captured } = captureTools();
+    const tools = [
+      {
+        type: "function" as const,
+        function: {
+          name: "read",
+          description: "read a file",
+          parameters: {
+            type: "object",
+            properties: {
+              range: {
+                type: "object",
+                properties: {
+                  start: { description: "start line" }, // no type
+                  end: { description: "end line" }, // no type
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    formatChat(tokenizer, [{ role: "user", content: "hi" }], "gemma", tools);
+
+    const sent = captured.tools as typeof tools;
+    const rangeProps = (sent[0]!.function.parameters as any).properties.range.properties;
+    expect(rangeProps.start).toEqual({ description: "start line", type: "string" });
+    expect(rangeProps.end).toEqual({ description: "end line", type: "string" });
+  });
+
+  it("recursively defaults array item properties without type", () => {
+    const { tokenizer, captured } = captureTools();
+    const tools = [
+      {
+        type: "function" as const,
+        function: {
+          name: "batch_read",
+          parameters: {
+            type: "object",
+            properties: {
+              files: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    path: { description: "file path" }, // no type
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    formatChat(tokenizer, [{ role: "user", content: "hi" }], "gemma", tools);
+
+    const sent = captured.tools as typeof tools;
+    const itemProps = (sent[0]!.function.parameters as any).properties.files.items.properties;
+    expect(itemProps.path).toEqual({ description: "file path", type: "string" });
+  });
+
+  it("recursively defaults union schema properties without type", () => {
+    const { tokenizer, captured } = captureTools();
+    const tools = [
+      {
+        type: "function" as const,
+        function: {
+          name: "flexible",
+          parameters: {
+            type: "object",
+            properties: {
+              value: {
+                anyOf: [
+                  {
+                    type: "object",
+                    properties: {
+                      id: { description: "numeric id" }, // no type
+                    },
+                  },
+                  { type: "string" },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    formatChat(tokenizer, [{ role: "user", content: "hi" }], "gemma", tools);
+
+    const sent = captured.tools as typeof tools;
+    const anyOfSchemas = (sent[0]!.function.parameters as any).properties.value.anyOf;
+    expect(anyOfSchemas[0]!.properties.id).toEqual({ description: "numeric id", type: "string" });
+  });
+
+  it("recursively defaults additionalProperties when it's an object schema", () => {
+    const { tokenizer, captured } = captureTools();
+    const tools = [
+      {
+        type: "function" as const,
+        function: {
+          name: "flexible_map",
+          parameters: {
+            type: "object",
+            properties: {
+              metadata: {
+                type: "object",
+                additionalProperties: {
+                  type: "object",
+                  properties: {
+                    value: { description: "some value" }, // no type
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    formatChat(tokenizer, [{ role: "user", content: "hi" }], "gemma", tools);
+
+    const sent = captured.tools as typeof tools;
+    const additionalProps = (sent[0]!.function.parameters as any).properties.metadata
+      .additionalProperties.properties;
+    expect(additionalProps.value).toEqual({ description: "some value", type: "string" });
+  });
 });

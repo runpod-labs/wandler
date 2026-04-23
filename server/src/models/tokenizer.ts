@@ -26,33 +26,110 @@ function normalizeMessages(messages: ChatMessage[]): ChatMessage[] {
 }
 
 /**
+ * Recursively sanitize a schema property: ensure every property descriptor
+ * (at any depth) has a `type` field (defaulting to "string" if missing).
+ * Handles:
+ * - Nested object properties
+ * - Array items
+ * - anyOf / oneOf / allOf unions
+ * - additionalProperties when it's an object
+ *
+ * Gemma's chat_template.jinja does `value['type'] | upper` on every property
+ * in a tool's parameter schema. JSON Schema allows a property without an
+ * explicit `type` (a description alone is valid), and OpenAI-style clients
+ * sometimes emit such schemas — which crashes the template with
+ * `Cannot apply filter "upper" to type: UndefinedValue`.
+ */
+function sanitizeSchema(
+  schema: Record<string, unknown>,
+  isPropertyDescriptor = false,
+): Record<string, unknown> {
+  if (!schema || typeof schema !== "object") return schema;
+
+  const sanitized = { ...schema };
+
+  // Only add type to property descriptors that lack schema-defining keywords
+  // (like type, properties, items, anyOf, etc). Empty objects stay empty.
+  const hasSchemaKeyword = [
+    "type",
+    "properties",
+    "items",
+    "anyOf",
+    "oneOf",
+    "allOf",
+    "const",
+    "enum",
+    "$ref",
+    "additionalProperties",
+  ].some((key) => key in sanitized);
+
+  if (isPropertyDescriptor && !hasSchemaKeyword) {
+    sanitized.type = "string";
+  }
+
+  // Recursively sanitize nested object properties
+  if (sanitized.properties && typeof sanitized.properties === "object") {
+    const props = sanitized.properties as Record<string, unknown>;
+    sanitized.properties = Object.fromEntries(
+      Object.entries(props).map(([key, prop]) => [
+        key,
+        typeof prop === "object" && prop !== null
+          ? sanitizeSchema(prop as Record<string, unknown>, true)
+          : prop,
+      ]),
+    );
+  }
+
+  // Recursively sanitize array items
+  if (sanitized.items && typeof sanitized.items === "object") {
+    sanitized.items = sanitizeSchema(sanitized.items as Record<string, unknown>, false);
+  }
+
+  // Recursively sanitize union types
+  for (const unionKey of ["anyOf", "oneOf", "allOf"]) {
+    if (sanitized[unionKey] && Array.isArray(sanitized[unionKey])) {
+      sanitized[unionKey] = (sanitized[unionKey] as unknown[]).map((schema) =>
+        typeof schema === "object" && schema !== null
+          ? sanitizeSchema(schema as Record<string, unknown>, false)
+          : schema,
+      );
+    }
+  }
+
+  // Recursively sanitize additionalProperties when it's a schema
+  if (sanitized.additionalProperties && typeof sanitized.additionalProperties === "object") {
+    sanitized.additionalProperties = sanitizeSchema(
+      sanitized.additionalProperties as Record<string, unknown>,
+      false,
+    );
+  }
+
+  return sanitized;
+}
+
+/**
  * Gemma's chat_template.jinja does `value['type'] | upper` on every property
  * in a tool's parameter schema. JSON Schema allows a property without an
  * explicit `type` (a description alone is valid), and OpenAI-style clients
  * sometimes emit such schemas — which crashes the template with
  * `Cannot apply filter "upper" to type: UndefinedValue`.
  *
- * Defensively default every property to `type: "string"` when missing.
+ * Recursively default every property to `type: "string"` when missing.
  */
 function sanitizeTools(tools: Tool[]): Tool[] {
   return tools.map((tool) => {
     const params = tool.function.parameters as
-      | { properties?: Record<string, Record<string, unknown>> }
+      | Record<string, unknown>
       | undefined;
-    if (!params?.properties) return tool;
+    if (!params) return tool;
 
-    const sanitizedProps: Record<string, Record<string, unknown>> = {};
-    for (const [key, prop] of Object.entries(params.properties)) {
-      sanitizedProps[key] = prop && typeof prop === "object" && "type" in prop
-        ? prop
-        : { ...prop, type: "string" };
-    }
+    const sanitizedParams = sanitizeSchema(params);
 
     return {
       ...tool,
       function: {
         ...tool.function,
-        parameters: { ...params, properties: sanitizedProps },
+        parameters: sanitizedParams,
       },
     };
   });
