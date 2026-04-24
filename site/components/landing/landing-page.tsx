@@ -619,12 +619,36 @@ print(response)`,
 								<div className="p-4 md:p-6 space-y-6">
 									<div>
 										<p className="text-white text-sm mb-3">
-											set the base URL in <code className="font-mono text-primary">~/.hermes/config.yaml</code>
+											configure Hermes via the CLI first
 										</p>
 										<div className="bg-black border border-white/[0.04] overflow-hidden">
 											<div className="relative p-4">
 												<button
-													onClick={() => handleCopy(`model:\n  default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"\n  provider: "custom"\n  base_url: "http://localhost:8000/v1"\n  api_key: "-"`, "hermes")}
+													onClick={() => handleCopy(`hermes config set model.default LiquidAI/LFM2.5-1.2B-Instruct-ONNX\nhermes config set model.provider custom\nhermes config set model.base_url http://localhost:8000/v1\n# optional: only if your server requires auth\n# hermes config set model.api_key your-local-key`, "hermes-cli")}
+													className="absolute top-3 right-3 p-2 text-white/20 hover:text-white/60 transition-colors z-10"
+													title="Copy to clipboard"
+												>
+													{copied === "hermes-cli" ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+												</button>
+												<SdkCodeBlock code={`hermes config set model.default LiquidAI/LFM2.5-1.2B-Instruct-ONNX
+hermes config set model.provider custom
+hermes config set model.base_url http://localhost:8000/v1
+# optional: only if your server requires auth
+# hermes config set model.api_key your-local-key`} lang="bash" />
+											</div>
+										</div>
+									</div>
+
+									<div>
+										<p className="text-white text-sm mb-3">
+											or edit <code className="font-mono text-primary">~/.hermes/config.yaml</code> directly
+											{" "}
+											<span className="text-white/50">(YAML, not JSON)</span>
+										</p>
+										<div className="bg-black border border-white/[0.04] overflow-hidden">
+											<div className="relative p-4">
+												<button
+													onClick={() => handleCopy(`model:\n  default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"\n  provider: "custom"\n  base_url: "http://localhost:8000/v1"\n  # api_key: "your-local-key" # optional, only if your server requires auth`, "hermes")}
 													className="absolute top-3 right-3 p-2 text-white/20 hover:text-white/60 transition-colors z-10"
 													title="Copy to clipboard"
 												>
@@ -634,23 +658,8 @@ print(response)`,
   default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"
   provider: "custom"
   base_url: "http://localhost:8000/v1"
-  api_key: "-"`} lang="bash" />
+  # api_key: "your-local-key" # optional, only if your server requires auth`} lang="yaml" />
 											</div>
-										</div>
-									</div>
-
-									<div>
-										<p className="text-white text-sm mb-3">or configure it via the CLI</p>
-										<div className="bg-black border border-white/[0.04] p-4">
-											<button
-												onClick={() => handleCopy("hermes config set model.base_url http://localhost:8000/v1", "hermes-cli")}
-												className="w-full flex items-center gap-3 text-left cursor-pointer group"
-											>
-												<code className="font-mono text-sm text-white">hermes config set model.base_url http://localhost:8000/v1</code>
-												<span className="ml-auto shrink-0">
-													{copied === "hermes-cli" ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />}
-												</span>
-											</button>
 										</div>
 									</div>
 								</div>
