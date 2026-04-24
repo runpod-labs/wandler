@@ -194,6 +194,7 @@ export function LandingPage() {
 
 const client = new OpenAI({
   baseURL: "http://localhost:8000/v1",
+  // placeholder required by the SDK when wandler is running without --api-key
   apiKey: "-",
 });
 
@@ -215,6 +216,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 const provider = createOpenAI({
   baseURL: "http://localhost:8000/v1",
+  // placeholder required by the SDK when wandler is running without --api-key
   apiKey: "-",
 });
 
@@ -234,6 +236,7 @@ const model = new ChatOpenAI({
   modelName: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
   configuration: {
     baseURL: "http://localhost:8000/v1",
+    // placeholder required by the client when wandler is running without --api-key
     apiKey: "-",
   },
 });
@@ -249,6 +252,7 @@ console.log(response.content);`,
 llm = OpenAILike(
     model="LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
     api_base="http://localhost:8000/v1",
+    # placeholder required by the client when wandler is running without --api-key
     api_key="-",
 )
 
