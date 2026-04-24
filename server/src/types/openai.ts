@@ -237,6 +237,114 @@ export interface ErrorResponse {
   };
 }
 
+// ── Responses API ──────────────────────────────────────────────────────────
+
+export interface ResponsesInputTextContent {
+  type: "input_text";
+  text: string;
+}
+
+export interface ResponsesInputImageContent {
+  type: "input_image";
+  image_url: string;
+  detail?: "auto" | "low" | "high";
+}
+
+export type ResponsesContentPart = ResponsesInputTextContent | ResponsesInputImageContent;
+
+export interface ResponsesMessageItem {
+  role: "user" | "assistant" | "system" | "developer";
+  content: string | ResponsesContentPart[];
+}
+
+export interface ResponsesFunctionCallItem {
+  type: "function_call";
+  call_id: string;
+  name: string;
+  arguments: string;
+  id?: string;
+  status?: string;
+}
+
+export interface ResponsesFunctionCallOutputItem {
+  type: "function_call_output";
+  call_id: string;
+  output: string;
+}
+
+export type ResponsesInputItem =
+  | ResponsesMessageItem
+  | ResponsesFunctionCallItem
+  | ResponsesFunctionCallOutputItem;
+
+export interface ResponsesTool {
+  type: "function";
+  name: string;
+  description?: string;
+  parameters?: Record<string, unknown>;
+  strict?: boolean;
+}
+
+export interface ResponsesRequest extends SamplingParams {
+  model?: string;
+  input: string | ResponsesInputItem[];
+  instructions?: string | null;
+  max_output_tokens?: number;
+  tools?: ResponsesTool[];
+  tool_choice?: "none" | "auto" | "required" | { type: "function"; name: string };
+  store?: boolean;
+  text?: { format?: { type: "text" | "json_object" | "json_schema"; json_schema?: { name: string; strict?: boolean; schema: Record<string, unknown> } } };
+}
+
+export interface ResponsesOutputTextContent {
+  type: "output_text";
+  text: string;
+  annotations: unknown[];
+}
+
+export interface ResponsesOutputMessage {
+  type: "message";
+  id: string;
+  role: "assistant";
+  status: "completed" | "in_progress";
+  content: ResponsesOutputTextContent[];
+}
+
+export interface ResponsesOutputFunctionCall {
+  type: "function_call";
+  id: string;
+  call_id: string;
+  name: string;
+  arguments: string;
+  status: "completed" | "in_progress";
+}
+
+export type ResponsesOutputItem = ResponsesOutputMessage | ResponsesOutputFunctionCall;
+
+export interface ResponsesUsage {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+}
+
+export interface ResponsesResponse {
+  id: string;
+  object: "response";
+  created_at: number;
+  model: string;
+  status: "completed" | "failed" | "incomplete" | "in_progress";
+  output: ResponsesOutputItem[];
+  usage: ResponsesUsage;
+  error?: null;
+  incomplete_details?: null;
+  instructions?: string | null;
+  metadata?: Record<string, unknown>;
+  temperature?: number | null;
+  top_p?: number | null;
+  max_output_tokens?: number | null;
+  text?: { format: { type: string } };
+}
+
 // ── Internal ────────────────────────────────────────────────────────────────
 
 export interface GenerationResult {
