@@ -10,6 +10,7 @@ import type {
 import { generate } from "../generation/generate.js";
 import { buildGenOpts } from "../generation/options.js";
 import { generateStreamTokens } from "../generation/stream.js";
+import { generateStreamWithTools } from "../generation/stream-tools.js";
 import { parseToolCalls } from "../tools/parser.js";
 import { makeId } from "../utils/http.js";
 import { getTextContent } from "../utils/content.js";
@@ -66,28 +67,57 @@ export async function chatCompletions(c: Context<AppEnv>) {
   const messages = applyResponseFormat(params.messages, params.response_format);
   const includeUsage = params.stream_options?.include_usage ?? true;
 
-  // Pure streaming (no tools)
-  if (params.stream && !params.tools?.length) {
+  // Streaming path — content tokens and tool calls both arrive incrementally.
+  if (params.stream) {
     return streamSSE(c, async (stream) => {
       await stream.writeSSE({ data: JSON.stringify({
         id, object: "chat.completion.chunk", created, model: modelId,
         choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
       } satisfies ChatCompletionChunk) });
 
-      const { promptTokens, completionTokens } = await generateStreamTokens(
-        models, modelId, messages, genOpts,
-        async (token) => {
-          await stream.writeSSE({ data: JSON.stringify({
-            id, object: "chat.completion.chunk", created, model: modelId,
-            choices: [{ index: 0, delta: { content: token }, finish_reason: null }],
-          } satisfies ChatCompletionChunk) });
-        },
-        params.tools,
-      );
+      let finishReason: "stop" | "tool_calls" = "stop";
+      let promptTokens = 0;
+      let completionTokens = 0;
+
+      if (params.tools?.length) {
+        const result = await generateStreamWithTools(
+          models, modelId, messages, genOpts, params.tools,
+          {
+            onContent: async (delta) => {
+              if (!delta) return;
+              await stream.writeSSE({ data: JSON.stringify({
+                id, object: "chat.completion.chunk", created, model: modelId,
+                choices: [{ index: 0, delta: { content: delta }, finish_reason: null }],
+              } satisfies ChatCompletionChunk) });
+            },
+            onToolCalls: async (calls) => {
+              finishReason = "tool_calls";
+              await stream.writeSSE({ data: JSON.stringify({
+                id, object: "chat.completion.chunk", created, model: modelId,
+                choices: [{ index: 0, delta: { tool_calls: calls }, finish_reason: null }],
+              } satisfies ChatCompletionChunk) });
+            },
+          },
+        );
+        promptTokens = result.promptTokens;
+        completionTokens = result.completionTokens;
+      } else {
+        const result = await generateStreamTokens(
+          models, modelId, messages, genOpts,
+          async (token) => {
+            await stream.writeSSE({ data: JSON.stringify({
+              id, object: "chat.completion.chunk", created, model: modelId,
+              choices: [{ index: 0, delta: { content: token }, finish_reason: null }],
+            } satisfies ChatCompletionChunk) });
+          },
+        );
+        promptTokens = result.promptTokens;
+        completionTokens = result.completionTokens;
+      }
 
       const finalChunk: ChatCompletionChunk = {
         id, object: "chat.completion.chunk", created, model: modelId,
-        choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
+        choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
       };
       if (includeUsage) {
         finalChunk.usage = { prompt_tokens: promptTokens, completion_tokens: completionTokens, total_tokens: promptTokens + completionTokens };
@@ -97,49 +127,10 @@ export async function chatCompletions(c: Context<AppEnv>) {
     });
   }
 
-  // Generate full text (needed for tool call parsing, or non-streaming)
+  // Non-streaming — generate the full response, then parse for tool calls.
   const result = await generate(models, modelId, messages, genOpts, params.tools);
   const toolCalls = params.tools?.length ? parseToolCalls(result.text) : null;
 
-  // Streaming response wrapping pre-generated text
-  if (params.stream) {
-    return streamSSE(c, async (stream) => {
-      if (toolCalls) {
-        await stream.writeSSE({ data: JSON.stringify({
-          id, object: "chat.completion.chunk", created, model: modelId,
-          choices: [{ index: 0, delta: { role: "assistant", tool_calls: toolCalls }, finish_reason: null }],
-        } satisfies ChatCompletionChunk) });
-        const finalChunk: ChatCompletionChunk = {
-          id, object: "chat.completion.chunk", created, model: modelId,
-          choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }],
-        };
-        if (includeUsage) {
-          finalChunk.usage = { prompt_tokens: result.promptTokens, completion_tokens: result.completionTokens, total_tokens: result.promptTokens + result.completionTokens };
-        }
-        await stream.writeSSE({ data: JSON.stringify(finalChunk) });
-      } else {
-        await stream.writeSSE({ data: JSON.stringify({
-          id, object: "chat.completion.chunk", created, model: modelId,
-          choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
-        } satisfies ChatCompletionChunk) });
-        await stream.writeSSE({ data: JSON.stringify({
-          id, object: "chat.completion.chunk", created, model: modelId,
-          choices: [{ index: 0, delta: { content: result.text }, finish_reason: null }],
-        } satisfies ChatCompletionChunk) });
-        const finalChunk: ChatCompletionChunk = {
-          id, object: "chat.completion.chunk", created, model: modelId,
-          choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
-        };
-        if (includeUsage) {
-          finalChunk.usage = { prompt_tokens: result.promptTokens, completion_tokens: result.completionTokens, total_tokens: result.promptTokens + result.completionTokens };
-        }
-        await stream.writeSSE({ data: JSON.stringify(finalChunk) });
-      }
-      await stream.writeSSE({ data: "[DONE]" });
-    });
-  }
-
-  // Non-streaming
   const message = toolCalls
     ? { role: "assistant" as const, content: null, tool_calls: toolCalls }
     : { role: "assistant" as const, content: result.text };

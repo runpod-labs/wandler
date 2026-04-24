@@ -30,6 +30,16 @@ export interface ServerConfig {
 /**
  * Parse a model reference like "org/repo:q4" into { id, dtype }.
  * If no :suffix is present, falls back to the provided default dtype.
+ *
+ * Supported dtype suffixes (transformers.js v4.2+):
+ *   - Full precision: fp32, fp16
+ *   - 8-bit:          q8, int8, uint8
+ *   - 4-bit:          q4, bnb4, q4f16
+ *   - 2-bit:          q2, q2f16       (v4.1+, CPU/WebGPU only)
+ *   - 1-bit (BitNet): q1, q1f16       (v4.1+, CPU/WebGPU only)
+ *   - Auto:           auto            (defers to the model's config dtype)
+ *
+ * Example: "onnx-community/Qwen3-0.6B-ONNX:q4" or "some-org/bitnet:q1".
  */
 export function parseModelRef(ref: string, defaultDtype: string): { id: string; dtype: string } {
   const lastColon = ref.lastIndexOf(":");

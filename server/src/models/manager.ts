@@ -2,6 +2,8 @@ import {
   AutoTokenizer,
   AutoModelForCausalLM,
   AutoProcessor,
+  LogLevel,
+  ModelRegistry,
   RawImage,
   pipeline,
   env as transformersEnv,
@@ -89,7 +91,46 @@ export async function loadImage(url: string): Promise<unknown> {
 }
 
 type DeviceType = "auto" | "cpu" | "cuda" | "coreml" | "dml" | "webgpu" | "wasm";
-type DtypeType = "q4" | "q8" | "fp16" | "fp32";
+// Full set of transformers.js v4 dtypes, including 1-bit (BitNet) and 2-bit
+// formats added in v4.1.0. "auto" defers selection to the model's own config.
+// Source: @huggingface/transformers DATA_TYPES constant.
+export type DtypeType =
+  | "auto"
+  | "fp32"
+  | "fp16"
+  | "q8"
+  | "int8"
+  | "uint8"
+  | "q4"
+  | "bnb4"
+  | "q4f16"
+  | "q2"
+  | "q2f16"
+  | "q1"
+  | "q1f16";
+
+export const SUPPORTED_DTYPES: readonly DtypeType[] = [
+  "auto",
+  "fp32",
+  "fp16",
+  "q8",
+  "int8",
+  "uint8",
+  "q4",
+  "bnb4",
+  "q4f16",
+  "q2",
+  "q2f16",
+  "q1",
+  "q1f16",
+] as const;
+
+/**
+ * Dtypes that are only reliable on CPU/WebGPU execution providers today.
+ * CUDA / CoreML / DML lack the custom ternary + 2-bit ONNX kernels, so we
+ * warn the user instead of silently falling back and producing garbage.
+ */
+const LOW_BIT_DTYPES: readonly DtypeType[] = ["q1", "q1f16", "q2", "q2f16"] as const;
 
 // All device types in preference order (best perf first, cpu last).
 // onnxruntime may crash instead of falling back between providers
@@ -103,6 +144,74 @@ type DtypeType = "q4" | "q8" | "fp16" | "fp32";
 // See: https://github.com/huggingface/transformers.js/issues/1645
 // Source: node_modules/@huggingface/transformers/src/backends/onnx.js
 const DEVICE_FALLBACK_ORDER: DeviceType[] = ["cuda", "coreml", "dml", "webgpu", "cpu"];
+
+/**
+ * When the user passes dtype "auto" at the wandler level we resolve it to
+ * the smallest available ONNX export for the model. Preference: tiniest
+ * memory footprint first, falling through to fp32 as a last resort.
+ */
+const AUTO_DTYPE_PREFERENCE: DtypeType[] = [
+  "q1", "q1f16", "q2", "q2f16", "q4", "q4f16", "bnb4", "q8", "int8", "uint8", "fp16", "fp32",
+];
+
+/**
+ * Pre-flight dtype check via `ModelRegistry.get_available_dtypes`. Resolves
+ * "auto" to the smallest available variant and validates explicit dtypes
+ * against what the HF repo actually ships, so users see a useful error
+ * instead of a cryptic 404 from the ONNX fetcher.
+ *
+ * Returns the (possibly resolved) dtype. Never throws on probe failure —
+ * falls back to the requested dtype and lets the real loader surface the
+ * error. This keeps offline / private-model flows working.
+ */
+async function resolveDtype(modelId: string, requested: string): Promise<string> {
+  let available: string[];
+  try {
+    available = await ModelRegistry.get_available_dtypes(modelId);
+  } catch (err) {
+    console.warn(
+      `[wandler] Could not probe dtypes for ${modelId} (${err instanceof Error ? err.message : err}); proceeding with ${requested}`,
+    );
+    return requested;
+  }
+
+  if (!available.length) return requested;
+
+  if (requested === "auto") {
+    const picked = AUTO_DTYPE_PREFERENCE.find((d) => available.includes(d));
+    if (!picked) {
+      console.warn(`[wandler] dtype=auto: no recognised dtype in ${JSON.stringify(available)}; using ${available[0]}`);
+      return available[0]!;
+    }
+    console.log(`[wandler] dtype=auto → ${picked} (available: ${available.join(", ")})`);
+    return picked;
+  }
+
+  if (!available.includes(requested)) {
+    throw new Error(
+      `dtype "${requested}" is not available for ${modelId}. ` +
+      `Available on the Hub: [${available.join(", ")}]. ` +
+      `Retry with one of those, or use :auto to let wandler pick.`,
+    );
+  }
+  return requested;
+}
+
+/**
+ * Warn when the user pairs a 1-bit / 2-bit dtype with a device whose ONNX
+ * Runtime build lacks the ternary kernels — today that's cuda/coreml/dml.
+ * Our device fallback chain will silently slide to CPU in that case, which
+ * is correct but surprising. A single log line flags the cost.
+ */
+function warnIfLowBitMismatch(dtype: string, device: string): void {
+  if (!LOW_BIT_DTYPES.includes(dtype as DtypeType)) return;
+  const ok = device === "auto" || device === "cpu" || device === "webgpu" || device === "wasm";
+  if (ok) return;
+  console.warn(
+    `[wandler] dtype=${dtype} (1-bit/2-bit) is CPU/WebGPU-only today. ` +
+    `device=${device} will likely fall back to cpu.`,
+  );
+}
 
 /**
  * Load the model, walking the device fallback chain when needed.
@@ -148,13 +257,60 @@ async function loadLLM(
   throw new Error("No usable device found");
 }
 
+/**
+ * Cheap probe: fetch `config.json` once and decide whether to try loading
+ * this as a vision model. Returns `true` when the config carries tell-tale
+ * vision fields (a nested `vision_config`, an image token id, or an
+ * architecture name ending in `*ForConditionalGeneration` /
+ * `*ForImageTextToText`). Any fetch failure returns `null`, which keeps
+ * the downstream fallback loop intact for private / offline loads.
+ */
+async function isLikelyVisionModel(modelId: string): Promise<boolean | null> {
+  try {
+    const url = `https://huggingface.co/${modelId}/resolve/main/config.json`;
+    const res = await fetch(url, {
+      headers: process.env.HF_TOKEN ? { Authorization: `Bearer ${process.env.HF_TOKEN}` } : undefined,
+    });
+    if (!res.ok) return null;
+    const config = await res.json() as {
+      architectures?: string[];
+      vision_config?: unknown;
+      image_token_id?: unknown;
+      image_token_index?: unknown;
+    };
+    if (config.vision_config || config.image_token_id != null || config.image_token_index != null) {
+      return true;
+    }
+    const arch = config.architectures?.[0] ?? "";
+    if (/(ForConditionalGeneration|ForImageTextToText|VLM|VisionText|Vision2Seq)$/i.test(arch)) {
+      return true;
+    }
+    return false;
+  } catch {
+    return null;
+  }
+}
+
 async function loadLLMWithDevice(
   modelId: string,
   dtype: string,
   device: DeviceType,
 ): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean }> {
-  // Try loading as a vision model first (AutoModelForImageTextToText),
-  // fall back to text-only (AutoModelForCausalLM)
+  // Probe config.json so we don't try the vision path on a 20B text-only
+  // model (wasted round-trip) or skip it on a real vision model. A null
+  // probe result means "unknown" and we fall through to the old try/catch
+  // behaviour for safety.
+  const probe = await isLikelyVisionModel(modelId);
+
+  if (probe === false) {
+    const model = await AutoModelForCausalLM.from_pretrained(modelId, {
+      dtype: dtype as DtypeType,
+      device,
+    }) as unknown as LoadedModels["model"];
+    return { model, processor: null, isVision: false };
+  }
+
+  // probe === true OR probe === null (unknown): try vision first, fall back.
   try {
     const { AutoModelForImageTextToText: VisionModel } = await import("@huggingface/transformers");
     const model = await VisionModel.from_pretrained(modelId, {
@@ -175,6 +331,25 @@ async function loadLLMWithDevice(
   }
 }
 
+/**
+ * Map a user-provided log level string ("debug" / "info" / "warning" /
+ * "error" / "silent") onto the transformers.js `LogLevel` numeric enum.
+ * Unknown values fall back to INFO.
+ */
+function toTransformersLogLevel(level: string): number {
+  switch (level.toLowerCase()) {
+    case "debug": return LogLevel.DEBUG;
+    case "info": return LogLevel.INFO;
+    case "warn":
+    case "warning": return LogLevel.WARNING;
+    case "error": return LogLevel.ERROR;
+    case "silent":
+    case "none":
+    case "off": return LogLevel.NONE;
+    default: return LogLevel.INFO;
+  }
+}
+
 export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   // Configure transformers.js environment
   if (config.cacheDir) {
@@ -183,6 +358,12 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   if (config.hfToken) {
     process.env.HF_TOKEN = config.hfToken;
   }
+  // Quiet the noisy ONNX Runtime WebGPU warnings (v4.0+). We map the user's
+  // configured level instead of always silencing, so debug builds still see
+  // the good stuff.
+  transformersEnv.logLevel = toTransformersLogLevel(config.logLevel);
+  // Cache compiled WASM kernels across runs — cuts cold start on Node.
+  transformersEnv.useWasmCache = true;
 
   const device = config.device || "auto";
 
@@ -197,7 +378,10 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
     const t0 = Date.now();
 
-    const result = await loadLLM(config.modelId, config.modelDtype, device);
+    const resolvedDtype = await resolveDtype(config.modelId, config.modelDtype);
+    warnIfLowBitMismatch(resolvedDtype, device);
+
+    const result = await loadLLM(config.modelId, resolvedDtype, device);
     model = result.model;
     processor = result.processor;
     isVision = result.isVision;
@@ -219,7 +403,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     console.log(`[wandler] Loading STT: ${config.sttModelId} (${config.sttDtype})`);
     const t1 = Date.now();
     const sttPipeline = await pipeline("automatic-speech-recognition", config.sttModelId, {
-      dtype: config.sttDtype as "q4" | "q8" | "fp16" | "fp32",
+      dtype: config.sttDtype as DtypeType,
     });
     transcriber = (input: Float32Array) =>
       sttPipeline(input) as Promise<{ text: string }>;
@@ -231,7 +415,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     console.log(`[wandler] Loading embeddings: ${config.embeddingModelId} (${config.embeddingDtype})`);
     const t2 = Date.now();
     const embPipeline = await pipeline("feature-extraction", config.embeddingModelId, {
-      dtype: config.embeddingDtype as "q4" | "q8" | "fp16" | "fp32",
+      dtype: config.embeddingDtype as DtypeType,
     });
     embedder = (input: string, opts: Record<string, unknown>) =>
       embPipeline(input, opts) as Promise<{ data: Float32Array }>;
