@@ -26,110 +26,112 @@ function normalizeMessages(messages: ChatMessage[]): ChatMessage[] {
 }
 
 /**
- * Recursively sanitize a schema property: ensure every property descriptor
- * (at any depth) has a `type` field (defaulting to "string" if missing).
- * Handles:
- * - Nested object properties
- * - Array items
- * - anyOf / oneOf / allOf unions
- * - additionalProperties when it's an object
+ * Recursively sanitize a JSON-Schema property descriptor: ensure it has a
+ * `type` field (inferred from structure — "object" when it has `properties`,
+ * "array" when it has `items`, otherwise "string") and recurse into every
+ * nested schema location the Gemma template might walk:
+ *   - `properties.<k>` (object schemas)
+ *   - `items` (array item schemas, single or tuple form)
+ *   - `anyOf` / `oneOf` / `allOf` (schema unions)
+ *   - `additionalProperties` (when it's a schema, not a boolean)
  *
  * Gemma's chat_template.jinja does `value['type'] | upper` on every property
- * in a tool's parameter schema. JSON Schema allows a property without an
- * explicit `type` (a description alone is valid), and OpenAI-style clients
- * sometimes emit such schemas — which crashes the template with
+ * descriptor. JSON Schema allows a property without an explicit `type` (a
+ * description alone is valid), and real-world tool schemas nest deeply with
+ * descriptors that omit `type` — which crashes the template with
  * `Cannot apply filter "upper" to type: UndefinedValue`.
  */
-function sanitizeSchema(
-  schema: Record<string, unknown>,
-  isPropertyDescriptor = false,
-): Record<string, unknown> {
-  if (!schema || typeof schema !== "object") return schema;
+function sanitizeProperty(prop: unknown): unknown {
+  if (!prop || typeof prop !== "object" || Array.isArray(prop)) return prop;
+  const p = prop as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...p };
 
-  const sanitized = { ...schema };
-
-  // Only add type to property descriptors that lack schema-defining keywords
-  // (like type, properties, items, anyOf, etc). Empty objects stay empty.
-  const hasSchemaKeyword = [
-    "type",
-    "properties",
-    "items",
-    "anyOf",
-    "oneOf",
-    "allOf",
-    "const",
-    "enum",
-    "$ref",
-    "additionalProperties",
-  ].some((key) => key in sanitized);
-
-  if (isPropertyDescriptor && !hasSchemaKeyword) {
-    sanitized.type = "string";
+  if (!("type" in out)) {
+    if (out.properties) out.type = "object";
+    else if (out.items) out.type = "array";
+    else out.type = "string";
   }
 
-  // Recursively sanitize nested object properties
-  if (sanitized.properties && typeof sanitized.properties === "object") {
-    const props = sanitized.properties as Record<string, unknown>;
-    sanitized.properties = Object.fromEntries(
-      Object.entries(props).map(([key, prop]) => [
-        key,
-        typeof prop === "object" && prop !== null
-          ? sanitizeSchema(prop as Record<string, unknown>, true)
-          : prop,
-      ]),
-    );
+  // Gemma's template has a fallback branch for type=="object" descriptors
+  // that lack a `properties` key — it recursively treats every other key
+  // in the descriptor (e.g. `patternProperties`, `additionalProperties`)
+  // as a sub-property, which crashes `upper` on non-descriptor values.
+  // Always supply `properties` so the primary branch handles it.
+  if (out.type === "object" && !("properties" in out)) {
+    out.properties = {};
   }
 
-  // Recursively sanitize array items
-  if (sanitized.items && typeof sanitized.items === "object") {
-    sanitized.items = sanitizeSchema(sanitized.items as Record<string, unknown>, false);
+  // Recurse into nested object properties
+  if (
+    out.properties &&
+    typeof out.properties === "object" &&
+    !Array.isArray(out.properties)
+  ) {
+    const sanitized: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(out.properties as Record<string, unknown>)) {
+      sanitized[k] = sanitizeProperty(v);
+    }
+    out.properties = sanitized;
   }
 
-  // Recursively sanitize union types
-  for (const unionKey of ["anyOf", "oneOf", "allOf"]) {
-    if (sanitized[unionKey] && Array.isArray(sanitized[unionKey])) {
-      sanitized[unionKey] = (sanitized[unionKey] as unknown[]).map((schema) =>
-        typeof schema === "object" && schema !== null
-          ? sanitizeSchema(schema as Record<string, unknown>, false)
-          : schema,
-      );
+  // Recurse into array item schema(s) — may be a single schema or a tuple
+  if (out.items) {
+    if (Array.isArray(out.items)) {
+      out.items = out.items.map(sanitizeProperty);
+    } else if (typeof out.items === "object") {
+      out.items = sanitizeProperty(out.items);
     }
   }
 
-  // Recursively sanitize additionalProperties when it's a schema
-  if (sanitized.additionalProperties && typeof sanitized.additionalProperties === "object") {
-    sanitized.additionalProperties = sanitizeSchema(
-      sanitized.additionalProperties as Record<string, unknown>,
-      false,
-    );
+  // Recurse into schema unions
+  for (const key of ["anyOf", "oneOf", "allOf"] as const) {
+    if (Array.isArray(out[key])) {
+      out[key] = (out[key] as unknown[]).map(sanitizeProperty);
+    }
   }
 
-  return sanitized;
+  // Recurse into additionalProperties when it's a schema (object, not bool)
+  if (
+    out.additionalProperties &&
+    typeof out.additionalProperties === "object" &&
+    !Array.isArray(out.additionalProperties)
+  ) {
+    out.additionalProperties = sanitizeProperty(out.additionalProperties);
+  }
+
+  return out;
 }
 
 /**
- * Gemma's chat_template.jinja does `value['type'] | upper` on every property
- * in a tool's parameter schema. JSON Schema allows a property without an
- * explicit `type` (a description alone is valid), and OpenAI-style clients
- * sometimes emit such schemas — which crashes the template with
- * `Cannot apply filter "upper" to type: UndefinedValue`.
- *
- * Recursively default every property to `type: "string"` when missing.
+ * Sanitize every tool's parameter schema so the Gemma chat template won't
+ * crash on missing `type` fields. The top-level `parameters` object itself
+ * is left untouched if it has no `properties` — empty / absent parameters
+ * are valid for parameterless tools.
  */
 function sanitizeTools(tools: Tool[]): Tool[] {
   return tools.map((tool) => {
-    const params = tool.function.parameters as
-      | Record<string, unknown>
-      | undefined;
-    if (!params) return tool;
+    const params = tool.function.parameters as Record<string, unknown> | undefined;
+    if (!params || typeof params !== "object") return tool;
+    if (
+      !params.properties ||
+      typeof params.properties !== "object" ||
+      Array.isArray(params.properties)
+    ) {
+      return tool;
+    }
 
-    const sanitizedParams = sanitizeSchema(params);
+    const sanitizedProps: Record<string, unknown> = {};
+    for (const [key, prop] of Object.entries(
+      params.properties as Record<string, unknown>,
+    )) {
+      sanitizedProps[key] = sanitizeProperty(prop);
+    }
 
     return {
       ...tool,
       function: {
         ...tool.function,
-        parameters: sanitizedParams,
+        parameters: { ...params, properties: sanitizedProps },
       },
     };
   });
