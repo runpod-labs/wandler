@@ -46,8 +46,13 @@ function createMockTokenizer(): Tokenizer {
 interface Streamer {
   put(value: bigint[][]): void;
   end(): void;
+  callback_function?: (text: string) => void;
 }
 
+/**
+ * Mock model whose `.generate()` emits a fixed 7-token burst through the
+ * real `TextStreamer.put()` protocol. Used by the default test server.
+ */
 export function createMockModels(): LoadedModels {
   const tokenizer = createMockTokenizer();
 
@@ -84,6 +89,79 @@ export function createMockModels(): LoadedModels {
   });
 
   return { tokenizer, chatTemplate: null, processor: null, isVision: false, model, transcriber, embedder };
+}
+
+/**
+ * Mock model whose `.generate()` emits a scripted sequence of pre-decoded
+ * text chunks by invoking `streamer.callback_function` directly. Bypasses
+ * the real TextStreamer's token-cache / space-boundary machinery so a test
+ * can pin down exactly what content the chat route sees.
+ *
+ * Used to drive the streaming-tool-call e2e tests where we need to control
+ * the raw text flow (e.g. a Qwen-style `<tool_call>…</tool_call>` split
+ * across chunks).
+ */
+export function createMockModelsWithChunks(chunks: string[]): LoadedModels {
+  const tokenizer = createMockTokenizer();
+
+  const model = {
+    async generate(opts: Record<string, unknown>) {
+      const streamer = opts.streamer as Streamer | undefined;
+      if (streamer?.callback_function) {
+        // Bypass TextStreamer's decode/buffer layer — feed the callback the
+        // pre-decoded chunks one at a time so we can test the downstream
+        // stream-tools state machine without having to reverse-engineer
+        // TextStreamer's space-boundary emission rules.
+        for (const chunk of chunks) streamer.callback_function(chunk);
+      }
+
+      const inputDims = (opts.input_ids as { dims: number[] })?.dims;
+      const promptLen = inputDims?.[1] ?? 10;
+      return {
+        dims: [1, promptLen + chunks.length],
+        slice(_dim: unknown, _range: unknown) {
+          return { data: chunks.map((_, i) => i + 1) };
+        },
+      };
+    },
+    async dispose() {},
+  };
+
+  return {
+    tokenizer,
+    chatTemplate: null,
+    processor: null,
+    isVision: false,
+    model: model as unknown as LoadedModels["model"],
+    transcriber: null,
+    embedder: null,
+  } as LoadedModels;
+}
+
+/**
+ * Same as `startTestServer` but uses the scripted mock. Every request the
+ * server handles will replay `chunks` verbatim through the streamer.
+ */
+export async function startTestServerWithChunks(
+  chunks: string[],
+  configOverrides?: Partial<ServerConfig>,
+): Promise<TestServer> {
+  const config = createTestConfig(configOverrides);
+  const models = createMockModelsWithChunks(chunks);
+  const app = createApp(config, models);
+
+  return new Promise((resolve) => {
+    const server = serve({ fetch: app.fetch, port: 0 }, (info) => {
+      const baseUrl = `http://localhost:${info.port}`;
+      resolve({
+        baseUrl,
+        close: () =>
+          new Promise<void>((res) => {
+            server.close(() => res());
+          }),
+      });
+    });
+  });
 }
 
 export function createTestConfig(
