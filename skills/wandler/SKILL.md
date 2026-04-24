@@ -34,7 +34,7 @@ wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 -
 # --max-concurrent <n> Concurrent requests (default: 1)
 # --timeout <ms>       Request timeout (default: 120000)
 # --log-level <l>      debug | info | warn | error (default: info)
-# --cache-dir <path>   Model cache directory
+# --cache-dir <path>   Model cache directory (default: ~/.cache/huggingface)
 # Precision suffixes:  q4 (default) | q8 | fp16 | fp32
 
 # list all models from the wandler registry

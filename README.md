@@ -95,7 +95,7 @@ Every CLI flag has a corresponding environment variable:
 | `WANDLER_MAX_CONCURRENT` | 1 | Max concurrent requests |
 | `WANDLER_TIMEOUT` | 120000 | Request timeout (ms) |
 | `WANDLER_LOG_LEVEL` | info | Log level |
-| `WANDLER_CACHE_DIR` | — | Model cache directory |
+| `WANDLER_CACHE_DIR` | ~/.cache/huggingface | Model cache directory (also respects `HF_HOME`) |
 | `HF_TOKEN` | — | HuggingFace token for gated models |
 
 ## Endpoints

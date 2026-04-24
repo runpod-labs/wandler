@@ -407,7 +407,7 @@ print(response)`,
 									{ flag: "--max-concurrent", arg: "<n>", desc: "Concurrent requests.", meta: <>default: <InlineCode>1</InlineCode></> },
 									{ flag: "--timeout", arg: "<ms>", desc: "Request timeout in milliseconds.", meta: <>default: <InlineCode>120000</InlineCode></> },
 									{ flag: "--log-level", arg: "<level>", desc: "Log verbosity.", meta: <>default: <InlineCode>info</InlineCode> · options: <InlineCode>debug</InlineCode>, <InlineCode>info</InlineCode>, <InlineCode>warn</InlineCode>, <InlineCode>error</InlineCode></> },
-									{ flag: "--cache-dir", arg: "<path>", desc: "Model cache directory.", meta: <>default: <InlineCode>.cache/</InlineCode> inside the <InlineCode>@huggingface/transformers</InlineCode> package (i.e. <InlineCode>node_modules/@huggingface/transformers/.cache/</InlineCode>)</> },
+									{ flag: "--cache-dir", arg: "<path>", desc: "Model cache directory.", meta: <>default: <InlineCode>~/.cache/huggingface</InlineCode> (standard HuggingFace cache, also respects <InlineCode>HF_HOME</InlineCode>)</> },
 								] as const).flatMap((o) => [
 									<div key={`${o.flag}-l`} className="font-mono text-[13px] whitespace-nowrap pt-0.5">
 										<span className="text-[#00ffff]">{o.flag}</span>
