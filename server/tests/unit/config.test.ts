@@ -1,3 +1,5 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadConfig, parseModelRef } from "../../src/config.js";
 
@@ -60,7 +62,25 @@ describe("loadConfig", () => {
     expect(config.timeout).toBe(120000);
     expect(config.logLevel).toBe("info");
     expect(config.hfToken).toBe("");
-    expect(config.cacheDir).toBe("");
+    expect(config.cacheDir).toBe(join(homedir(), ".cache", "huggingface"));
+  });
+
+  it("uses HF_HOME as cache dir when set", () => {
+    const config = loadConfig({ HF_HOME: "/custom/hf/home" });
+    expect(config.cacheDir).toBe("/custom/hf/home");
+  });
+
+  it("uses XDG_CACHE_HOME/huggingface when HF_HOME is not set", () => {
+    const config = loadConfig({ XDG_CACHE_HOME: "/custom/xdg/cache" });
+    expect(config.cacheDir).toBe(join("/custom/xdg/cache", "huggingface"));
+  });
+
+  it("WANDLER_CACHE_DIR takes priority over HF_HOME", () => {
+    const config = loadConfig({
+      WANDLER_CACHE_DIR: "/explicit/cache",
+      HF_HOME: "/hf/home",
+    });
+    expect(config.cacheDir).toBe("/explicit/cache");
   });
 
   it("reads WANDLER_ prefixed env vars", () => {

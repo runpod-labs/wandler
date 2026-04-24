@@ -44,7 +44,7 @@ program
   .option("--timeout <ms>", "Request timeout in ms")
   .option("--log-level <level>", "debug, info, warn, error")
   .option("--hf-token <token>", "HuggingFace token for gated models")
-  .option("--cache-dir <path>", "Model cache directory")
+  .option("--cache-dir <path>", "Model cache directory (default: ~/.cache/huggingface)")
   .action(async (opts) => {
     const config = loadConfig({
       WANDLER_LLM: opts.llm ?? process.env.WANDLER_LLM ?? process.env.MODEL_ID,
@@ -61,6 +61,8 @@ program
       WANDLER_LOG_LEVEL: opts.logLevel ?? process.env.WANDLER_LOG_LEVEL,
       HF_TOKEN: opts.hfToken ?? process.env.HF_TOKEN,
       WANDLER_CACHE_DIR: opts.cacheDir ?? process.env.WANDLER_CACHE_DIR,
+      HF_HOME: process.env.HF_HOME,
+      XDG_CACHE_HOME: process.env.XDG_CACHE_HOME,
     });
 
     if (!config.modelId && !config.embeddingModelId && !config.sttModelId) {
@@ -75,6 +77,7 @@ program
     if (config.modelId) console.log(`[wandler] LLM: ${config.modelId} (${config.modelDtype}, ${config.device})`);
     if (config.sttModelId) console.log(`[wandler] STT: ${config.sttModelId} (${config.sttDtype})`);
     if (config.embeddingModelId) console.log(`[wandler] Embedding: ${config.embeddingModelId} (${config.embeddingDtype})`);
+    console.log(`[wandler] Cache: ${config.cacheDir}`);
     if (config.apiKey) console.log(`[wandler] API key auth enabled`);
   });
 

@@ -1,3 +1,6 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
+
 // ── Server configuration from environment variables ─────────────────────────
 
 export interface ServerConfig {
@@ -52,6 +55,22 @@ export function parseModelRef(ref: string, defaultDtype: string): { id: string; 
   return { id: ref, dtype: defaultDtype };
 }
 
+/**
+ * Resolve the default model cache directory following the standard HuggingFace
+ * cache hierarchy so downloaded models are shared with vLLM, the Python
+ * `huggingface_hub` package, and other HF-ecosystem tools:
+ *
+ *   WANDLER_CACHE_DIR  >  HF_HOME  >  XDG_CACHE_HOME/huggingface  >  ~/.cache/huggingface
+ *
+ * This avoids the transformers.js default of caching inside `node_modules/`,
+ * which gets wiped on every `npm install` or when running via `npx`.
+ */
+function defaultHfCacheDir(env: Record<string, string | undefined>): string {
+  if (env.HF_HOME) return env.HF_HOME;
+  if (env.XDG_CACHE_HOME) return join(env.XDG_CACHE_HOME, "huggingface");
+  return join(homedir(), ".cache", "huggingface");
+}
+
 export function loadConfig(env: Record<string, string | undefined> = process.env): ServerConfig {
   const DEFAULT_DTYPE = "q4";
 
@@ -80,6 +99,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     timeout: parseInt(env.WANDLER_TIMEOUT || "120000", 10),
     logLevel: env.WANDLER_LOG_LEVEL || "info",
     hfToken: env.HF_TOKEN || env.WANDLER_HF_TOKEN || "",
-    cacheDir: env.WANDLER_CACHE_DIR || "",
+    cacheDir: env.WANDLER_CACHE_DIR || defaultHfCacheDir(env),
   };
 }

@@ -352,9 +352,7 @@ function toTransformersLogLevel(level: string): number {
 
 export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   // Configure transformers.js environment
-  if (config.cacheDir) {
-    transformersEnv.cacheDir = config.cacheDir;
-  }
+  transformersEnv.cacheDir = config.cacheDir;
   if (config.hfToken) {
     process.env.HF_TOKEN = config.hfToken;
   }
