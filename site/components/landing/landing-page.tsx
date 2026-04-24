@@ -14,7 +14,7 @@ function getHighlighter() {
 	if (!highlighterPromise) {
 		highlighterPromise = createHighlighter({
 			themes: ["github-dark"],
-			langs: ["typescript", "python", "bash"],
+			langs: ["typescript", "python", "bash", "json", "yaml", "markdown", "tsx", "jsx"],
 		});
 	}
 	return highlighterPromise;
@@ -24,7 +24,11 @@ function useHighlightedCode(code: string, lang: string) {
 	const [html, setHtml] = useState<string | null>(null);
 	useEffect(() => {
 		getHighlighter().then((h) => {
-			setHtml(h.codeToHtml(code.replace(/^\n+|\n+$/g, ""), { lang, theme: "github-dark" }));
+			try {
+				setHtml(h.codeToHtml(code.replace(/^\n+|\n+$/g, ""), { lang, theme: "github-dark" }));
+			} catch {
+				setHtml(null);
+			}
 		});
 	}, [code, lang]);
 	return html;
@@ -40,10 +44,20 @@ function useHighlightedCode(code: string, lang: string) {
 function BashHighlight({ code }: { code: string }) {
 	const cleaned = code.replace(/^\n+|\n+$/g, "");
 	const lines = cleaned.split("\n");
-	let sawKeyword = false;
 	return (
 		<>
 			{lines.map((line, i) => {
+				if (line.trimStart().startsWith("#")) {
+					return (
+						<span key={i} className="text-white/45">
+							{line}
+							{i < lines.length - 1 && "\n"}
+						</span>
+					);
+				}
+
+				const trimmed = line.trimStart();
+				let sawKeyword = trimmed.startsWith("-");
 				const parts = line.split(/(\s+)/);
 				return (
 					<span key={i}>
@@ -162,14 +176,12 @@ export function LandingPage() {
 		},
 		embedding: {
 			label: "embedding",
-			code: `wandler \\
-  --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
+			code: `wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
   --embedding Xenova/all-MiniLM-L6-v2:q8`,
 		},
 		stt: {
 			label: "speech-to-text",
-			code: `wandler \\
-  --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
+			code: `wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
   --stt onnx-community/whisper-tiny:q4`,
 		},
 	};
@@ -182,12 +194,13 @@ export function LandingPage() {
 
 const client = new OpenAI({
   baseURL: "http://localhost:8000/v1",
-  apiKey: "-",
+  // replace with your --api-key value if you started wandler with one
+  apiKey: "changeme",
 });
 
 const res = await client.chat.completions.create({
   model: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
-  messages: [{ role: "user", content: "Hello!" }],
+  messages: [{ role: "user", content: "What is the capital of Germany" }],
   stream: true,
 });
 
@@ -201,15 +214,15 @@ for await (const chunk of res) {
 			code: `import { generateText, streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 
-const provider = createOpenAI({
+const wandler = createOpenAI({
   baseURL: "http://localhost:8000/v1",
-  apiKey: "-",
-  compatibility: "compatible",
+  // replace with your --api-key value if you started wandler with one
+  apiKey: "changeme",
 });
 
 const { text } = await generateText({
-  model: provider.chat("LiquidAI/LFM2.5-1.2B-Instruct-ONNX"),
-  prompt: "Hello!",
+  model: wandler.chat("LiquidAI/LFM2.5-1.2B-Instruct-ONNX"),
+  prompt: "What is the capital of Germany",
 });
 
 console.log(text);`,
@@ -223,11 +236,12 @@ const model = new ChatOpenAI({
   modelName: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
   configuration: {
     baseURL: "http://localhost:8000/v1",
-    apiKey: "-",
+    // replace with your --api-key value if you started wandler with one
+    apiKey: "changeme",
   },
 });
 
-const response = await model.invoke("Hello!");
+const response = await model.invoke("What is the capital of Germany");
 console.log(response.content);`,
 		},
 		llamaindex: {
@@ -238,10 +252,11 @@ console.log(response.content);`,
 llm = OpenAILike(
     model="LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
     api_base="http://localhost:8000/v1",
-    api_key="-",
+    # replace with your --api-key value if you started wandler with one
+    api_key="changeme",
 )
 
-response = llm.complete("Hello!")
+response = llm.complete("What is the capital of Germany")
 print(response)`,
 		},
 		curl: {
@@ -251,8 +266,7 @@ print(response)`,
   -H "Content-Type: application/json" \\
   -d '{
     "model": "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
-    "messages": [{"role": "user", "content": "Hello!"}],
-    "stream": true
+    "messages": [{"role": "user", "content": "What is the capital of Germany"}]
   }'`,
 		},
 	};
@@ -374,7 +388,7 @@ print(response)`,
 										</button>
 									))}
 								</div>
-								<div className="relative p-4 md:p-6 min-h-[11.5rem]">
+								<div className="relative p-4 md:p-6 min-h-[8.5rem]">
 									<button
 										onClick={() => handleCopy(setupExamples[activeSetupTab].code, "setup")}
 										className="absolute top-3 right-3 p-2 text-white/20 hover:text-white/60 transition-colors z-10"
@@ -619,12 +633,46 @@ print(response)`,
 								<div className="p-4 md:p-6 space-y-6">
 									<div>
 										<p className="text-white text-sm mb-3">
-											set the base URL in <code className="font-mono text-primary">~/.hermes/config.yaml</code>
+											assuming your <code className="font-mono text-primary">wandler</code> server is running
+											{" "}
+											<code className="font-mono text-primary">LiquidAI/LFM2.5-1.2B-Instruct-ONNX</code>,
+											{" "}
+											configure Hermes via the CLI like this
+										</p>
+										<p className="text-white/50 text-xs mb-3">
+											replace <code className="font-mono">model.default</code> with the model slug you actually loaded in
+											{" "}
+											<code className="font-mono">wandler</code>.
 										</p>
 										<div className="bg-black border border-white/[0.04] overflow-hidden">
 											<div className="relative p-4">
 												<button
-													onClick={() => handleCopy(`model:\n  default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"\n  provider: "custom"\n  base_url: "http://localhost:8000/v1"\n  api_key: "-"`, "hermes")}
+													onClick={() => handleCopy(`hermes config set model.default LiquidAI/LFM2.5-1.2B-Instruct-ONNX\nhermes config set model.provider custom\nhermes config set model.base_url http://localhost:8000/v1\n# if you started wandler with --api-key your-local-key\n# hermes config set model.api_key your-local-key`, "hermes-cli")}
+													className="absolute top-3 right-3 p-2 text-white/20 hover:text-white/60 transition-colors z-10"
+													title="Copy to clipboard"
+												>
+													{copied === "hermes-cli" ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+												</button>
+												<SdkCodeBlock code={`hermes config set model.default LiquidAI/LFM2.5-1.2B-Instruct-ONNX
+hermes config set model.provider custom
+hermes config set model.base_url http://localhost:8000/v1
+# if you started wandler with --api-key your-local-key
+# hermes config set model.api_key your-local-key`} lang="bash" />
+											</div>
+										</div>
+									</div>
+
+									<div>
+										<p className="text-white text-sm mb-3">
+											or put the same settings into <code className="font-mono text-primary">~/.hermes/config.yaml</code>
+										</p>
+										<p className="text-white/50 text-xs mb-3">
+											again, replace <code className="font-mono">model.default</code> if your server is running a different model.
+										</p>
+										<div className="bg-black border border-white/[0.04] overflow-hidden">
+											<div className="relative p-4">
+												<button
+													onClick={() => handleCopy(`model:\n  default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"\n  provider: "custom"\n  base_url: "http://localhost:8000/v1"\n  # if you started wandler with --api-key your-local-key\n  # api_key: "your-local-key"`, "hermes")}
 													className="absolute top-3 right-3 p-2 text-white/20 hover:text-white/60 transition-colors z-10"
 													title="Copy to clipboard"
 												>
@@ -634,23 +682,9 @@ print(response)`,
   default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"
   provider: "custom"
   base_url: "http://localhost:8000/v1"
-  api_key: "-"`} lang="bash" />
+  # if you started wandler with --api-key your-local-key
+  # api_key: "your-local-key"`} lang="yaml" />
 											</div>
-										</div>
-									</div>
-
-									<div>
-										<p className="text-white text-sm mb-3">or configure it via the CLI</p>
-										<div className="bg-black border border-white/[0.04] p-4">
-											<button
-												onClick={() => handleCopy("hermes config set model.base_url http://localhost:8000/v1", "hermes-cli")}
-												className="w-full flex items-center gap-3 text-left cursor-pointer group"
-											>
-												<code className="font-mono text-sm text-white">hermes config set model.base_url http://localhost:8000/v1</code>
-												<span className="ml-auto shrink-0">
-													{copied === "hermes-cli" ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />}
-												</span>
-											</button>
 										</div>
 									</div>
 								</div>
