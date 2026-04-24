@@ -30,8 +30,56 @@ function useHighlightedCode(code: string, lang: string) {
 	return html;
 }
 
+// Custom bash renderer — shiki grammars don't reliably distinguish
+// "first word as the command keyword" vs "arbitrary identifier", so we
+// tokenize ourselves:
+//   npx / npm runners                       → magenta (hero #ff00ff)
+//   first keyword after any runner          → yellow (matches wandler logo)
+//   any flag token (-g, --llm, ...)         → cyan (hero #00ffff)
+//   everything else                         → white
+function BashHighlight({ code }: { code: string }) {
+	const cleaned = code.replace(/^\n+|\n+$/g, "");
+	const lines = cleaned.split("\n");
+	let sawKeyword = false;
+	return (
+		<>
+			{lines.map((line, i) => {
+				const parts = line.split(/(\s+)/);
+				return (
+					<span key={i}>
+						{parts.map((tok, j) => {
+							const key = `${i}-${j}`;
+							if (tok === "") return null;
+							if (/^\s+$/.test(tok)) return <span key={key}>{tok}</span>;
+							if (/^-\S/.test(tok)) {
+								return <span key={key} className="text-[#00ffff]">{tok}</span>;
+							}
+							if (!sawKeyword && (tok === "npx" || tok === "npm")) {
+								return <span key={key} className="text-[#ff00ff]">{tok}</span>;
+							}
+							if (!sawKeyword && /^[A-Za-z_]/.test(tok)) {
+								sawKeyword = true;
+								return <span key={key} className="text-primary">{tok}</span>;
+							}
+							return <span key={key} className="text-white/85">{tok}</span>;
+						})}
+						{i < lines.length - 1 && "\n"}
+					</span>
+				);
+			})}
+		</>
+	);
+}
+
 function SdkCodeBlock({ code, lang }: { code: string; lang: string }) {
-	const html = useHighlightedCode(code, lang);
+	const html = useHighlightedCode(lang === "bash" ? "" : code, lang);
+	if (lang === "bash") {
+		return (
+			<pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap break-all">
+				<BashHighlight code={code} />
+			</pre>
+		);
+	}
 	if (html) {
 		return (
 			<div
@@ -66,24 +114,15 @@ function CodeLine({
 	handleCopy: (text: string, id: string) => void;
 	copied: string | null;
 }) {
-	const html = useHighlightedCode(cmd, "bash");
 	return (
 		<div className="bg-[#0a0a0a] border border-white/[0.08] rounded-md p-4">
 			<button
 				onClick={() => handleCopy(cmd, id)}
 				className="w-full flex items-start gap-3 text-left cursor-pointer group"
 			>
-				<span className="text-white/40 font-mono text-sm select-none shrink-0">$</span>
-				<div className="flex-1 min-w-0 font-mono text-sm">
-					{html ? (
-						<div
-							className="[&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!m-0 [&_pre]:whitespace-pre-wrap [&_pre]:break-all"
-							dangerouslySetInnerHTML={{ __html: html }}
-						/>
-					) : (
-						<code className="text-white break-all">{cmd}</code>
-					)}
-				</div>
+				<pre className="flex-1 min-w-0 font-mono text-sm whitespace-pre-wrap break-all">
+					<BashHighlight code={cmd} />
+				</pre>
 				<span className="shrink-0">
 					{copied === id ? (
 						<Check className="w-4 h-4 text-primary" />
@@ -113,7 +152,7 @@ export function LandingPage() {
 	type SdkTab = "openai" | "ai-sdk" | "langchain" | "llamaindex" | "curl";
 	const [activeTab, setActiveTab] = useState<SdkTab>("openai");
 
-	type SetupTab = "text" | "embedding" | "stt" | "cpu" | "auth";
+	type SetupTab = "text" | "embedding" | "stt";
 	const [activeSetupTab, setActiveSetupTab] = useState<SetupTab>("text");
 
 	const setupExamples: Record<SetupTab, { label: string; code: string }> = {
@@ -132,18 +171,6 @@ export function LandingPage() {
 			code: `wandler \\
   --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
   --stt onnx-community/whisper-tiny:q4`,
-		},
-		cpu: {
-			label: "CPU",
-			code: "wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:fp16 --device cpu",
-		},
-		auth: {
-			label: "auth",
-			code: `wandler \\
-  --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX \\
-  --port 3000 \\
-  --host 0.0.0.0 \\
-  --api-key mysecret`,
 		},
 	};
 
@@ -253,7 +280,6 @@ print(response)`,
 								onClick={() => handleCopy(quickstart, "qs")}
 								className="w-full bg-black/90 border border-[#00ffff]/30 px-5 py-5 flex items-center gap-3 text-left cursor-pointer group shadow-[0_0_20px_rgba(0,255,255,0.06),inset_0_0_30px_rgba(0,255,255,0.02)]"
 							>
-								<span className="text-[#00ffff]/60 font-mono text-sm select-none">$</span>
 								<code className="font-mono text-sm text-white/80">{quickstart}</code>
 								<span className="ml-auto shrink-0">
 									{copied === "qs" ? <Check className="w-4 h-4 text-[#00ffff]" /> : <Copy className="w-4 h-4 text-white/20 group-hover:text-[#00ffff] transition-colors" />}
@@ -284,11 +310,10 @@ print(response)`,
 								<div className="absolute left-1/2 top-0 h-full w-px bg-[#ff00ff] shadow-[0_0_4px_rgba(255,0,255,0.8)]" />
 							</div>
 							<button
-								onClick={() => handleCopy("npx skills add https://github.com/runpod-labs/wandler --skill wandler", "qs-hero-skill")}
+								onClick={() => handleCopy("npx skills add runpod-labs/wandler --skill wandler", "qs-hero-skill")}
 								className="w-full bg-black/90 border border-[#ff00ff]/30 px-5 py-5 flex items-center gap-3 text-left cursor-pointer group shadow-[0_0_20px_rgba(255,0,255,0.06),inset_0_0_30px_rgba(255,0,255,0.02)]"
 							>
-								<span className="text-[#ff00ff]/60 font-mono text-sm select-none">$</span>
-								<code className="font-mono text-sm text-white/80">npx skills add https://github.com/runpod-labs/wandler --skill wandler</code>
+								<code className="font-mono text-sm text-white/80">npx skills add runpod-labs/wandler --skill wandler</code>
 								<span className="ml-auto shrink-0">
 									{copied === "qs-hero-skill" ? <Check className="w-4 h-4 text-[#ff00ff]" /> : <Copy className="w-4 h-4 text-white/20 group-hover:text-[#ff00ff] transition-colors" />}
 								</span>
@@ -300,21 +325,17 @@ print(response)`,
 				{/* ── Setup ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">setup</h2>
-						<p className="text-muted-foreground mb-8">
-							wandler is an OpenAI-compatible inference server powered by transformers.js
-						</p>
-
+						<h2 id="setup" className="text-3xl md:text-5xl font-bold tracking-tighter mb-4 scroll-mt-20">setup</h2>
 						<div className="max-w-3xl">
 							<p className="text-white/90 text-base leading-relaxed mb-3">
-								install it globally and run it directly:
+								install it globally
 							</p>
 							<div className="mb-8">
 								<CodeLine cmd="npm install -g wandler" id="qs-install" handleCopy={handleCopy} copied={copied} />
 							</div>
 
 							<p className="text-white/90 text-base leading-relaxed mb-3">
-								or use <InlineCode>npx</InlineCode> to skip the install:
+								or use <InlineCode>npx</InlineCode>
 							</p>
 							<div>
 								<CodeLine cmd="npx wandler --llm <org/repo:precision>" id="qs-npx" handleCopy={handleCopy} copied={copied} />
@@ -329,9 +350,11 @@ print(response)`,
 				{/* ── Run the server ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">run the server</h2>
+						<h2 id="run-the-server" className="text-3xl md:text-5xl font-bold tracking-tighter mb-4 scroll-mt-20">run the server</h2>
 						<p className="text-muted-foreground mb-8">
-							pick a setup, run the command, and point any OpenAI client at the server
+							the server runs at <InlineCode>http://127.0.0.1:8000</InlineCode> and exposes an{" "}
+							<a href="#api-reference" className="text-white hover:text-primary transition-colors underline underline-offset-4 decoration-white/30 hover:decoration-primary">OpenAI-compatible API</a>
+							, so any OpenAI client works out of the box.
 						</p>
 
 						<div className="max-w-3xl">
@@ -342,7 +365,7 @@ print(response)`,
 											key={tab}
 											className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors ${
 												activeSetupTab === tab
-													? "text-primary bg-primary/5 border-b-2 border-primary"
+													? "text-[#ff00ff] bg-[#ff00ff]/5 border-b-2 border-[#ff00ff]"
 													: "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
 											}`}
 											onClick={() => setActiveSetupTab(tab)}
@@ -354,21 +377,16 @@ print(response)`,
 								<div className="relative p-4 md:p-6 min-h-[11.5rem]">
 									<button
 										onClick={() => handleCopy(setupExamples[activeSetupTab].code, "setup")}
-										className="absolute top-3 right-3 p-2 text-muted-foreground hover:text-primary transition-colors z-10"
+										className="absolute top-3 right-3 p-2 text-white/20 hover:text-white/60 transition-colors z-10"
 										title="Copy to clipboard"
 									>
-										{copied === "setup" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+										{copied === "setup" ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
 									</button>
 									<div className="[&_pre]:whitespace-pre-wrap [&_pre]:break-all pr-8">
 										<SdkCodeBlock code={setupExamples[activeSetupTab].code} lang="bash" />
 									</div>
 								</div>
 							</div>
-
-							<p className="text-white/90 text-base leading-relaxed mb-10">
-								the server listens on <InlineCode>http://127.0.0.1:8000</InlineCode> and speaks the OpenAI API,
-								so any OpenAI client works out of the box.
-							</p>
 
 							<p className="text-white/90 text-base leading-relaxed mb-6">
 								here is every flag <InlineCode>wandler</InlineCode> accepts:
@@ -392,7 +410,7 @@ print(response)`,
 									{ flag: "--cache-dir", arg: "<path>", desc: "Model cache directory.", meta: <>default: <InlineCode>.cache/</InlineCode> inside the <InlineCode>@huggingface/transformers</InlineCode> package (i.e. <InlineCode>node_modules/@huggingface/transformers/.cache/</InlineCode>)</> },
 								] as const).flatMap((o) => [
 									<div key={`${o.flag}-l`} className="font-mono text-[13px] whitespace-nowrap pt-0.5">
-										<span className="text-primary">{o.flag}</span>
+										<span className="text-[#00ffff]">{o.flag}</span>
 										{" "}
 										<span className="text-white/50">{o.arg}</span>
 									</div>,
@@ -420,7 +438,7 @@ print(response)`,
 				{/* ── Discover models ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">discover models</h2>
+						<h2 id="discover-models" className="text-3xl md:text-5xl font-bold tracking-tighter mb-4 scroll-mt-20">discover models</h2>
 						<p className="text-muted-foreground mb-8">
 							list every model in the wandler registry with type, size, precision and capabilities
 						</p>
@@ -434,7 +452,7 @@ print(response)`,
 							</p>
 						</div>
 
-						<h3 className="text-xl md:text-2xl font-bold tracking-tight mb-2">benchmarks</h3>
+						<h3 id="benchmarks" className="text-xl md:text-2xl font-bold tracking-tight mb-2 scroll-mt-20">benchmarks</h3>
 						<p className="text-muted-foreground mb-6 font-mono text-sm">
 							WebGPU · q4 quantization · 10 runs per scenario
 						</p>
@@ -519,7 +537,7 @@ print(response)`,
 				{/* ── Use it in your app ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
+						<h2 id="use-it-in-your-app" className="text-3xl md:text-5xl font-bold tracking-tighter mb-4 scroll-mt-20">
 							use it in your app
 						</h2>
 						<p className="text-muted-foreground mb-8">
@@ -534,7 +552,7 @@ print(response)`,
 										key={tab}
 										className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors ${
 											activeTab === tab
-												? "text-primary bg-primary/5 border-b-2 border-primary"
+												? "text-[#ff00ff] bg-[#ff00ff]/5 border-b-2 border-[#ff00ff]"
 												: "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
 										}`}
 										onClick={() => setActiveTab(tab)}
@@ -548,11 +566,11 @@ print(response)`,
 							<div className="relative p-4 md:p-6">
 								<button
 									onClick={() => handleCopy(sdkExamples[activeTab].code, "sdk")}
-									className="absolute top-3 right-3 p-2 text-muted-foreground hover:text-primary transition-colors z-10"
+									className="absolute top-3 right-3 p-2 text-white/20 hover:text-white/60 transition-colors z-10"
 									title="Copy to clipboard"
 								>
 									{copied === "sdk" ? (
-										<Check className="w-4 h-4" />
+										<Check className="w-4 h-4 text-primary" />
 									) : (
 										<Copy className="w-4 h-4" />
 									)}
@@ -569,7 +587,7 @@ print(response)`,
 				{/* ── Use it with your agent ── */}
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
-						<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
+						<h2 id="use-it-with-your-agent" className="text-3xl md:text-5xl font-bold tracking-tighter mb-4 scroll-mt-20">
 							use it with your agent
 						</h2>
 						<p className="text-muted-foreground mb-8">
@@ -586,7 +604,7 @@ print(response)`,
 										key={tab.key}
 										className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors ${
 											activeAgentTab === tab.key
-												? "text-primary bg-primary/5 border-b-2 border-primary"
+												? "text-[#ff00ff] bg-[#ff00ff]/5 border-b-2 border-[#ff00ff]"
 												: "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
 										}`}
 										onClick={() => setActiveAgentTab(tab.key)}
@@ -607,10 +625,10 @@ print(response)`,
 											<div className="relative p-4">
 												<button
 													onClick={() => handleCopy(`model:\n  default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"\n  provider: "custom"\n  base_url: "http://localhost:8000/v1"\n  api_key: "-"`, "hermes")}
-													className="absolute top-3 right-3 p-2 text-muted-foreground hover:text-primary transition-colors z-10"
+													className="absolute top-3 right-3 p-2 text-white/20 hover:text-white/60 transition-colors z-10"
 													title="Copy to clipboard"
 												>
-													{copied === "hermes" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+													{copied === "hermes" ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
 												</button>
 												<SdkCodeBlock code={`model:
   default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"
@@ -628,7 +646,6 @@ print(response)`,
 												onClick={() => handleCopy("hermes config set model.base_url http://localhost:8000/v1", "hermes-cli")}
 												className="w-full flex items-center gap-3 text-left cursor-pointer group"
 											>
-												<span className="text-primary/50 font-mono text-sm select-none">$</span>
 												<code className="font-mono text-sm text-white">hermes config set model.base_url http://localhost:8000/v1</code>
 												<span className="ml-auto shrink-0">
 													{copied === "hermes-cli" ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors" />}
@@ -649,7 +666,7 @@ print(response)`,
 				<section className="py-20 md:py-28 relative overflow-hidden">
 					<div className="container mx-auto px-4 relative z-10">
 						<div className="max-w-4xl">
-							<h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-12">
+							<h2 id="api-reference" className="text-3xl md:text-5xl font-bold tracking-tighter mb-12 scroll-mt-20">
 								API reference
 							</h2>
 
@@ -695,7 +712,7 @@ print(response)`,
 									params: [],
 								},
 								{
-									method: "POST", path: "/v1/audio/transcriptions", desc: "Speech-to-text via Whisper",
+									method: "POST", path: "/v1/audio/transcriptions", desc: "Speech-to-text",
 									params: [
 										{ name: "file", type: "binary", required: true, desc: "Audio file to transcribe" },
 										{ name: "language", type: "string", required: false, desc: "Language code (e.g. en, de)" },
