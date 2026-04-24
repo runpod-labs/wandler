@@ -1,5 +1,12 @@
 # wandler
 
+## 2.6.0
+
+### Minor Changes
+
+- 312ef11: Use the standard HuggingFace cache directory (`~/.cache/huggingface`) instead of `node_modules/`. Models are now persisted across reinstalls, `npx` runs, and fresh checkouts. Respects `HF_HOME` and `XDG_CACHE_HOME` environment variables. Override with `WANDLER_CACHE_DIR` or `--cache-dir`.
+- a9f2a7b: Add OpenAI Responses API endpoint (`/v1/responses`) with full support for text generation, streaming with named SSE events, and function calling. This enables `provider("model")` in the Vercel AI SDK v6 without needing `.chat()`.
+
 ## 2.5.0
 
 ### Minor Changes
