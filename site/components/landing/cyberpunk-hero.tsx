@@ -108,6 +108,9 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
       {/* Centered content */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
         <div className="relative flex flex-col items-center w-full max-w-3xl mx-auto px-4">
+          {/* Frame: backdrop filter on the video behind it (sits behind content, under brackets) */}
+          <div className="absolute -top-8 -left-2 -right-2 -bottom-8 sm:-top-10 sm:-left-8 sm:-right-8 sm:-bottom-10 md:-top-12 md:-left-12 md:-right-12 md:-bottom-12 lg:-left-[141px] lg:-right-[141px] backdrop-blur-sm backdrop-brightness-75 backdrop-saturate-150 pointer-events-none z-0" />
+
           {/* Viewfinder brackets */}
           <div className="absolute -top-8 -left-2 sm:-top-10 sm:-left-8 md:-top-12 md:-left-12 lg:-left-[141px] w-6 h-6 border-t border-l border-white/20 pointer-events-none z-20" />
           <div className="absolute -top-8 -right-2 sm:-top-10 sm:-right-8 md:-top-12 md:-right-12 lg:-right-[141px] w-6 h-6 border-t border-r border-white/20 pointer-events-none z-20" />
@@ -120,13 +123,13 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
             alt="wandler"
             width={700}
             height={180}
-            className="w-[260px] sm:w-[400px] md:w-[600px] lg:w-[950px] max-w-none h-auto"
+            className="relative z-10 w-[320px] sm:w-[400px] md:w-[600px] lg:w-[950px] max-w-none h-auto"
             priority
           />
 
           {/* Identity text */}
-          <div className="text-center space-y-6 mt-6">
-            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-tight">
+          <div className="relative z-10 flex flex-col items-center space-y-10 mt-6">
+            <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight text-center">
               <a
                 href="https://github.com/huggingface/transformers.js"
                 target="_blank"
@@ -137,14 +140,16 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
               </a>{" "}
               <span className="text-white/80 font-light">inference server</span>
             </p>
-            <p className="text-xs md:text-sm text-white/30 tracking-[0.2em] uppercase font-mono">
-              OpenAI-compatible API{" \u00b7 "}Mac, Linux & Windows
-            </p>
+            <div className="px-6 py-3 rounded-full border border-white/15 bg-black/40 backdrop-blur-sm">
+              <p className="text-sm sm:text-base text-white/70 leading-relaxed text-left max-w-[340px]">
+                run open-weight models on mac, linux &amp; win via an OpenAI-compatible api, built in ts
+              </p>
+            </div>
           </div>
 
           {/* Quickstart commands */}
           {children && (
-            <div className="w-full space-y-10 mt-14">
+            <div className="relative z-10 w-full sm:max-w-xl mx-auto space-y-10 mt-14">
               {children}
             </div>
           )}
