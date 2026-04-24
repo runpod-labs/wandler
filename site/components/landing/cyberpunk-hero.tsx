@@ -112,10 +112,10 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
           <div className="absolute -top-8 -left-2 -right-2 -bottom-8 sm:-top-10 sm:-left-8 sm:-right-8 sm:-bottom-10 md:-top-12 md:-left-12 md:-right-12 md:-bottom-12 lg:-left-[141px] lg:-right-[141px] backdrop-blur-sm backdrop-brightness-75 backdrop-saturate-150 pointer-events-none z-0" />
 
           {/* Viewfinder brackets */}
-          <div className="absolute -top-8 -left-2 sm:-top-10 sm:-left-8 md:-top-12 md:-left-12 lg:-left-[141px] w-6 h-6 border-t border-l border-white/20 pointer-events-none z-20" />
-          <div className="absolute -top-8 -right-2 sm:-top-10 sm:-right-8 md:-top-12 md:-right-12 lg:-right-[141px] w-6 h-6 border-t border-r border-white/20 pointer-events-none z-20" />
-          <div className="absolute -bottom-8 -left-2 sm:-bottom-10 sm:-left-8 md:-bottom-12 md:-left-12 lg:-left-[141px] w-6 h-6 border-b border-l border-white/20 pointer-events-none z-20" />
-          <div className="absolute -bottom-8 -right-2 sm:-bottom-10 sm:-right-8 md:-bottom-12 md:-right-12 lg:-right-[141px] w-6 h-6 border-b border-r border-white/20 pointer-events-none z-20" />
+          <div className="absolute -top-[40px] -left-[16px] sm:-top-[48px] sm:-left-[40px] md:-top-[56px] md:-left-[56px] lg:-left-[149px] w-6 h-6 border-t border-l border-white/20 pointer-events-none z-20" />
+          <div className="absolute -top-[40px] -right-[16px] sm:-top-[48px] sm:-right-[40px] md:-top-[56px] md:-right-[56px] lg:-right-[149px] w-6 h-6 border-t border-r border-white/20 pointer-events-none z-20" />
+          <div className="absolute -bottom-[40px] -left-[16px] sm:-bottom-[48px] sm:-left-[40px] md:-bottom-[56px] md:-left-[56px] lg:-left-[149px] w-6 h-6 border-b border-l border-white/20 pointer-events-none z-20" />
+          <div className="absolute -bottom-[40px] -right-[16px] sm:-bottom-[48px] sm:-right-[40px] md:-bottom-[56px] md:-right-[56px] lg:-right-[149px] w-6 h-6 border-b border-r border-white/20 pointer-events-none z-20" />
 
           {/* Logo */}
           <Image
@@ -140,11 +140,9 @@ export function CyberpunkHero({ children }: { children?: React.ReactNode }) {
               </a>{" "}
               <span className="text-white/80 font-light">inference server</span>
             </p>
-            <div className="px-6 py-3 rounded-full border border-white/15 bg-black/40 backdrop-blur-sm">
-              <p className="text-sm sm:text-base text-white/70 leading-relaxed text-left max-w-[340px]">
-                run open-weight models on mac, linux &amp; win via an OpenAI-compatible api, built in ts
-              </p>
-            </div>
+            <p className="max-w-[520px] text-[18px] sm:text-[21.7px] text-white/58 font-light leading-relaxed tracking-tight text-center">
+              use open-weight models on mac, linux &amp; win via an OpenAI-compatible api, built in TypeScript
+            </p>
           </div>
 
           {/* Quickstart commands */}

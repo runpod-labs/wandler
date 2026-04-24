@@ -365,7 +365,7 @@ print(response)`,
 											key={tab}
 											className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors ${
 												activeSetupTab === tab
-													? "text-[#ff00ff] bg-[#ff00ff]/5 border-b-2 border-[#ff00ff]"
+													? "text-white bg-white/[0.06] border-b-2 border-white"
 													: "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
 											}`}
 											onClick={() => setActiveSetupTab(tab)}
@@ -454,7 +454,7 @@ print(response)`,
 
 						<h3 id="benchmarks" className="text-xl md:text-2xl font-bold tracking-tight mb-2 scroll-mt-20">benchmarks</h3>
 						<p className="text-muted-foreground mb-6 font-mono text-sm">
-							WebGPU · q4 quantization · 10 runs per scenario
+							WebGPU · q4 quantization · 10 runs per scenario · tested on m3 pro 18gb
 						</p>
 
 						<div className="border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
@@ -552,7 +552,7 @@ print(response)`,
 										key={tab}
 										className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors ${
 											activeTab === tab
-												? "text-[#ff00ff] bg-[#ff00ff]/5 border-b-2 border-[#ff00ff]"
+												? "text-white bg-white/[0.06] border-b-2 border-white"
 												: "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
 										}`}
 										onClick={() => setActiveTab(tab)}
@@ -604,7 +604,7 @@ print(response)`,
 										key={tab.key}
 										className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors ${
 											activeAgentTab === tab.key
-												? "text-[#ff00ff] bg-[#ff00ff]/5 border-b-2 border-[#ff00ff]"
+												? "text-white bg-white/[0.06] border-b-2 border-white"
 												: "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
 										}`}
 										onClick={() => setActiveAgentTab(tab.key)}
