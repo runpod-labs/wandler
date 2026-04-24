@@ -194,13 +194,13 @@ export function LandingPage() {
 
 const client = new OpenAI({
   baseURL: "http://localhost:8000/v1",
-  // placeholder required by the SDK when wandler is running without --api-key
-  apiKey: "-",
+  // replace with your --api-key value if you started wandler with one
+  apiKey: "changeme",
 });
 
 const res = await client.chat.completions.create({
   model: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
-  messages: [{ role: "user", content: "Hello!" }],
+  messages: [{ role: "user", content: "What is the capital of Germany" }],
   stream: true,
 });
 
@@ -214,15 +214,15 @@ for await (const chunk of res) {
 			code: `import { generateText, streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 
-const provider = createOpenAI({
+const wandler = createOpenAI({
   baseURL: "http://localhost:8000/v1",
-  // placeholder required by the SDK when wandler is running without --api-key
-  apiKey: "-",
+  // replace with your --api-key value if you started wandler with one
+  apiKey: "changeme",
 });
 
 const { text } = await generateText({
-  model: provider.chat("LiquidAI/LFM2.5-1.2B-Instruct-ONNX"),
-  prompt: "Hello!",
+  model: wandler.chat("LiquidAI/LFM2.5-1.2B-Instruct-ONNX"),
+  prompt: "What is the capital of Germany",
 });
 
 console.log(text);`,
@@ -236,12 +236,12 @@ const model = new ChatOpenAI({
   modelName: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
   configuration: {
     baseURL: "http://localhost:8000/v1",
-    // placeholder required by the client when wandler is running without --api-key
-    apiKey: "-",
+    // replace with your --api-key value if you started wandler with one
+    apiKey: "changeme",
   },
 });
 
-const response = await model.invoke("Hello!");
+const response = await model.invoke("What is the capital of Germany");
 console.log(response.content);`,
 		},
 		llamaindex: {
@@ -252,11 +252,11 @@ console.log(response.content);`,
 llm = OpenAILike(
     model="LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
     api_base="http://localhost:8000/v1",
-    # placeholder required by the client when wandler is running without --api-key
-    api_key="-",
+    # replace with your --api-key value if you started wandler with one
+    api_key="changeme",
 )
 
-response = llm.complete("Hello!")
+response = llm.complete("What is the capital of Germany")
 print(response)`,
 		},
 		curl: {
@@ -266,7 +266,7 @@ print(response)`,
   -H "Content-Type: application/json" \\
   -d '{
     "model": "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
-    "messages": [{"role": "user", "content": "What is the capital of Germany? Answer with just the city name."}]
+    "messages": [{"role": "user", "content": "What is the capital of Germany"}]
   }'`,
 		},
 	};
