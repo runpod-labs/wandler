@@ -259,3 +259,43 @@ export async function collectSSE(
 
   return { status: res.status, events };
 }
+
+export interface NamedSSEEvent {
+  event: string;
+  data: unknown;
+}
+
+/**
+ * Collect named SSE events (used by the Responses API).
+ * Each event has `event: <type>\ndata: <json>\n\n`.
+ */
+export async function collectNamedSSE(
+  url: string,
+  body: unknown,
+): Promise<{ status: number; events: NamedSSEEvent[] }> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const text = await res.text();
+  const events: NamedSSEEvent[] = [];
+  let currentEvent = "";
+
+  for (const line of text.split("\n")) {
+    if (line.startsWith("event: ") || line.startsWith("event:")) {
+      currentEvent = line.startsWith("event: ") ? line.slice(7) : line.slice(6);
+    } else if (line.startsWith("data: ") || line.startsWith("data:")) {
+      const data = line.startsWith("data: ") ? line.slice(6) : line.slice(5);
+      try {
+        events.push({ event: currentEvent, data: JSON.parse(data) });
+      } catch {
+        // skip
+      }
+      currentEvent = "";
+    }
+  }
+
+  return { status: res.status, events };
+}

@@ -221,7 +221,7 @@ const wandler = createOpenAI({
 });
 
 const { text } = await generateText({
-  model: wandler.chat("LiquidAI/LFM2.5-1.2B-Instruct-ONNX"),
+  model: wandler("LiquidAI/LFM2.5-1.2B-Instruct-ONNX"),
   prompt: "What is the capital of Germany",
 });
 
@@ -438,8 +438,8 @@ print(response)`,
 							</div>
 
 							<p className="text-white/90 text-base leading-relaxed">
-								precision suffixes: <InlineCode>q4</InlineCode> (default),
-								{" "}
+								precision suffixes: <InlineCode>q1</InlineCode>,{" "}
+								<InlineCode>q2</InlineCode>, <InlineCode>q4</InlineCode> (default),{" "}
 								<InlineCode>q8</InlineCode>, <InlineCode>fp16</InlineCode>, <InlineCode>fp32</InlineCode>.
 							</p>
 						</div>
@@ -705,6 +705,23 @@ hermes config set model.base_url http://localhost:8000/v1
 							</h2>
 
 							{([
+								{
+									method: "POST", path: "/v1/responses", desc: "Create a model response with streaming, tool calling, and multi-turn input",
+									params: [
+										{ name: "input", type: "string | array", required: true, desc: "Input text or array of message/function_call/function_call_output items" },
+										{ name: "instructions", type: "string", required: false, desc: "System-level instructions (replaces system message)" },
+										{ name: "temperature", type: "float", required: false, desc: "Sampling temperature, 0-2. Default 0.7" },
+										{ name: "top_p", type: "float", required: false, desc: "Nucleus sampling threshold. Default 0.95" },
+										{ name: "max_output_tokens", type: "int", required: false, desc: "Maximum tokens to generate" },
+										{ name: "stream", type: "boolean", required: false, desc: "Enable named SSE event streaming. Default false" },
+										{ name: "tools", type: "array", required: false, desc: 'Function tools: {type, name, description, parameters}', note: "Flat format — name and parameters are top-level, not nested under a function key." },
+										{ name: "tool_choice", type: "string | object", required: false, desc: '"auto", "none", "required", or {type: "function", name: "..."}' },
+										{ name: "text", type: "object", required: false, desc: '{"format": {"type": "json_object"}} for JSON mode' },
+										{ name: "top_k", type: "int", required: false, desc: "Top-k sampling" },
+										{ name: "min_p", type: "float", required: false, desc: "Minimum probability threshold" },
+										{ name: "repetition_penalty", type: "float", required: false, desc: "Repetition penalty, > 1.0 to penalize" },
+									],
+								},
 								{
 									method: "POST", path: "/v1/chat/completions", desc: "Chat completion with streaming and tool calling",
 									params: [

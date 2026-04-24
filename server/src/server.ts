@@ -5,6 +5,7 @@ import { serve } from "@hono/node-server";
 import type { ServerConfig } from "./config.js";
 import type { LoadedModels } from "./models/manager.js";
 import { chatCompletions } from "./routes/chat.js";
+import { responses } from "./routes/responses.js";
 import { completions } from "./routes/completions.js";
 import { embeddings } from "./routes/embeddings.js";
 import { listModels, getModel } from "./routes/models.js";
@@ -54,6 +55,7 @@ export function createApp(config: ServerConfig, models: LoadedModels) {
   // OpenAI-compatible endpoints
   app.get("/v1/models", listModels);
   app.get("/v1/models/:id{.+}", getModel);
+  app.post("/v1/responses", responses);
   app.post("/v1/chat/completions", chatCompletions);
   app.post("/v1/completions", completions);
   app.post("/v1/embeddings", embeddings);
