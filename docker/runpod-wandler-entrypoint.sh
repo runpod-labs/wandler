@@ -23,8 +23,19 @@ if [ "$#" -gt 0 ]; then
   exec "$@"
 fi
 
-exec wandler \
+set +e
+wandler \
   --llm "${WANDLER_LLM:-onnx-community/gemma-4-E4B-it-ONNX:q4}" \
   --device "${WANDLER_DEVICE:-webgpu}" \
   --host "${WANDLER_HOST:-0.0.0.0}" \
   --port "${WANDLER_PORT:-8000}"
+status=$?
+set -e
+
+echo "Wandler exited with status ${status}."
+if [ "${WANDLER_KEEP_ALIVE_ON_EXIT:-true}" = "true" ]; then
+  echo "Keeping container alive for RunPod SSH debugging. Set WANDLER_KEEP_ALIVE_ON_EXIT=false to exit instead."
+  sleep infinity
+fi
+
+exit "${status}"
