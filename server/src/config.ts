@@ -28,6 +28,9 @@ export interface ServerConfig {
   logLevel: string;
   hfToken: string;
   cacheDir: string;
+  prefillChunkSize: string;
+  warmupTokens: number;
+  warmupMaxNewTokens: number;
 }
 
 /**
@@ -100,5 +103,20 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     logLevel: env.WANDLER_LOG_LEVEL || "info",
     hfToken: env.HF_TOKEN || env.WANDLER_HF_TOKEN || "",
     cacheDir: env.WANDLER_CACHE_DIR || defaultHfCacheDir(env),
+    prefillChunkSize: env.WANDLER_PREFILL_CHUNK_SIZE || "1024",
+    warmupTokens: parseNonNegativeInt(env.WANDLER_WARMUP_TOKENS, 0),
+    warmupMaxNewTokens: parsePositiveInt(env.WANDLER_WARMUP_MAX_NEW_TOKENS, 8),
   };
+}
+
+function parseNonNegativeInt(raw: string | undefined, fallback: number): number {
+  if (raw == null || raw === "") return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (raw == null || raw === "") return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }

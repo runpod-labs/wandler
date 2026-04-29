@@ -201,6 +201,9 @@ export function createTestConfig(
     logLevel: "info",
     hfToken: "",
     cacheDir: "",
+    prefillChunkSize: "1024",
+    warmupTokens: 0,
+    warmupMaxNewTokens: 8,
     ...overrides,
   };
 }

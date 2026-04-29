@@ -6,7 +6,7 @@ import type {
   CompletionRequest,
   CompletionResponse,
 } from "../types/openai.js";
-import { buildGenOpts } from "../generation/options.js";
+import { buildGenOpts, stripInternalGenOpts } from "../generation/options.js";
 import { makeId } from "../utils/http.js";
 import { requestStarted, trackFailedRequest, trackRequest } from "./admin.js";
 
@@ -60,7 +60,8 @@ export async function completions(c: Context<AppEnv>) {
     const prompts = Array.isArray(params.prompt) ? params.prompt : [params.prompt];
     const id = makeId("cmpl");
     const created = Math.floor(Date.now() / 1000);
-    const genOpts = buildGenOpts(params, models.tokenizer!, config.maxTokens, models.maxContextLength);
+    const genOpts = buildGenOpts(params, models.tokenizer!, config.maxTokens, models.maxContextLength, config.prefillChunkSize);
+    const transformersGenOpts = stripInternalGenOpts(genOpts);
 
     // Streaming for single prompt
     if (params.stream && prompts.length === 1) {
@@ -88,7 +89,7 @@ export async function completions(c: Context<AppEnv>) {
             },
           );
 
-          await models.model!.generate({ ...inputs, ...genOpts, streamer });
+          await models.model!.generate({ ...inputs, ...transformersGenOpts, streamer });
 
           const finalChunk: CompletionChunk = {
             id, object: "text_completion", created, model: modelId,
@@ -115,7 +116,7 @@ export async function completions(c: Context<AppEnv>) {
     for (let i = 0; i < prompts.length; i++) {
       const prompt = prompts[i]!;
       const inputs = models.tokenizer!(prompt, { return_tensors: "pt" });
-      const outputIds = await models.model!.generate({ ...inputs, ...genOpts });
+      const outputIds = await models.model!.generate({ ...inputs, ...transformersGenOpts });
 
       const promptTokens = inputs.input_ids.dims[1]!;
       const completionTokens = outputIds.dims[1]! - promptTokens;

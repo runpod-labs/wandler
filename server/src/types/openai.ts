@@ -399,4 +399,5 @@ export interface GenerationOptions {
   repetition_penalty?: number;
   no_repeat_ngram_size?: number;
   eos_token_id?: number[];
+  prefill_chunk_size?: string;
 }

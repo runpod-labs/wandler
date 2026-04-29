@@ -7,6 +7,7 @@ import type {
   Tool,
 } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
+import { stripInternalGenOpts } from "./options.js";
 import { getImageUrls } from "../utils/content.js";
 import {
   elapsedMs,
@@ -102,8 +103,7 @@ async function disposeUnusedOutputs(outputs: Record<string, unknown>, cache: Wan
   );
 }
 
-function readPrefillChunkSize(promptTokens: number): number | null {
-  const raw = process.env.WANDLER_PREFILL_CHUNK_SIZE ?? "2048";
+function readPrefillChunkSize(promptTokens: number, raw = process.env.WANDLER_PREFILL_CHUNK_SIZE ?? "1024"): number | null {
   if (["0", "false", "off", "no"].includes(raw.toLowerCase())) return null;
   const chunkSize = Number.parseInt(raw, 10);
   if (!Number.isFinite(chunkSize) || chunkSize < 2 || chunkSize >= promptTokens) return null;
@@ -233,7 +233,7 @@ export async function generate(
       const generateStart = nowMs();
       let outputIds: { dims: number[]; slice(...args: unknown[]): unknown };
       try {
-        outputIds = await models.model!.generate({ ...inputs, ...genOpts });
+        outputIds = await models.model!.generate({ ...inputs, ...stripInternalGenOpts(genOpts) });
       } catch (error) {
         const promptTokens = inputIds.dims[1]!;
         const memoryAfterGenerate = memorySnapshot();
@@ -353,7 +353,8 @@ export async function generate(
           ),
         }
       : genOpts;
-    const chunkSize = readPrefillChunkSize(promptTokens);
+    const chunkSize = readPrefillChunkSize(promptTokens, effectiveGenOpts.prefill_chunk_size);
+    const transformersGenOpts = stripInternalGenOpts(effectiveGenOpts);
     if (chunkSize) {
       const prefill = await prefillPromptCache(
         models.model,
@@ -368,10 +369,10 @@ export async function generate(
       outputIds = await models.model!.generate({
         input_ids: prefill.lastTokenInputIds,
         past_key_values: chunkedCache,
-        ...effectiveGenOpts,
+        ...transformersGenOpts,
       });
     } else {
-      outputIds = await models.model!.generate({ ...inputs, ...effectiveGenOpts });
+      outputIds = await models.model!.generate({ ...inputs, ...transformersGenOpts });
     }
   } catch (error) {
     if (error instanceof GenerationExecutionError) {

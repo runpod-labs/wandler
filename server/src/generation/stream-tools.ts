@@ -2,6 +2,7 @@ import { TextStreamer } from "@huggingface/transformers";
 import type { LoadedModels } from "../models/manager.js";
 import type { ChatMessage, GenerationOptions, Tool, ToolCall } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
+import { stripInternalGenOpts } from "./options.js";
 import { GenerationExecutionError, memorySnapshot, nowMs, elapsedMs, estimateFullLogitsMb, estimateAttentionScoresMb, serializedToolsChars, logGenerationProfile } from "./profile.js";
 import { parseToolCalls } from "../tools/parser.js";
 
@@ -185,7 +186,7 @@ export async function generateStreamWithTools(
     },
   );
 
-  await models.model!.generate({ ...inputs, ...effectiveGenOpts, streamer });
+  await models.model!.generate({ ...inputs, ...stripInternalGenOpts(effectiveGenOpts), streamer });
 
   if (toolCalls) {
     await handlers.onToolCalls(toolCalls);

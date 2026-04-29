@@ -422,6 +422,9 @@ print(response)`,
 									{ flag: "--timeout", arg: "<ms>", desc: "Request timeout in milliseconds.", meta: <>default: <InlineCode>120000</InlineCode></> },
 									{ flag: "--log-level", arg: "<level>", desc: "Log verbosity.", meta: <>default: <InlineCode>info</InlineCode> · options: <InlineCode>debug</InlineCode>, <InlineCode>info</InlineCode>, <InlineCode>warn</InlineCode>, <InlineCode>error</InlineCode></> },
 									{ flag: "--cache-dir", arg: "<path>", desc: "Model cache directory.", meta: <>default: <InlineCode>~/.cache/huggingface</InlineCode> (standard HuggingFace cache, also respects <InlineCode>HF_HOME</InlineCode>)</> },
+									{ flag: "--prefill-chunk-size", arg: "<n>", desc: "Chunk size for long-prompt prefill.", meta: <>default: <InlineCode>1024</InlineCode> · use <InlineCode>0</InlineCode> or <InlineCode>off</InlineCode> to disable</> },
+									{ flag: "--warmup-tokens", arg: "<n>", desc: "Approximate prompt tokens to run once before serving.", meta: <>default: <InlineCode>0</InlineCode></> },
+									{ flag: "--warmup-max-new-tokens", arg: "<n>", desc: "Max new tokens for startup warmup.", meta: <>default: <InlineCode>8</InlineCode></> },
 								] as const).flatMap((o) => [
 									<div key={`${o.flag}-l`} className="font-mono text-[13px] whitespace-nowrap pt-0.5">
 										<span className="text-[#00ffff]">{o.flag}</span>
