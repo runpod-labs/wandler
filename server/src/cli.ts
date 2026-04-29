@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "./config.js";
+import { warmupLLM } from "./generation/warmup.js";
 import { loadModels } from "./models/manager.js";
 import { startServer } from "./server.js";
 
@@ -45,6 +46,8 @@ program
   .option("--log-level <level>", "debug, info, warn, error")
   .option("--hf-token <token>", "HuggingFace token for gated models")
   .option("--cache-dir <path>", "Model cache directory (default: ~/.cache/huggingface)")
+  .option("--warmup-tokens <n>", "Approximate prompt tokens to run once before serving")
+  .option("--warmup-max-new-tokens <n>", "Max new tokens for startup warmup")
   .action(async (opts) => {
     const config = loadConfig({
       WANDLER_LLM: opts.llm ?? process.env.WANDLER_LLM ?? process.env.MODEL_ID,
@@ -61,6 +64,8 @@ program
       WANDLER_LOG_LEVEL: opts.logLevel ?? process.env.WANDLER_LOG_LEVEL,
       HF_TOKEN: opts.hfToken ?? process.env.HF_TOKEN,
       WANDLER_CACHE_DIR: opts.cacheDir ?? process.env.WANDLER_CACHE_DIR,
+      WANDLER_WARMUP_TOKENS: opts.warmupTokens ?? process.env.WANDLER_WARMUP_TOKENS,
+      WANDLER_WARMUP_MAX_NEW_TOKENS: opts.warmupMaxNewTokens ?? process.env.WANDLER_WARMUP_MAX_NEW_TOKENS,
       HF_HOME: process.env.HF_HOME,
       XDG_CACHE_HOME: process.env.XDG_CACHE_HOME,
     });
@@ -71,6 +76,13 @@ program
     }
 
     const models = await loadModels(config);
+    const warmup = await warmupLLM(config, models);
+    if (warmup.enabled) {
+      const suffix = warmup.error
+        ? `failed after ${warmup.totalMs}ms: ${warmup.error}`
+        : `completed in ${warmup.totalMs}ms (${warmup.promptTokens} prompt tokens)`;
+      console.log(`[wandler] Warmup ${suffix}`);
+    }
     startServer(config, models);
 
     console.log(`[wandler] http://${config.host}:${config.port}`);
