@@ -5,22 +5,22 @@ This image is for testing Wandler with ONNX Runtime Node WebGPU on RunPod.
 Build:
 
 ```bash
-docker build -f docker/runpod-webgpu.Dockerfile -t ghcr.io/runpod-labs/wandler-webgpu:dev .
-docker push ghcr.io/runpod-labs/wandler-webgpu:dev
+docker build -f docker/runpod-webgpu.Dockerfile -t runpod/wandler-webgpu:dev .
+docker push runpod/wandler-webgpu:dev
 ```
 
 Build on GitHub with Blacksmith:
 
 ```bash
-gh workflow run release.yml -f image_tag=dev -f push_webgpu_image=true
+gh workflow run webgpu-image.yml -f image_tag=dev -f push_webgpu_image=true
 ```
 
 Default pushed image:
 
 ```bash
-ghcr.io/<github-owner>/wandler-webgpu:dev
-ghcr.io/<github-owner>/wandler-webgpu:sha-<commit>
-ghcr.io/<github-owner>/wandler-webgpu:latest # only on main
+runpod/wandler-webgpu:dev
+runpod/wandler-webgpu:sha-<commit>
+runpod/wandler-webgpu:latest # only on main
 ```
 
 RunPod pod requirements:
