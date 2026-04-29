@@ -1,5 +1,17 @@
 # wandler
 
+## 2.6.1
+
+### Patch Changes
+
+- e3b8b03: Enforce `WANDLER_MAX_CONCURRENT` for generation endpoints, reject prompts that exceed the loaded model context before generation, and fix the RunPod image to run the built repo server with cuDNN available for CUDA.
+- fa81104: Publish the RunPod WebGPU image to public Docker Hub, preserve RunPod SSH startup in the image entrypoint, and avoid baking NVIDIA driver libraries that can mismatch the host driver.
+- e7cc59f: Fix Gemma long-context generation memory usage by forcing generation logits to the final token, adding chunked prefill, and exposing generation memory diagnostics.
+
+  Adds RunPod WebGPU image build and verification tooling for validating the WebGPU backend.
+
+- 4b3c509: Add optional LLM startup warmup to reduce first-request CUDA/WebGPU setup latency, and expose prefill chunk sizing through the CLI.
+
 ## 2.6.0
 
 ### Minor Changes
