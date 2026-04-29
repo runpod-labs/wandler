@@ -34,6 +34,7 @@ model
 
 program
   .option("-l, --llm <id>", "LLM model")
+  .option("--backend <name>", "LLM backend: wandler, transformersjs")
   .option("-e, --embedding <id>", "Embedding model")
   .option("-s, --stt <id>", "STT model")
   .option("-d, --device <type>", "Device: auto, cpu, cuda, coreml, dml, webgpu, wasm")
@@ -57,6 +58,7 @@ program
   .action(async (opts) => {
     const config = loadConfig({
       WANDLER_LLM: opts.llm ?? process.env.WANDLER_LLM ?? process.env.MODEL_ID,
+      WANDLER_BACKEND: opts.backend ?? process.env.WANDLER_BACKEND,
       WANDLER_STT: opts.stt ?? process.env.WANDLER_STT ?? process.env.STT_MODEL_ID,
       WANDLER_EMBEDDING: opts.embedding ?? process.env.WANDLER_EMBEDDING ?? process.env.EMBEDDING_MODEL_ID,
       WANDLER_DEVICE: opts.device ?? process.env.WANDLER_DEVICE ?? process.env.DEVICE,

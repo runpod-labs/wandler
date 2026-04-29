@@ -190,6 +190,7 @@ export function createTestConfig(
     host: "127.0.0.1",
     modelId: "mock-model/test",
     modelDtype: "q4",
+    backend: "wandler",
     device: "cpu",
     sttModelId: "mock-stt/test",
     sttDtype: "q4",

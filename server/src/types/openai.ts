@@ -222,6 +222,7 @@ export interface ModelListResponse {
 export interface HealthResponse {
   status: "ok";
   engine: string;
+  backend: "wandler" | "transformersjs";
   device: string;
   models: Record<string, string>;
 }

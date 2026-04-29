@@ -8,6 +8,7 @@ export interface ServerConfig {
   host: string;
   modelId: string;
   modelDtype: string;
+  backend: "wandler" | "transformersjs";
   device: string;
   sttModelId: string;
   sttDtype: string;
@@ -91,6 +92,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     host: env.WANDLER_HOST || "127.0.0.1",
     modelId: llm.id,
     modelDtype: llm.dtype,
+    backend: parseBackend(env.WANDLER_BACKEND),
     device: env.WANDLER_DEVICE || env.DEVICE || "auto",
     sttModelId: stt.id,
     sttDtype: stt.dtype,
@@ -109,6 +111,11 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     warmupTokens: parseNonNegativeInt(env.WANDLER_WARMUP_TOKENS, 0),
     warmupMaxNewTokens: parsePositiveInt(env.WANDLER_WARMUP_MAX_NEW_TOKENS, 8),
   };
+}
+
+function parseBackend(raw: string | undefined): ServerConfig["backend"] {
+  if (raw === "transformersjs") return "transformersjs";
+  return "wandler";
 }
 
 function parseNonNegativeInt(raw: string | undefined, fallback: number): number {

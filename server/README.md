@@ -50,6 +50,7 @@ Usage:
 
 Model:
   -l, --llm <id>              LLM model (default: onnx-community/gemma-4-E4B-it-ONNX:q4)
+      --backend <name>        LLM backend: wandler, transformersjs (default: wandler)
   -e, --embedding <id>        Embedding model (disabled by default)
   -s, --stt <id>              STT model (default: onnx-community/whisper-tiny:q4)
       --no-stt                Disable STT
@@ -81,6 +82,7 @@ Every CLI flag has a corresponding environment variable:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `WANDLER_LLM` | onnx-community/gemma-4-E4B-it-ONNX:q4 | LLM model with precision |
+| `WANDLER_BACKEND` | wandler | LLM backend: `wandler` for Wandler's serving layer, `transformersjs` for the direct baseline |
 | `WANDLER_STT` | onnx-community/whisper-tiny:q4 | Speech-to-text model |
 | `WANDLER_EMBEDDING` | — | Embedding model (disabled by default) |
 | `WANDLER_DEVICE` | webgpu | Device: webgpu, cpu, wasm |

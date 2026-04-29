@@ -409,6 +409,7 @@ print(response)`,
 							<div className="grid grid-cols-1 md:grid-cols-[max-content_1fr] gap-x-10 gap-y-6 mb-8">
 								{([
 									{ flag: "--llm", arg: "<id>", desc: "LLM model.", meta: <>format: <InlineCode>org/repo[:precision]</InlineCode></> },
+									{ flag: "--backend", arg: "<name>", desc: "LLM backend.", meta: <>default: <InlineCode>wandler</InlineCode> · baseline: <InlineCode>transformersjs</InlineCode></> },
 									{ flag: "--embedding", arg: "<id>", desc: "Embedding model." },
 									{ flag: "--stt", arg: "<id>", desc: "Speech-to-text model." },
 									{ flag: "--device", arg: "<type>", desc: "Inference device.", meta: <>default: <InlineCode>auto</InlineCode> · options: <InlineCode>auto</InlineCode>, <InlineCode>webgpu</InlineCode>, <InlineCode>cpu</InlineCode>, <InlineCode>wasm</InlineCode></> },

@@ -5,6 +5,8 @@ import { bearerAuth } from "hono/bearer-auth";
 import { serve } from "@hono/node-server";
 import type { ServerConfig } from "./config.js";
 import type { LoadedModels } from "./models/manager.js";
+import { createLLMBackend } from "./backends/index.js";
+import type { LLMBackend } from "./backends/index.js";
 import { chatCompletions } from "./routes/chat.js";
 import { responses } from "./routes/responses.js";
 import { completions } from "./routes/completions.js";
@@ -20,6 +22,7 @@ export type AppEnv = {
   Variables: {
     config: ServerConfig;
     models: LoadedModels;
+    backend: LLMBackend;
   };
 };
 
@@ -117,11 +120,13 @@ class RequestLimiter {
 export function createApp(config: ServerConfig, models: LoadedModels) {
   const app = new Hono<AppEnv>();
   const generationLimiter = new RequestLimiter(config.maxConcurrent, config.timeout);
+  const backend = createLLMBackend(config, models);
 
   // Inject config + models into every request context
   app.use("*", async (c, next) => {
     c.set("config", config);
     c.set("models", models);
+    c.set("backend", backend);
     await next();
   });
 

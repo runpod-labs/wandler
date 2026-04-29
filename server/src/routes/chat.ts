@@ -8,10 +8,7 @@ import type {
   GenerationProfile,
   ChatMessage,
 } from "../types/openai.js";
-import { generate } from "../generation/generate.js";
 import { buildGenOpts } from "../generation/options.js";
-import { generateStreamTokens } from "../generation/stream.js";
-import { generateStreamWithTools } from "../generation/stream-tools.js";
 import { getGenerationProfile, getGenerationStatusCode } from "../generation/profile.js";
 import { parseToolCalls } from "../tools/parser.js";
 import { makeId } from "../utils/http.js";
@@ -73,6 +70,7 @@ export async function chatCompletions(c: Context<AppEnv>) {
 
   const config = c.get("config");
   const models = c.get("models");
+  const backend = c.get("backend");
   const modelId = config.modelId;
 
   if (!models.model || !models.tokenizer) {
@@ -116,8 +114,8 @@ export async function chatCompletions(c: Context<AppEnv>) {
           } satisfies ChatCompletionChunk) });
 
           if (params.tools?.length) {
-            const result = await generateStreamWithTools(
-              models, modelId, messages, genOpts, params.tools,
+            const result = await backend.streamChatWithTools(
+              modelId, messages, genOpts, params.tools,
               {
                 onContent: async (delta) => {
                   if (!delta) return;
@@ -137,9 +135,10 @@ export async function chatCompletions(c: Context<AppEnv>) {
             );
             promptTokens = result.promptTokens;
             completionTokens = result.completionTokens;
+            profile = result.profile;
           } else {
-            const result = await generateStreamTokens(
-              models, modelId, messages, genOpts,
+            const result = await backend.streamChat(
+              modelId, messages, genOpts,
               async (token) => {
                 await stream.writeSSE({ data: JSON.stringify({
                   id, object: "chat.completion.chunk", created, model: modelId,
@@ -179,7 +178,7 @@ export async function chatCompletions(c: Context<AppEnv>) {
     }
 
     // Non-streaming: generate the full response, then parse for tool calls.
-    const result = await generate(models, modelId, messages, genOpts, params.tools);
+    const result = await backend.generateChat(modelId, messages, genOpts, params.tools);
     const toolCalls = params.tools?.length ? parseToolCalls(result.text) : null;
 
     const message = toolCalls

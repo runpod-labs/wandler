@@ -48,6 +48,7 @@ describe("loadConfig", () => {
     expect(config.host).toBe("127.0.0.1");
     expect(config.modelId).toBe("");
     expect(config.modelDtype).toBe("q4");
+    expect(config.backend).toBe("wandler");
     expect(config.device).toBe("auto");
     expect(config.sttModelId).toBe("");
     expect(config.sttDtype).toBe("q4");
@@ -90,6 +91,7 @@ describe("loadConfig", () => {
   it("reads WANDLER_ prefixed env vars", () => {
     const config = loadConfig({
       WANDLER_LLM: "my-org/my-model:fp16",
+      WANDLER_BACKEND: "transformersjs",
       WANDLER_PORT: "3000",
       WANDLER_HOST: "0.0.0.0",
       WANDLER_DEVICE: "cpu",
@@ -110,6 +112,7 @@ describe("loadConfig", () => {
     expect(config.host).toBe("0.0.0.0");
     expect(config.modelId).toBe("my-org/my-model");
     expect(config.modelDtype).toBe("fp16");
+    expect(config.backend).toBe("transformersjs");
     expect(config.device).toBe("cpu");
     expect(config.apiKey).toBe("secret");
     expect(config.corsOrigin).toBe("https://example.com");
