@@ -35,7 +35,8 @@ COPY docker ./docker
 COPY README.md ./README.md
 
 RUN npm run build --workspace server \
-  && chmod +x /opt/wandler/docker/webgpu-smoke.sh
+  && chmod +x /opt/wandler/docker/webgpu-smoke.sh \
+  && chmod +x /opt/wandler/docker/runpod-wandler-entrypoint.sh
 
 EXPOSE 8000
 
@@ -43,5 +44,4 @@ EXPOSE 8000
 #   /opt/wandler/docker/webgpu-smoke.sh
 # Start Wandler:
 #   wandler --llm onnx-community/gemma-4-E4B-it-ONNX:q4 --device webgpu --host 0.0.0.0
-ENTRYPOINT ["/bin/bash", "-lc"]
-CMD ["wandler --llm ${WANDLER_LLM:-onnx-community/gemma-4-E4B-it-ONNX:q4} --device ${WANDLER_DEVICE:-webgpu} --host ${WANDLER_HOST:-0.0.0.0} --port ${WANDLER_PORT:-8000}"]
+ENTRYPOINT ["/opt/wandler/docker/runpod-wandler-entrypoint.sh"]

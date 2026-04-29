@@ -1,0 +1,113 @@
+name: WebGPU Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/webgpu-image.yml"
+      - ".dockerignore"
+      - "docker/**"
+      - "package.json"
+      - "package-lock.json"
+      - "packages/**"
+      - "server/**"
+      - "turbo.json"
+  pull_request:
+    paths:
+      - ".github/workflows/webgpu-image.yml"
+      - ".dockerignore"
+      - "docker/**"
+      - "package.json"
+      - "package-lock.json"
+      - "packages/**"
+      - "server/**"
+      - "turbo.json"
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: WebGPU image tag to publish
+        required: false
+        default: dev
+      push_webgpu_image:
+        description: Push WebGPU image to GHCR
+        required: false
+        type: boolean
+        default: true
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  webgpu-image:
+    name: Build RunPod WebGPU Image
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare image metadata
+        id: image
+        env:
+          IMAGE_TAG: ${{ github.event.inputs.image_tag || 'dev' }}
+        run: |
+          set -euo pipefail
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          image="ghcr.io/${owner}/wandler-webgpu"
+          short_sha="${GITHUB_SHA::12}"
+          push_image=false
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            push_image=true
+          elif [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.push_webgpu_image }}" = "true" ]; then
+            push_image=true
+          fi
+
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+          echo "push=${push_image}" >> "$GITHUB_OUTPUT"
+          {
+            echo "tags<<EOF"
+            echo "${image}:sha-${short_sha}"
+            if [ -n "${IMAGE_TAG}" ]; then
+              echo "${image}:${IMAGE_TAG}"
+            fi
+            if [ "${GITHUB_REF_NAME}" = "main" ]; then
+              echo "${image}:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        if: steps.image.outputs.push == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Blacksmith Docker builder
+        uses: useblacksmith/setup-docker-builder@v1
+        with:
+          max-cache-size-mb: "204800"
+
+      - name: Build image
+        uses: useblacksmith/build-push-action@v2
+        with:
+          context: .
+          file: docker/runpod-webgpu.Dockerfile
+          platforms: linux/amd64
+          push: ${{ steps.image.outputs.push }}
+          tags: ${{ steps.image.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Wandler RunPod WebGPU test image
+
+      - name: Print image
+        run: |
+          echo "Image:"
+          echo "${{ steps.image.outputs.image }}"
+          echo "Tags:"
+          cat <<'EOF'
+          ${{ steps.image.outputs.tags }}
+          EOF
