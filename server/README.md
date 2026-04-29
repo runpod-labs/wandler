@@ -94,7 +94,7 @@ Every CLI flag has a corresponding environment variable:
 | `WANDLER_LOG_LEVEL` | info | Log level |
 | `WANDLER_QUIET` | false | Suppress non-error startup/profile logs |
 | `WANDLER_CACHE_DIR` | — | Model cache directory |
-| `WANDLER_PREFILL_CHUNK_SIZE` | auto | Chunk size for long-prompt prefill; `auto` uses WebGPU=off and other devices=1024; set `0`/`off` to disable |
+| `WANDLER_PREFILL_CHUNK_SIZE` | auto | Chunk size for long-prompt prefill; `auto` uses WebGPU=off up to 4096 prompt tokens and 1024 otherwise; set `0`/`off` to disable |
 | `WANDLER_WARMUP_TOKENS` | 0 | Approximate prompt tokens to run once before serving |
 | `WANDLER_WARMUP_MAX_NEW_TOKENS` | 8 | Max new tokens for startup warmup |
 | `HF_TOKEN` | — | HuggingFace token for gated models |

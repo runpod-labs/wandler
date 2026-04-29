@@ -39,7 +39,7 @@ export async function warmupLLM(config: ServerConfig, models: LoadedModels): Pro
         temperature: 0,
         top_p: 1,
         do_sample: false,
-        prefill_chunk_size: resolvePrefillChunkSize(config.prefillChunkSize, models.device),
+        prefill_chunk_size: resolvePrefillChunkSize(config.prefillChunkSize, models.device, tokenBudget),
       },
     );
     return {

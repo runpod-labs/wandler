@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildGenOpts, FALLBACK_MAX_TOKENS, resolvePrefillChunkSize } from "../../../src/generation/options.js";
+import {
+  buildGenOpts,
+  FALLBACK_MAX_TOKENS,
+  resolvePrefillChunkSize,
+  WEBGPU_FULL_PREFILL_MAX_TOKENS,
+} from "../../../src/generation/options.js";
 import type { Tokenizer } from "../../../src/models/tokenizer.js";
 import type { SamplingParams } from "../../../src/types/openai.js";
 
@@ -126,13 +131,19 @@ describe("buildGenOpts", () => {
     expect(opts.prefill_chunk_size).toBe("1024");
   });
 
-  it("disables auto prefill chunking for WebGPU", () => {
-    const opts = buildGenOpts({}, mockTokenizer, null, 131072, "auto", "webgpu");
-    expect(opts.prefill_chunk_size).toBe("0");
+  it("passes auto prefill through until prompt length is known", () => {
+    const opts = buildGenOpts({}, mockTokenizer, null, 131072, "auto");
+    expect(opts.prefill_chunk_size).toBe("auto");
   });
 
-  it("keeps auto prefill chunking on non-WebGPU backends", () => {
-    expect(resolvePrefillChunkSize("auto", "cuda")).toBe("1024");
-    expect(resolvePrefillChunkSize("auto", "cpu")).toBe("1024");
+  it("disables auto prefill chunking for small WebGPU prompts only", () => {
+    expect(resolvePrefillChunkSize("auto", "webgpu", WEBGPU_FULL_PREFILL_MAX_TOKENS)).toBe("0");
+    expect(resolvePrefillChunkSize("auto", "webgpu", WEBGPU_FULL_PREFILL_MAX_TOKENS + 1)).toBe("1024");
+  });
+
+  it("keeps auto prefill chunking on non-WebGPU backends and unknown prompt lengths", () => {
+    expect(resolvePrefillChunkSize("auto", "webgpu")).toBe("1024");
+    expect(resolvePrefillChunkSize("auto", "cuda", 2048)).toBe("1024");
+    expect(resolvePrefillChunkSize("auto", "cpu", 2048)).toBe("1024");
   });
 });

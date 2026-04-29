@@ -7,7 +7,7 @@ import type {
   Tool,
 } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
-import { stripInternalGenOpts } from "./options.js";
+import { resolvePrefillChunkSize, stripInternalGenOpts } from "./options.js";
 import { getImageUrls } from "../utils/content.js";
 import {
   elapsedMs,
@@ -103,9 +103,14 @@ async function disposeUnusedOutputs(outputs: Record<string, unknown>, cache: Wan
   );
 }
 
-function readPrefillChunkSize(promptTokens: number, raw = process.env.WANDLER_PREFILL_CHUNK_SIZE ?? "1024"): number | null {
-  if (["0", "false", "off", "no"].includes(raw.toLowerCase())) return null;
-  const chunkSize = Number.parseInt(raw, 10);
+function readPrefillChunkSize(
+  promptTokens: number,
+  raw = process.env.WANDLER_PREFILL_CHUNK_SIZE ?? "auto",
+  device?: string | null,
+): number | null {
+  const resolved = resolvePrefillChunkSize(raw, device, promptTokens);
+  if (["0", "false", "off", "no"].includes(resolved.toLowerCase())) return null;
+  const chunkSize = Number.parseInt(resolved, 10);
   if (!Number.isFinite(chunkSize) || chunkSize < 2 || chunkSize >= promptTokens) return null;
   return chunkSize;
 }
@@ -353,7 +358,7 @@ export async function generate(
           ),
         }
       : genOpts;
-    const chunkSize = readPrefillChunkSize(promptTokens, effectiveGenOpts.prefill_chunk_size);
+    const chunkSize = readPrefillChunkSize(promptTokens, effectiveGenOpts.prefill_chunk_size, models.device);
     const transformersGenOpts = stripInternalGenOpts(effectiveGenOpts);
     if (chunkSize) {
       const prefill = await prefillPromptCache(

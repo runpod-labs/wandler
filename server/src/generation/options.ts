@@ -6,15 +6,23 @@ import type { Tokenizer } from "../models/tokenizer.js";
 // doesn't expose `max_position_embeddings`). Exported so tests can assert it.
 export const FALLBACK_MAX_TOKENS = 2048;
 export const DEFAULT_PREFILL_CHUNK_SIZE = "1024";
+export const WEBGPU_FULL_PREFILL_MAX_TOKENS = 4096;
 
-export function resolvePrefillChunkSize(raw = "auto", device: string | null | undefined = "auto"): string {
+export function resolvePrefillChunkSize(
+  raw = "auto",
+  device: string | null | undefined = "auto",
+  promptTokens = 0,
+): string {
   const value = raw.trim().toLowerCase();
   if (value !== "auto") return raw;
 
-  // transformers.js/ORT WebGPU already handles the full prompt path better
-  // for Gemma in local tests. Manual prefill remains the safer default for
-  // CUDA/CPU-style backends where long-prompt memory spikes are more common.
-  return device === "webgpu" ? "0" : DEFAULT_PREFILL_CHUNK_SIZE;
+  // transformers.js/ORT WebGPU handles small/medium Gemma prompts faster on
+  // the full-prompt path. Keep long prompts chunked so Hermes-sized tool
+  // contexts do not surprise a local Mac with unbounded full-prompt tensors.
+  if (device === "webgpu" && promptTokens > 0 && promptTokens <= WEBGPU_FULL_PREFILL_MAX_TOKENS) {
+    return "0";
+  }
+  return DEFAULT_PREFILL_CHUNK_SIZE;
 }
 
 /**
@@ -33,7 +41,6 @@ export function buildGenOpts(
   maxTokensCap?: number | null,
   modelMaxContext?: number | null,
   prefillChunkSize?: string,
-  device?: string | null,
 ): GenerationOptions {
   const temperature = params.temperature ?? 0.7;
   const hardCap = maxTokensCap ?? modelMaxContext ?? FALLBACK_MAX_TOKENS;
@@ -45,7 +52,7 @@ export function buildGenOpts(
     do_sample: temperature > 0,
   };
   if (prefillChunkSize != null) {
-    opts.prefill_chunk_size = resolvePrefillChunkSize(prefillChunkSize, device ?? "auto");
+    opts.prefill_chunk_size = prefillChunkSize;
   }
 
   // Extended sampling params supported by transformers.js
