@@ -107,8 +107,9 @@ function readPrefillChunkSize(
   promptTokens: number,
   raw = process.env.WANDLER_PREFILL_CHUNK_SIZE ?? "auto",
   device?: string | null,
+  attentionHeads?: number | null,
 ): number | null {
-  const resolved = resolvePrefillChunkSize(raw, device, promptTokens);
+  const resolved = resolvePrefillChunkSize(raw, device, promptTokens, attentionHeads);
   if (["0", "false", "off", "no"].includes(resolved.toLowerCase())) return null;
   const chunkSize = Number.parseInt(resolved, 10);
   if (!Number.isFinite(chunkSize) || chunkSize < 2 || chunkSize >= promptTokens) return null;
@@ -358,7 +359,12 @@ export async function generate(
           ),
         }
       : genOpts;
-    const chunkSize = readPrefillChunkSize(promptTokens, effectiveGenOpts.prefill_chunk_size, models.device);
+    const chunkSize = readPrefillChunkSize(
+      promptTokens,
+      effectiveGenOpts.prefill_chunk_size,
+      models.device,
+      models.attentionHeads,
+    );
     const transformersGenOpts = stripInternalGenOpts(effectiveGenOpts);
     if (chunkSize) {
       const prefill = await prefillPromptCache(

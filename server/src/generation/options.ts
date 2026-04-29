@@ -6,23 +6,54 @@ import type { Tokenizer } from "../models/tokenizer.js";
 // doesn't expose `max_position_embeddings`). Exported so tests can assert it.
 export const FALLBACK_MAX_TOKENS = 2048;
 export const DEFAULT_PREFILL_CHUNK_SIZE = "1024";
-export const WEBGPU_FULL_PREFILL_MAX_TOKENS = 4096;
+export const DEFAULT_WEBGPU_PREFILL_MEMORY_MB = 640;
+export const FALLBACK_WEBGPU_FULL_PREFILL_MAX_TOKENS = 4096;
+
+function parseAutoPrefillMemoryMb(raw: string): number {
+  const [, budget] = raw.split(":", 2);
+  if (!budget) return DEFAULT_WEBGPU_PREFILL_MEMORY_MB;
+  const parsed = Number.parseInt(budget, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_WEBGPU_PREFILL_MEMORY_MB;
+}
+
+function alignChunkSize(tokens: number): number {
+  if (tokens >= 256) return Math.floor(tokens / 256) * 256;
+  if (tokens >= 64) return Math.floor(tokens / 64) * 64;
+  return Math.max(2, Math.floor(tokens));
+}
 
 export function resolvePrefillChunkSize(
   raw = "auto",
   device: string | null | undefined = "auto",
   promptTokens = 0,
+  attentionHeads?: number | null,
 ): string {
   const value = raw.trim().toLowerCase();
-  if (value !== "auto") return raw;
+  if (value !== "auto" && !value.startsWith("auto:")) return raw;
+
+  if (device !== "webgpu") return DEFAULT_PREFILL_CHUNK_SIZE;
 
   // transformers.js/ORT WebGPU handles small/medium Gemma prompts faster on
-  // the full-prompt path. Keep long prompts chunked so Hermes-sized tool
-  // contexts do not surprise a local Mac with unbounded full-prompt tensors.
-  if (device === "webgpu" && promptTokens > 0 && promptTokens <= WEBGPU_FULL_PREFILL_MAX_TOKENS) {
+  // the full-prompt path. Use the full path only when the estimated attention
+  // score tensor fits the budget; otherwise use the largest budget-fitting
+  // chunk to avoid an artificial latency cliff at a fixed token count.
+  if (promptTokens <= 0) return DEFAULT_PREFILL_CHUNK_SIZE;
+  if (!attentionHeads) {
+    return promptTokens <= FALLBACK_WEBGPU_FULL_PREFILL_MAX_TOKENS
+      ? "0"
+      : DEFAULT_PREFILL_CHUNK_SIZE;
+  }
+
+  const budgetMb = parseAutoPrefillMemoryMb(value);
+  const fullAttentionMb = (attentionHeads * promptTokens * promptTokens * 4) / 1024 / 1024;
+  if (fullAttentionMb <= budgetMb) {
     return "0";
   }
-  return DEFAULT_PREFILL_CHUNK_SIZE;
+
+  const budgetBytes = budgetMb * 1024 * 1024;
+  const rawChunk = budgetBytes / (attentionHeads * promptTokens * 4);
+  const chunkSize = alignChunkSize(Math.min(promptTokens - 1, rawChunk));
+  return String(chunkSize);
 }
 
 /**

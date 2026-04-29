@@ -423,7 +423,7 @@ print(response)`,
 									{ flag: "--log-level", arg: "<level>", desc: "Log verbosity.", meta: <>default: <InlineCode>info</InlineCode> · options: <InlineCode>debug</InlineCode>, <InlineCode>info</InlineCode>, <InlineCode>warn</InlineCode>, <InlineCode>error</InlineCode></> },
 									{ flag: "--quiet", arg: "", desc: "Suppress non-error startup and profile logs." },
 									{ flag: "--cache-dir", arg: "<path>", desc: "Model cache directory.", meta: <>default: <InlineCode>~/.cache/huggingface</InlineCode> (standard HuggingFace cache, also respects <InlineCode>HF_HOME</InlineCode>)</> },
-									{ flag: "--prefill-chunk-size", arg: "<n>", desc: "Chunk size for long-prompt prefill.", meta: <>default: <InlineCode>auto</InlineCode> (WebGPU=off up to 4096 prompt tokens, otherwise 1024) · use <InlineCode>0</InlineCode> or <InlineCode>off</InlineCode> to disable</> },
+									{ flag: "--prefill-chunk-size", arg: "<n>", desc: "Chunk size for long-prompt prefill.", meta: <>default: <InlineCode>auto</InlineCode> (640MB WebGPU attention budget) · use <InlineCode>auto:&lt;mb&gt;</InlineCode> to tune or <InlineCode>0</InlineCode>/<InlineCode>off</InlineCode> to disable</> },
 									{ flag: "--warmup-tokens", arg: "<n>", desc: "Approximate prompt tokens to run once before serving.", meta: <>default: <InlineCode>0</InlineCode></> },
 									{ flag: "--warmup-max-new-tokens", arg: "<n>", desc: "Max new tokens for startup warmup.", meta: <>default: <InlineCode>8</InlineCode></> },
 								] as const).flatMap((o) => [
