@@ -110,6 +110,14 @@ function readPrefillChunkSize(promptTokens: number): number | null {
   return chunkSize;
 }
 
+function promptTooLongErrorMessage(promptTokens: number, maxContextLength: number): string | null {
+  if (promptTokens < maxContextLength) return null;
+  return (
+    `Prompt has ${promptTokens} tokens, but the model context is ${maxContextLength} tokens. ` +
+    "Reduce the prompt/tools."
+  );
+}
+
 async function prefillPromptCache(
   model: LoadedModels["model"],
   inputIds: TensorLike,
@@ -306,6 +314,45 @@ export async function generate(
   let chunkedCache: WandlerDynamicCache | null = null;
   try {
     const promptTokens = inputs.input_ids.dims[1]!;
+    const contextError = models.maxContextLength
+      ? promptTooLongErrorMessage(promptTokens, models.maxContextLength)
+      : null;
+    if (contextError) {
+      const profile = {
+        path: "text" as const,
+        promptChars: prompt.length,
+        toolsCount,
+        toolsChars,
+        promptTokens,
+        completionTokens: 0,
+        formatMs,
+        tokenizeMs,
+        generateMs: 0,
+        decodeMs: 0,
+        totalMs: elapsedMs(started),
+        memoryBefore,
+        memoryAfterTokenize,
+        memoryAfterGenerate: memoryAfterTokenize,
+        memoryAfterDecode: memoryAfterTokenize,
+        estimatedFullLogitsMb: estimateFullLogitsMb(models, promptTokens),
+        estimatedAttentionScoresMb: estimateAttentionScoresMb(models, promptTokens),
+        numLogitsToKeepInput: models.generationDiagnostics.numLogitsToKeepInput,
+        numLogitsToKeepPatchedSessions: models.generationDiagnostics.numLogitsToKeepPatchedSessions,
+        failedStage: "tokenize" as const,
+        errorMessage: contextError,
+      };
+      logGenerationProfile(profile);
+      throw new GenerationExecutionError(new Error(contextError), profile, 400);
+    }
+    const effectiveGenOpts = models.maxContextLength
+      ? {
+          ...genOpts,
+          max_new_tokens: Math.min(
+            genOpts.max_new_tokens,
+            Math.max(1, models.maxContextLength - promptTokens),
+          ),
+        }
+      : genOpts;
     const chunkSize = readPrefillChunkSize(promptTokens);
     if (chunkSize) {
       const prefill = await prefillPromptCache(
@@ -321,12 +368,16 @@ export async function generate(
       outputIds = await models.model!.generate({
         input_ids: prefill.lastTokenInputIds,
         past_key_values: chunkedCache,
-        ...genOpts,
+        ...effectiveGenOpts,
       });
     } else {
-      outputIds = await models.model!.generate({ ...inputs, ...genOpts });
+      outputIds = await models.model!.generate({ ...inputs, ...effectiveGenOpts });
     }
   } catch (error) {
+    if (error instanceof GenerationExecutionError) {
+      await chunkedCache?.dispose();
+      throw error;
+    }
     const promptTokens = inputs.input_ids.dims[1]!;
     const memoryAfterGenerate = memorySnapshot();
     const profile = {

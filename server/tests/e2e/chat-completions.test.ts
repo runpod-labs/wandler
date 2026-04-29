@@ -1,6 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { TestServer } from "./helpers.js";
-import { collectSSE, postJson, startTestServer } from "./helpers.js";
+import {
+  collectSSE,
+  createMockModels,
+  createTestConfig,
+  postJson,
+  startTestServer,
+  startTestServerWithLoadedModels,
+} from "./helpers.js";
 
 describe("POST /v1/chat/completions", () => {
   let ts: TestServer;
@@ -69,6 +76,23 @@ describe("POST /v1/chat/completions", () => {
         max_tokens: 50,
       });
       expect(status).toBe(200);
+    });
+
+    it("rejects requests that exceed the model context before generation", async () => {
+      const models = createMockModels();
+      models.maxContextLength = 12;
+      const limited = await startTestServerWithLoadedModels(models, createTestConfig({ maxTokens: null }));
+      try {
+        const { status, body } = await postJson(`${limited.baseUrl}/v1/chat/completions`, {
+          messages: [{ role: "user", content: "one two three four five six seven eight nine ten eleven twelve" }],
+          max_tokens: 4,
+        });
+
+        expect(status).toBe(400);
+        expect((body as { error?: { code?: string } }).error?.code).toBe("context_length_exceeded");
+      } finally {
+        await limited.close();
+      }
     });
 
     it("accepts presence_penalty and frequency_penalty", async () => {

@@ -2,6 +2,7 @@ import { TextStreamer } from "@huggingface/transformers";
 import type { LoadedModels } from "../models/manager.js";
 import type { ChatMessage, GenerationOptions, Tool, ToolCall } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
+import { GenerationExecutionError, memorySnapshot, nowMs, elapsedMs, estimateFullLogitsMb, estimateAttentionScoresMb, serializedToolsChars, logGenerationProfile } from "./profile.js";
 import { parseToolCalls } from "../tools/parser.js";
 
 // ── Tool-aware token streamer ───────────────────────────────────────────────
@@ -89,10 +90,53 @@ export async function generateStreamWithTools(
   tools: Tool[] | undefined,
   handlers: StreamToolHandlers,
 ): Promise<{ promptTokens: number; completionTokens: number }> {
+  const started = nowMs();
+  const memoryBefore = memorySnapshot();
   const prompt = formatChat(models.tokenizer!, messages, modelId, tools, models.chatTemplate);
   const inputs = models.tokenizer!(prompt, { return_tensors: "pt" });
+  const memoryAfterTokenize = memorySnapshot();
   const promptTokens = inputs.input_ids.dims[1]!;
   let completionTokens = 0;
+  if (models.maxContextLength && promptTokens >= models.maxContextLength) {
+    const message = (
+      `Prompt has ${promptTokens} tokens, but the model context is ${models.maxContextLength} tokens. ` +
+      "Reduce the prompt/tools."
+    );
+    const profile = {
+      path: "stream" as const,
+      promptChars: prompt.length,
+      toolsCount: tools?.length ?? 0,
+      toolsChars: serializedToolsChars(tools),
+      promptTokens,
+      completionTokens: 0,
+      formatMs: 0,
+      tokenizeMs: 0,
+      generateMs: 0,
+      decodeMs: 0,
+      totalMs: elapsedMs(started),
+      memoryBefore,
+      memoryAfterTokenize,
+      memoryAfterGenerate: memoryAfterTokenize,
+      memoryAfterDecode: memoryAfterTokenize,
+      estimatedFullLogitsMb: estimateFullLogitsMb(models, promptTokens),
+      estimatedAttentionScoresMb: estimateAttentionScoresMb(models, promptTokens),
+      numLogitsToKeepInput: models.generationDiagnostics.numLogitsToKeepInput,
+      numLogitsToKeepPatchedSessions: models.generationDiagnostics.numLogitsToKeepPatchedSessions,
+      failedStage: "tokenize" as const,
+      errorMessage: message,
+    };
+    logGenerationProfile(profile);
+    throw new GenerationExecutionError(new Error(message), profile, 400);
+  }
+  const effectiveGenOpts = models.maxContextLength
+    ? {
+        ...genOpts,
+        max_new_tokens: Math.min(
+          genOpts.max_new_tokens,
+          Math.max(1, models.maxContextLength - promptTokens),
+        ),
+      }
+    : genOpts;
 
   let buffer = "";
   let emittedLen = 0;
@@ -141,7 +185,7 @@ export async function generateStreamWithTools(
     },
   );
 
-  await models.model!.generate({ ...inputs, ...genOpts, streamer });
+  await models.model!.generate({ ...inputs, ...effectiveGenOpts, streamer });
 
   if (toolCalls) {
     await handlers.onToolCalls(toolCalls);

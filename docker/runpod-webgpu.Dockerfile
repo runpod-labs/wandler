@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     git \
+    libcudnn9-cuda-12 \
     libvulkan1 \
     vulkan-tools \
   && rm -rf /var/lib/apt/lists/*

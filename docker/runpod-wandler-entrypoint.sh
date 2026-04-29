@@ -24,7 +24,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 set +e
-wandler \
+node /opt/wandler/server/dist/cli.js \
   --llm "${WANDLER_LLM:-onnx-community/gemma-4-E4B-it-ONNX:q4}" \
   --device "${WANDLER_DEVICE:-webgpu}" \
   --host "${WANDLER_HOST:-0.0.0.0}" \
