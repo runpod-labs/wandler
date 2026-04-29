@@ -7,6 +7,7 @@ import { loadConfig } from "./config.js";
 import { warmupLLM } from "./generation/warmup.js";
 import { loadModels } from "./models/manager.js";
 import { startServer } from "./server.js";
+import { configureLogging, logInfo } from "./utils/logging.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, "..", "package.json"), "utf-8"));
@@ -44,6 +45,7 @@ program
   .option("--max-concurrent <n>", "Max concurrent requests")
   .option("--timeout <ms>", "Request timeout in ms")
   .option("--log-level <level>", "debug, info, warn, error")
+  .option("--quiet", "Suppress non-error startup logs")
   .option("--hf-token <token>", "HuggingFace token for gated models")
   .option("--cache-dir <path>", "Model cache directory (default: ~/.cache/huggingface)")
   .option("--prefill-chunk-size <n>", "Chunk size for long-prompt prefill; 0/off disables it")
@@ -63,6 +65,7 @@ program
       WANDLER_MAX_CONCURRENT: opts.maxConcurrent ?? process.env.WANDLER_MAX_CONCURRENT,
       WANDLER_TIMEOUT: opts.timeout ?? process.env.WANDLER_TIMEOUT,
       WANDLER_LOG_LEVEL: opts.logLevel ?? process.env.WANDLER_LOG_LEVEL,
+      WANDLER_QUIET: opts.quiet ? "true" : process.env.WANDLER_QUIET,
       HF_TOKEN: opts.hfToken ?? process.env.HF_TOKEN,
       WANDLER_CACHE_DIR: opts.cacheDir ?? process.env.WANDLER_CACHE_DIR,
       WANDLER_PREFILL_CHUNK_SIZE: opts.prefillChunkSize ?? process.env.WANDLER_PREFILL_CHUNK_SIZE,
@@ -71,6 +74,7 @@ program
       HF_HOME: process.env.HF_HOME,
       XDG_CACHE_HOME: process.env.XDG_CACHE_HOME,
     });
+    configureLogging({ quiet: config.quiet });
 
     if (!config.modelId && !config.embeddingModelId && !config.sttModelId) {
       console.error("[wandler] Error: at least one model is required (--llm, --embedding, or --stt)");
@@ -78,21 +82,27 @@ program
     }
 
     const models = await loadModels(config);
+    if (config.warmupTokens > 0 && config.modelId) {
+      logInfo(
+        `[wandler] Warmup starting: ${config.warmupTokens} prompt tokens, ` +
+        `${config.warmupMaxNewTokens} max new tokens`,
+      );
+    }
     const warmup = await warmupLLM(config, models);
     if (warmup.enabled) {
       const suffix = warmup.error
         ? `failed after ${warmup.totalMs}ms: ${warmup.error}`
         : `completed in ${warmup.totalMs}ms (${warmup.promptTokens} prompt tokens)`;
-      console.log(`[wandler] Warmup ${suffix}`);
+      logInfo(`[wandler] Warmup ${suffix}`);
     }
     startServer(config, models);
 
-    console.log(`[wandler] http://${config.host}:${config.port}`);
-    if (config.modelId) console.log(`[wandler] LLM: ${config.modelId} (${config.modelDtype}, ${config.device})`);
-    if (config.sttModelId) console.log(`[wandler] STT: ${config.sttModelId} (${config.sttDtype})`);
-    if (config.embeddingModelId) console.log(`[wandler] Embedding: ${config.embeddingModelId} (${config.embeddingDtype})`);
-    console.log(`[wandler] Cache: ${config.cacheDir}`);
-    if (config.apiKey) console.log(`[wandler] API key auth enabled`);
+    logInfo(`[wandler] http://${config.host}:${config.port}`);
+    if (config.modelId) logInfo(`[wandler] LLM: ${config.modelId} (${config.modelDtype}, ${config.device})`);
+    if (config.sttModelId) logInfo(`[wandler] STT: ${config.sttModelId} (${config.sttDtype})`);
+    if (config.embeddingModelId) logInfo(`[wandler] Embedding: ${config.embeddingModelId} (${config.embeddingDtype})`);
+    logInfo(`[wandler] Cache: ${config.cacheDir}`);
+    if (config.apiKey) logInfo(`[wandler] API key auth enabled`);
   });
 
 program.parse();

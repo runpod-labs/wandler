@@ -1,5 +1,6 @@
 import type { LoadedModels } from "../models/manager.js";
 import type { GenerationProfile, MemorySnapshot, Tool } from "../types/openai.js";
+import { isQuiet, logInfo } from "../utils/logging.js";
 
 export function nowMs(): number {
   return performance.now();
@@ -44,6 +45,7 @@ function memoryDelta(before: MemorySnapshot, after: MemorySnapshot): string {
 }
 
 export function shouldLogGenerationProfile(profile: GenerationProfile): boolean {
+  if (isQuiet()) return false;
   return (
     process.env.WANDLER_LOG_LEVEL === "debug" ||
     profile.promptTokens >= 1024 ||
@@ -66,7 +68,7 @@ export function logGenerationProfile(profile: GenerationProfile): void {
     ? profile.numLogitsToKeepPatchedSessions.join(",")
     : "none";
 
-  console.log(
+  logInfo(
     [
       "[wandler] generation profile",
       `path=${profile.path}`,

@@ -92,6 +92,7 @@ Every CLI flag has a corresponding environment variable:
 | `WANDLER_MAX_CONCURRENT` | 1 | Max concurrent requests |
 | `WANDLER_TIMEOUT` | 120000 | Request timeout (ms) |
 | `WANDLER_LOG_LEVEL` | info | Log level |
+| `WANDLER_QUIET` | false | Suppress non-error startup/profile logs |
 | `WANDLER_CACHE_DIR` | — | Model cache directory |
 | `WANDLER_PREFILL_CHUNK_SIZE` | 1024 | Chunk size for long-prompt prefill; set `0`/`off` to disable |
 | `WANDLER_WARMUP_TOKENS` | 0 | Approximate prompt tokens to run once before serving |

@@ -69,6 +69,7 @@ Server:
       --max-concurrent <n>    Max concurrent requests (default: 1)
       --timeout <ms>          Request timeout in ms (default: 120000)
       --log-level <level>     debug, info, warn, error (default: info)
+      --quiet                 Suppress non-error startup/profile logs
       --prefill-chunk-size <n>
                               Chunk size for long-prompt prefill; 0/off disables it
       --warmup-tokens <n>     Approximate prompt tokens to run once before serving
@@ -100,6 +101,7 @@ Every CLI flag has a corresponding environment variable:
 | `WANDLER_MAX_CONCURRENT` | 1 | Max concurrent requests |
 | `WANDLER_TIMEOUT` | 120000 | Request timeout (ms) |
 | `WANDLER_LOG_LEVEL` | info | Log level |
+| `WANDLER_QUIET` | false | Suppress non-error startup/profile logs |
 | `WANDLER_CACHE_DIR` | ~/.cache/huggingface | Model cache directory (also respects `HF_HOME`) |
 | `WANDLER_PREFILL_CHUNK_SIZE` | 1024 | Chunk size for long-prompt prefill; set `0`/`off` to disable |
 | `WANDLER_WARMUP_TOKENS` | 0 | Approximate prompt tokens to run once before serving |

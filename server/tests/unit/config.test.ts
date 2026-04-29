@@ -61,6 +61,7 @@ describe("loadConfig", () => {
     expect(config.maxConcurrent).toBe(1);
     expect(config.timeout).toBe(120000);
     expect(config.logLevel).toBe("info");
+    expect(config.quiet).toBe(false);
     expect(config.hfToken).toBe("");
     expect(config.cacheDir).toBe(join(homedir(), ".cache", "huggingface"));
     expect(config.prefillChunkSize).toBe("1024");
@@ -98,6 +99,7 @@ describe("loadConfig", () => {
       WANDLER_MAX_CONCURRENT: "4",
       WANDLER_TIMEOUT: "60000",
       WANDLER_LOG_LEVEL: "debug",
+      WANDLER_QUIET: "true",
       WANDLER_CACHE_DIR: "/tmp/models",
       WANDLER_PREFILL_CHUNK_SIZE: "1024",
       WANDLER_WARMUP_TOKENS: "2048",
@@ -115,6 +117,7 @@ describe("loadConfig", () => {
     expect(config.maxConcurrent).toBe(4);
     expect(config.timeout).toBe(60000);
     expect(config.logLevel).toBe("debug");
+    expect(config.quiet).toBe(true);
     expect(config.cacheDir).toBe("/tmp/models");
     expect(config.hfToken).toBe("hf_abc123");
     expect(config.prefillChunkSize).toBe("1024");

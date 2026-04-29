@@ -9,6 +9,7 @@ import {
   env as transformersEnv,
 } from "@huggingface/transformers";
 import type { ServerConfig } from "../config.js";
+import { logInfo, logWarn } from "../utils/logging.js";
 import type { Tokenizer } from "./tokenizer.js";
 
 // ── Model manager — loads and holds references to models ────────────────────
@@ -232,7 +233,7 @@ async function loadChatTemplate(
     const res = await fetch(url);
     if (res.ok) {
       const template = await res.text();
-      console.log(`[wandler] Loaded chat_template.jinja for ${modelId}`);
+      logInfo(`[wandler] Loaded chat_template.jinja for ${modelId}`);
       return template;
     }
   } catch {
@@ -360,7 +361,7 @@ async function resolveDtype(modelId: string, requested: string): Promise<string>
   try {
     available = await ModelRegistry.get_available_dtypes(modelId);
   } catch (err) {
-    console.warn(
+    logWarn(
       `[wandler] Could not probe dtypes for ${modelId} (${err instanceof Error ? err.message : err}); proceeding with ${requested}`,
     );
     return requested;
@@ -371,10 +372,10 @@ async function resolveDtype(modelId: string, requested: string): Promise<string>
   if (requested === "auto") {
     const picked = AUTO_DTYPE_PREFERENCE.find((d) => available.includes(d));
     if (!picked) {
-      console.warn(`[wandler] dtype=auto: no recognised dtype in ${JSON.stringify(available)}; using ${available[0]}`);
+      logWarn(`[wandler] dtype=auto: no recognised dtype in ${JSON.stringify(available)}; using ${available[0]}`);
       return available[0]!;
     }
-    console.log(`[wandler] dtype=auto → ${picked} (available: ${available.join(", ")})`);
+    logInfo(`[wandler] dtype=auto → ${picked} (available: ${available.join(", ")})`);
     return picked;
   }
 
@@ -398,7 +399,7 @@ function warnIfLowBitMismatch(dtype: string, device: string): void {
   if (!LOW_BIT_DTYPES.includes(dtype as DtypeType)) return;
   const ok = device === "auto" || device === "cpu" || device === "webgpu" || device === "wasm";
   if (ok) return;
-  console.warn(
+  logWarn(
     `[wandler] dtype=${dtype} (1-bit/2-bit) is CPU/WebGPU-only today. ` +
     `device=${device} will likely fall back to cpu.`,
   );
@@ -427,7 +428,7 @@ async function loadLLM(
     } catch (err) {
       const isLast = i === DEVICE_FALLBACK_ORDER.length - 1;
       if (isLast) throw err;
-      console.warn(
+      logWarn(
         `[wandler] device=${dev} failed: ${err instanceof Error ? err.message : err}`,
       );
     }
@@ -500,7 +501,7 @@ async function loadLLMWithDevice(
     }) as unknown as LoadedModels["model"];
 
     const processor = await AutoProcessor.from_pretrained(modelId);
-    console.log(`[wandler] Loaded as vision model (device=${device})`);
+    logInfo(`[wandler] Loaded as vision model (device=${device})`);
     return { model, processor, isVision: true };
   } catch {
     // Not a vision model or vision files not available — load as text-only
@@ -561,7 +562,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   };
 
   if (config.modelId) {
-    console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
+    logInfo(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
     const t0 = Date.now();
 
     const resolvedDtype = await resolveDtype(config.modelId, config.modelDtype);
@@ -585,43 +586,43 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
       numLogitsToKeepPatchedSessions: patchOnnxSessionRuns(model),
     };
     if (maxContextLength) {
-      console.log(`[wandler] Model context: ${maxContextLength} tokens`);
+      logInfo(`[wandler] Model context: ${maxContextLength} tokens`);
     }
     if (vocabSize) {
-      console.log(`[wandler] Model vocab: ${vocabSize} tokens`);
+      logInfo(`[wandler] Model vocab: ${vocabSize} tokens`);
     }
     if (attentionHeads) {
-      console.log(`[wandler] Model attention heads: ${attentionHeads}`);
+      logInfo(`[wandler] Model attention heads: ${attentionHeads}`);
     }
     if (generationDiagnostics.numLogitsToKeepInput) {
       const sessions = generationDiagnostics.numLogitsToKeepPatchedSessions.join(", ") || "none";
-      console.log(`[wandler] num_logits_to_keep input detected; patched sessions: ${sessions}`);
+      logInfo(`[wandler] num_logits_to_keep input detected; patched sessions: ${sessions}`);
     }
-    console.log(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    logInfo(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   }
 
   let transcriber: LoadedModels["transcriber"] = null;
   if (config.sttModelId) {
-    console.log(`[wandler] Loading STT: ${config.sttModelId} (${config.sttDtype})`);
+    logInfo(`[wandler] Loading STT: ${config.sttModelId} (${config.sttDtype})`);
     const t1 = Date.now();
     const sttPipeline = await pipeline("automatic-speech-recognition", config.sttModelId, {
       dtype: config.sttDtype as DtypeType,
     });
     transcriber = (input: Float32Array) =>
       sttPipeline(input) as Promise<{ text: string }>;
-    console.log(`[wandler] STT ready in ${((Date.now() - t1) / 1000).toFixed(1)}s`);
+    logInfo(`[wandler] STT ready in ${((Date.now() - t1) / 1000).toFixed(1)}s`);
   }
 
   let embedder: LoadedModels["embedder"] = null;
   if (config.embeddingModelId) {
-    console.log(`[wandler] Loading embeddings: ${config.embeddingModelId} (${config.embeddingDtype})`);
+    logInfo(`[wandler] Loading embeddings: ${config.embeddingModelId} (${config.embeddingDtype})`);
     const t2 = Date.now();
     const embPipeline = await pipeline("feature-extraction", config.embeddingModelId, {
       dtype: config.embeddingDtype as DtypeType,
     });
     embedder = (input: string, opts: Record<string, unknown>) =>
       embPipeline(input, opts) as Promise<{ data: Float32Array }>;
-    console.log(`[wandler] Embeddings ready in ${((Date.now() - t2) / 1000).toFixed(1)}s`);
+    logInfo(`[wandler] Embeddings ready in ${((Date.now() - t2) / 1000).toFixed(1)}s`);
   }
 
   return {

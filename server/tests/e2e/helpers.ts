@@ -199,6 +199,7 @@ export function createTestConfig(
     maxConcurrent: 1,
     timeout: 120000,
     logLevel: "info",
+    quiet: false,
     hfToken: "",
     cacheDir: "",
     prefillChunkSize: "1024",
