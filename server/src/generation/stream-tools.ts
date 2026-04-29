@@ -3,6 +3,7 @@ import type { LoadedModels } from "../models/manager.js";
 import type { ChatMessage, GenerationOptions, Tool, ToolCall } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
 import { stripInternalGenOpts } from "./options.js";
+import { buildPrefixCandidate, preparePrefill, type TensorLike } from "./prefill.js";
 import { GenerationExecutionError, memorySnapshot, nowMs, elapsedMs, estimateFullLogitsMb, estimateAttentionScoresMb, serializedToolsChars, logGenerationProfile } from "./profile.js";
 import { parseToolCalls } from "../tools/parser.js";
 
@@ -186,7 +187,37 @@ export async function generateStreamWithTools(
     },
   );
 
-  await models.model!.generate({ ...inputs, ...stripInternalGenOpts(effectiveGenOpts), streamer });
+  const transformersGenOpts = stripInternalGenOpts(effectiveGenOpts);
+  const prefixCandidate = buildPrefixCandidate(
+    models.tokenizer!,
+    messages,
+    modelId,
+    tools,
+    models.chatTemplate,
+    prompt,
+  );
+  const prefill = await preparePrefill(
+    models,
+    inputs.input_ids as TensorLike,
+    promptTokens,
+    effectiveGenOpts,
+    prompt,
+    prefixCandidate,
+  );
+  try {
+    if (prefill.pastKeyValues) {
+      await models.model!.generate({
+        input_ids: prefill.inputIds,
+        past_key_values: prefill.pastKeyValues,
+        ...transformersGenOpts,
+        streamer,
+      });
+    } else {
+      await models.model!.generate({ ...inputs, ...transformersGenOpts, streamer });
+    }
+  } finally {
+    await prefill.cleanup();
+  }
 
   if (toolCalls) {
     await handlers.onToolCalls(toolCalls);

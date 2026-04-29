@@ -222,6 +222,7 @@ export interface ModelListResponse {
 export interface HealthResponse {
   status: "ok";
   engine: string;
+  backend: "wandler" | "transformersjs";
   device: string;
   models: Record<string, string>;
 }
@@ -376,6 +377,8 @@ export interface GenerationProfile {
   prefillChunkSize?: number;
   prefillChunks?: number;
   prefillMs?: number;
+  prefixCacheHit?: boolean;
+  prefixCacheTokens?: number;
   memoryBefore: MemorySnapshot;
   memoryAfterTokenize: MemorySnapshot;
   memoryAfterGenerate: MemorySnapshot;

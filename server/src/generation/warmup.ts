@@ -1,6 +1,7 @@
 import type { ServerConfig } from "../config.js";
 import type { LoadedModels } from "../models/manager.js";
 import { generate } from "./generate.js";
+import { resolvePrefillChunkSize } from "./options.js";
 
 export interface WarmupResult {
   enabled: boolean;
@@ -38,7 +39,12 @@ export async function warmupLLM(config: ServerConfig, models: LoadedModels): Pro
         temperature: 0,
         top_p: 1,
         do_sample: false,
-        prefill_chunk_size: config.prefillChunkSize,
+        prefill_chunk_size: resolvePrefillChunkSize(
+          config.prefillChunkSize,
+          models.device,
+          tokenBudget,
+          models.attentionHeads,
+        ),
       },
     );
     return {

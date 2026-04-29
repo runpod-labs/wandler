@@ -20,11 +20,13 @@ describe("GET /health", () => {
     const body = (await res.json()) as {
       status: string;
       engine: string;
+      backend: string;
       device: string;
       models: Record<string, string>;
     };
     expect(body.status).toBe("ok");
     expect(body.engine).toBe("transformers.js");
+    expect(body.backend).toBe("wandler");
     expect(body.device).toBe("cpu");
     expect(body.models.llm).toBe("mock-model/test");
     expect(body.models.stt).toBe("mock-stt/test");

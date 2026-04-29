@@ -54,6 +54,7 @@ Commands:
 
 Model:
   -l, --llm <id>              LLM model
+      --backend <name>        LLM backend: wandler, transformersjs (default: wandler)
   -e, --embedding <id>        Embedding model
   -s, --stt <id>              STT model
   -d, --device <type>         Device: auto, cpu, cuda, coreml, dml, webgpu, wasm (default: auto)
@@ -69,8 +70,14 @@ Server:
       --max-concurrent <n>    Max concurrent requests (default: 1)
       --timeout <ms>          Request timeout in ms (default: 120000)
       --log-level <level>     debug, info, warn, error (default: info)
+      --quiet                 Suppress non-error startup/profile logs
       --prefill-chunk-size <n>
-                              Chunk size for long-prompt prefill; 0/off disables it
+                              Chunk size for long-prompt prefill; auto uses a 640MB WebGPU attention budget; auto:<mb> customizes it; 0/off disables it
+      --prefix-cache <mode>   Enable prefix KV cache: true/false (default: true)
+      --prefix-cache-entries <n>
+                              Prefix KV cache entries (default: 2)
+      --prefix-cache-min-tokens <n>
+                              Minimum prefix tokens to cache (default: 512)
       --warmup-tokens <n>     Approximate prompt tokens to run once before serving
       --warmup-max-new-tokens <n>
                               Max new tokens for startup warmup
@@ -89,6 +96,7 @@ Every CLI flag has a corresponding environment variable:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `WANDLER_LLM` | onnx-community/gemma-4-E4B-it-ONNX:q4 | LLM model with precision |
+| `WANDLER_BACKEND` | wandler | LLM backend: `wandler` for Wandler's serving layer, `transformersjs` for the direct baseline |
 | `WANDLER_STT` | onnx-community/whisper-tiny:q4 | Speech-to-text model |
 | `WANDLER_EMBEDDING` | — | Embedding model (disabled by default) |
 | `WANDLER_DEVICE` | webgpu | Device: webgpu, cpu, wasm |
@@ -100,8 +108,12 @@ Every CLI flag has a corresponding environment variable:
 | `WANDLER_MAX_CONCURRENT` | 1 | Max concurrent requests |
 | `WANDLER_TIMEOUT` | 120000 | Request timeout (ms) |
 | `WANDLER_LOG_LEVEL` | info | Log level |
+| `WANDLER_QUIET` | false | Suppress non-error startup/profile logs |
 | `WANDLER_CACHE_DIR` | ~/.cache/huggingface | Model cache directory (also respects `HF_HOME`) |
-| `WANDLER_PREFILL_CHUNK_SIZE` | 1024 | Chunk size for long-prompt prefill; set `0`/`off` to disable |
+| `WANDLER_PREFILL_CHUNK_SIZE` | auto | Chunk size for long-prompt prefill; `auto` uses the fastest WebGPU path that fits a 640MB attention budget, `auto:<mb>` customizes it; set `0`/`off` to disable |
+| `WANDLER_PREFIX_CACHE` | true | Enable in-memory prefix KV caching for repeated system/tool prefixes |
+| `WANDLER_PREFIX_CACHE_ENTRIES` | 2 | Prefix KV cache entry count |
+| `WANDLER_PREFIX_CACHE_MIN_TOKENS` | 512 | Minimum prefix size before caching |
 | `WANDLER_WARMUP_TOKENS` | 0 | Approximate prompt tokens to run once before serving |
 | `WANDLER_WARMUP_MAX_NEW_TOKENS` | 8 | Max new tokens for startup warmup |
 | `HF_TOKEN` | — | HuggingFace token for gated models |

@@ -91,6 +91,7 @@ function mockModelsWithScript(script: string[]): LoadedModels {
     },
   };
   return {
+    device: "cpu",
     tokenizer,
     chatTemplate: null,
     processor: null,

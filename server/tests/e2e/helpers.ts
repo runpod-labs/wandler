@@ -90,6 +90,7 @@ export function createMockModels(): LoadedModels {
   });
 
   return {
+    device: "cpu",
     tokenizer,
     chatTemplate: null,
     processor: null,
@@ -144,6 +145,7 @@ export function createMockModelsWithChunks(chunks: string[]): LoadedModels {
   };
 
   return {
+    device: "cpu",
     tokenizer,
     chatTemplate: null,
     processor: null,
@@ -188,6 +190,7 @@ export function createTestConfig(
     host: "127.0.0.1",
     modelId: "mock-model/test",
     modelDtype: "q4",
+    backend: "wandler",
     device: "cpu",
     sttModelId: "mock-stt/test",
     sttDtype: "q4",
@@ -199,9 +202,10 @@ export function createTestConfig(
     maxConcurrent: 1,
     timeout: 120000,
     logLevel: "info",
+    quiet: false,
     hfToken: "",
     cacheDir: "",
-    prefillChunkSize: "1024",
+    prefillChunkSize: "auto",
     warmupTokens: 0,
     warmupMaxNewTokens: 8,
     ...overrides,

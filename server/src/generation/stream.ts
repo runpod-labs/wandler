@@ -3,6 +3,7 @@ import type { LoadedModels } from "../models/manager.js";
 import type { ChatMessage, GenerationOptions, GenerationProfile, Tool } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
 import { stripInternalGenOpts } from "./options.js";
+import { buildPrefixCandidate, preparePrefill, type TensorLike } from "./prefill.js";
 import {
   elapsedMs,
   estimateAttentionScoresMb,
@@ -90,9 +91,49 @@ export async function generateStreamTokens(
   );
 
   const generateStart = nowMs();
+  let prefillChunkSize: number | undefined;
+  let prefillChunks: number | undefined;
+  let prefillMs: number | undefined;
+  let prefixCacheHit: boolean | undefined;
+  let prefixCacheTokens: number | undefined;
+  let prefillCleanup: (() => Promise<void>) | null = null;
   try {
-    await models.model!.generate({ ...inputs, ...stripInternalGenOpts(effectiveGenOpts), streamer });
+    const transformersGenOpts = stripInternalGenOpts(effectiveGenOpts);
+    const prefixCandidate = buildPrefixCandidate(
+      models.tokenizer!,
+      messages,
+      modelId,
+      tools,
+      models.chatTemplate,
+      prompt,
+    );
+    const prefill = await preparePrefill(
+      models,
+      inputs.input_ids as TensorLike,
+      promptTokens,
+      effectiveGenOpts,
+      prompt,
+      prefixCandidate,
+    );
+    prefillCleanup = prefill.cleanup;
+    prefillChunkSize = prefill.prefillChunkSize;
+    prefillChunks = prefill.prefillChunks;
+    prefillMs = prefill.prefillMs;
+    prefixCacheHit = prefill.prefixCacheHit;
+    prefixCacheTokens = prefill.prefixCacheTokens;
+
+    if (prefill.pastKeyValues) {
+      await models.model!.generate({
+        input_ids: prefill.inputIds,
+        past_key_values: prefill.pastKeyValues,
+        ...transformersGenOpts,
+        streamer,
+      });
+    } else {
+      await models.model!.generate({ ...inputs, ...transformersGenOpts, streamer });
+    }
   } catch (error) {
+    await prefillCleanup?.();
     if (error instanceof GenerationExecutionError) throw error;
     const memoryAfterGenerate = memorySnapshot();
     const profile: GenerationProfile = {
@@ -107,6 +148,11 @@ export async function generateStreamTokens(
       generateMs: elapsedMs(generateStart),
       decodeMs: 0,
       totalMs: elapsedMs(started),
+      prefillChunkSize,
+      prefillChunks,
+      prefillMs,
+      prefixCacheHit,
+      prefixCacheTokens,
       memoryBefore,
       memoryAfterTokenize,
       memoryAfterGenerate,
@@ -121,6 +167,7 @@ export async function generateStreamTokens(
     logGenerationProfile(profile);
     throw new GenerationExecutionError(error, profile);
   }
+  await prefillCleanup?.();
   const generateMs = elapsedMs(generateStart);
   const memoryAfterGenerate = memorySnapshot();
 
@@ -136,6 +183,11 @@ export async function generateStreamTokens(
     generateMs,
     decodeMs: 0,
     totalMs: elapsedMs(started),
+    prefillChunkSize,
+    prefillChunks,
+    prefillMs,
+    prefixCacheHit,
+    prefixCacheTokens,
     memoryBefore,
     memoryAfterTokenize,
     memoryAfterGenerate,

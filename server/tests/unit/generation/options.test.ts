@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildGenOpts, FALLBACK_MAX_TOKENS } from "../../../src/generation/options.js";
+import {
+  buildGenOpts,
+  DEFAULT_WEBGPU_PREFILL_MEMORY_MB,
+  FALLBACK_MAX_TOKENS,
+  FALLBACK_WEBGPU_FULL_PREFILL_MAX_TOKENS,
+  resolvePrefillChunkSize,
+} from "../../../src/generation/options.js";
 import type { Tokenizer } from "../../../src/models/tokenizer.js";
 import type { SamplingParams } from "../../../src/types/openai.js";
 
@@ -124,5 +130,29 @@ describe("buildGenOpts", () => {
   it("passes server prefill chunk size through to generation", () => {
     const opts = buildGenOpts({}, mockTokenizer, null, 131072, "1024");
     expect(opts.prefill_chunk_size).toBe("1024");
+  });
+
+  it("passes auto prefill through until prompt length is known", () => {
+    const opts = buildGenOpts({}, mockTokenizer, null, 131072, "auto");
+    expect(opts.prefill_chunk_size).toBe("auto");
+  });
+
+  it("disables auto prefill chunking when WebGPU full-prompt attention fits the budget", () => {
+    expect(resolvePrefillChunkSize("auto", "webgpu", 4096, 8)).toBe("0");
+    expect(resolvePrefillChunkSize("auto", "webgpu", 8192, 8)).toBe("2560");
+    expect(DEFAULT_WEBGPU_PREFILL_MEMORY_MB).toBe(640);
+  });
+
+  it("supports custom WebGPU auto prefill memory budgets", () => {
+    expect(resolvePrefillChunkSize("auto:4096", "webgpu", 8192, 16)).toBe("0");
+    expect(resolvePrefillChunkSize("auto:512", "webgpu", 8192, 16)).toBe("1024");
+  });
+
+  it("keeps auto prefill chunking on non-WebGPU backends and uses a WebGPU fallback without model heads", () => {
+    expect(resolvePrefillChunkSize("auto", "webgpu")).toBe("1024");
+    expect(resolvePrefillChunkSize("auto", "webgpu", FALLBACK_WEBGPU_FULL_PREFILL_MAX_TOKENS)).toBe("0");
+    expect(resolvePrefillChunkSize("auto", "webgpu", FALLBACK_WEBGPU_FULL_PREFILL_MAX_TOKENS + 1)).toBe("1024");
+    expect(resolvePrefillChunkSize("auto", "cuda", 2048)).toBe("1024");
+    expect(resolvePrefillChunkSize("auto", "cpu", 2048)).toBe("1024");
   });
 });

@@ -8,6 +8,7 @@ export interface ServerConfig {
   host: string;
   modelId: string;
   modelDtype: string;
+  backend: "wandler" | "transformersjs";
   device: string;
   sttModelId: string;
   sttDtype: string;
@@ -26,6 +27,7 @@ export interface ServerConfig {
   maxConcurrent: number;
   timeout: number;
   logLevel: string;
+  quiet: boolean;
   hfToken: string;
   cacheDir: string;
   prefillChunkSize: string;
@@ -90,6 +92,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     host: env.WANDLER_HOST || "127.0.0.1",
     modelId: llm.id,
     modelDtype: llm.dtype,
+    backend: parseBackend(env.WANDLER_BACKEND),
     device: env.WANDLER_DEVICE || env.DEVICE || "auto",
     sttModelId: stt.id,
     sttDtype: stt.dtype,
@@ -101,12 +104,18 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     maxConcurrent: parseInt(env.WANDLER_MAX_CONCURRENT || "1", 10),
     timeout: parseInt(env.WANDLER_TIMEOUT || "120000", 10),
     logLevel: env.WANDLER_LOG_LEVEL || "info",
+    quiet: parseBoolean(env.WANDLER_QUIET, false),
     hfToken: env.HF_TOKEN || env.WANDLER_HF_TOKEN || "",
     cacheDir: env.WANDLER_CACHE_DIR || defaultHfCacheDir(env),
-    prefillChunkSize: env.WANDLER_PREFILL_CHUNK_SIZE || "1024",
+    prefillChunkSize: env.WANDLER_PREFILL_CHUNK_SIZE || "auto",
     warmupTokens: parseNonNegativeInt(env.WANDLER_WARMUP_TOKENS, 0),
     warmupMaxNewTokens: parsePositiveInt(env.WANDLER_WARMUP_MAX_NEW_TOKENS, 8),
   };
+}
+
+function parseBackend(raw: string | undefined): ServerConfig["backend"] {
+  if (raw === "transformersjs") return "transformersjs";
+  return "wandler";
 }
 
 function parseNonNegativeInt(raw: string | undefined, fallback: number): number {
@@ -119,4 +128,9 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   if (raw == null || raw === "") return fallback;
   const parsed = Number.parseInt(raw, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (raw == null || raw === "") return fallback;
+  return ["1", "true", "yes", "on"].includes(raw.toLowerCase());
 }
