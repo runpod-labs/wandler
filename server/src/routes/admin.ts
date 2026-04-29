@@ -93,6 +93,7 @@ export function trackFailedRequest(
 
 export function adminMetrics(c: Context<AppEnv>) {
   const config = c.get("config");
+  const modelsState = c.get("models");
   const mem = process.memoryUsage();
   return c.json({
     uptime_seconds: Math.round((Date.now() - startedAt) / 1000),
@@ -114,7 +115,7 @@ export function adminMetrics(c: Context<AppEnv>) {
     models: {
       llm: config.modelId,
       dtype: config.modelDtype,
-      device: config.device,
+      device: modelsState.device ?? config.device,
       stt: config.sttModelId || null,
       embedding: config.embeddingModelId || null,
     },

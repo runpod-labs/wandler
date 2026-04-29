@@ -105,7 +105,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     quiet: parseBoolean(env.WANDLER_QUIET, false),
     hfToken: env.HF_TOKEN || env.WANDLER_HF_TOKEN || "",
     cacheDir: env.WANDLER_CACHE_DIR || defaultHfCacheDir(env),
-    prefillChunkSize: env.WANDLER_PREFILL_CHUNK_SIZE || "1024",
+    prefillChunkSize: env.WANDLER_PREFILL_CHUNK_SIZE || "auto",
     warmupTokens: parseNonNegativeInt(env.WANDLER_WARMUP_TOKENS, 0),
     warmupMaxNewTokens: parsePositiveInt(env.WANDLER_WARMUP_MAX_NEW_TOKENS, 8),
   };

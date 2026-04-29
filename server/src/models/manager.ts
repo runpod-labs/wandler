@@ -15,6 +15,7 @@ import type { Tokenizer } from "./tokenizer.js";
 // ── Model manager — loads and holds references to models ────────────────────
 
 export interface LoadedModels {
+  device: string | null;
   tokenizer: Tokenizer | null;
   chatTemplate: string | null;
   processor: unknown | null;
@@ -414,7 +415,7 @@ async function loadLLM(
   modelId: string,
   dtype: string,
   device: string,
-): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean }> {
+): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean; device: DeviceType }> {
   // Explicit device (not "auto") — try it, fall back to cpu.
   if (device !== "auto") {
     return await loadLLMWithDevice(modelId, dtype, device as DeviceType);
@@ -476,7 +477,7 @@ async function loadLLMWithDevice(
   modelId: string,
   dtype: string,
   device: DeviceType,
-): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean }> {
+): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean; device: DeviceType }> {
   // Probe config.json so we don't try the vision path on a 20B text-only
   // model (wasted round-trip) or skip it on a real vision model. A null
   // probe result means "unknown" and we fall through to the old try/catch
@@ -487,8 +488,9 @@ async function loadLLMWithDevice(
     const model = await AutoModelForCausalLM.from_pretrained(modelId, {
       dtype: dtype as DtypeType,
       device,
+      session_options: buildSessionOptions(device),
     }) as unknown as LoadedModels["model"];
-    return { model, processor: null, isVision: false };
+    return { model, processor: null, isVision: false, device };
   }
 
   // probe === true OR probe === null (unknown): try vision first, fall back.
@@ -502,7 +504,7 @@ async function loadLLMWithDevice(
 
     const processor = await AutoProcessor.from_pretrained(modelId);
     logInfo(`[wandler] Loaded as vision model (device=${device})`);
-    return { model, processor, isVision: true };
+    return { model, processor, isVision: true, device };
   } catch {
     // Not a vision model or vision files not available — load as text-only
     const model = await AutoModelForCausalLM.from_pretrained(modelId, {
@@ -510,7 +512,7 @@ async function loadLLMWithDevice(
       device,
       session_options: buildSessionOptions(device),
     }) as unknown as LoadedModels["model"];
-    return { model, processor: null, isVision: false };
+    return { model, processor: null, isVision: false, device };
   }
 }
 
@@ -552,6 +554,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   let tokenizer: Tokenizer | null = null;
   let processor: unknown | null = null;
   let isVision = false;
+  let loadedDevice: string | null = config.modelId ? device : null;
   let chatTemplate: string | null = null;
   let maxContextLength: number | null = null;
   let vocabSize: number | null = null;
@@ -572,6 +575,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     model = result.model;
     processor = result.processor;
     isVision = result.isVision;
+    loadedDevice = result.device;
 
     tokenizer = isVision && processor
       ? (processor as { tokenizer: Tokenizer }).tokenizer ?? await AutoTokenizer.from_pretrained(config.modelId) as unknown as Tokenizer
@@ -626,6 +630,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   }
 
   return {
+    device: loadedDevice,
     tokenizer,
     chatTemplate,
     processor,

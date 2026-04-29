@@ -232,7 +232,7 @@ export async function responses(c: Context<AppEnv>) {
   if (params.max_output_tokens != null && params.max_tokens == null) {
     samplingParams.max_tokens = params.max_output_tokens;
   }
-  const genOpts = buildGenOpts(samplingParams, models.tokenizer, config.maxTokens, models.maxContextLength, config.prefillChunkSize);
+  const genOpts = buildGenOpts(samplingParams, models.tokenizer, config.maxTokens, models.maxContextLength, config.prefillChunkSize, models.device);
 
   // ── Streaming path ──────────────────────────────────────────────────────
   if (params.stream) {

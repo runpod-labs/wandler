@@ -48,7 +48,7 @@ program
   .option("--quiet", "Suppress non-error startup logs")
   .option("--hf-token <token>", "HuggingFace token for gated models")
   .option("--cache-dir <path>", "Model cache directory (default: ~/.cache/huggingface)")
-  .option("--prefill-chunk-size <n>", "Chunk size for long-prompt prefill; 0/off disables it")
+  .option("--prefill-chunk-size <n>", "Chunk size for long-prompt prefill; auto uses WebGPU=off, others=1024; 0/off disables it")
   .option("--warmup-tokens <n>", "Approximate prompt tokens to run once before serving")
   .option("--warmup-max-new-tokens <n>", "Max new tokens for startup warmup")
   .action(async (opts) => {

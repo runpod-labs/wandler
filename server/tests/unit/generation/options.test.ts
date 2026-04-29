@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildGenOpts, FALLBACK_MAX_TOKENS } from "../../../src/generation/options.js";
+import { buildGenOpts, FALLBACK_MAX_TOKENS, resolvePrefillChunkSize } from "../../../src/generation/options.js";
 import type { Tokenizer } from "../../../src/models/tokenizer.js";
 import type { SamplingParams } from "../../../src/types/openai.js";
 
@@ -124,5 +124,15 @@ describe("buildGenOpts", () => {
   it("passes server prefill chunk size through to generation", () => {
     const opts = buildGenOpts({}, mockTokenizer, null, 131072, "1024");
     expect(opts.prefill_chunk_size).toBe("1024");
+  });
+
+  it("disables auto prefill chunking for WebGPU", () => {
+    const opts = buildGenOpts({}, mockTokenizer, null, 131072, "auto", "webgpu");
+    expect(opts.prefill_chunk_size).toBe("0");
+  });
+
+  it("keeps auto prefill chunking on non-WebGPU backends", () => {
+    expect(resolvePrefillChunkSize("auto", "cuda")).toBe("1024");
+    expect(resolvePrefillChunkSize("auto", "cpu")).toBe("1024");
   });
 });

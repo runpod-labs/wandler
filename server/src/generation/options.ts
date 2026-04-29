@@ -5,6 +5,17 @@ import type { Tokenizer } from "../models/tokenizer.js";
 // context length is available (e.g. loaded via a custom pipeline that
 // doesn't expose `max_position_embeddings`). Exported so tests can assert it.
 export const FALLBACK_MAX_TOKENS = 2048;
+export const DEFAULT_PREFILL_CHUNK_SIZE = "1024";
+
+export function resolvePrefillChunkSize(raw = "auto", device: string | null | undefined = "auto"): string {
+  const value = raw.trim().toLowerCase();
+  if (value !== "auto") return raw;
+
+  // transformers.js/ORT WebGPU already handles the full prompt path better
+  // for Gemma in local tests. Manual prefill remains the safer default for
+  // CUDA/CPU-style backends where long-prompt memory spikes are more common.
+  return device === "webgpu" ? "0" : DEFAULT_PREFILL_CHUNK_SIZE;
+}
 
 /**
  * Build transformers.js generation options from OpenAI-compatible sampling params.
@@ -22,6 +33,7 @@ export function buildGenOpts(
   maxTokensCap?: number | null,
   modelMaxContext?: number | null,
   prefillChunkSize?: string,
+  device?: string | null,
 ): GenerationOptions {
   const temperature = params.temperature ?? 0.7;
   const hardCap = maxTokensCap ?? modelMaxContext ?? FALLBACK_MAX_TOKENS;
@@ -32,7 +44,9 @@ export function buildGenOpts(
     top_p: params.top_p ?? 0.95,
     do_sample: temperature > 0,
   };
-  if (prefillChunkSize != null) opts.prefill_chunk_size = prefillChunkSize;
+  if (prefillChunkSize != null) {
+    opts.prefill_chunk_size = resolvePrefillChunkSize(prefillChunkSize, device ?? "auto");
+  }
 
   // Extended sampling params supported by transformers.js
   if (params.top_k != null) opts.top_k = params.top_k;

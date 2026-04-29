@@ -96,7 +96,7 @@ export async function chatCompletions(c: Context<AppEnv>) {
 
     const id = makeId();
     const created = Math.floor(Date.now() / 1000);
-    const genOpts = buildGenOpts(params, models.tokenizer, config.maxTokens, models.maxContextLength, config.prefillChunkSize);
+    const genOpts = buildGenOpts(params, models.tokenizer, config.maxTokens, models.maxContextLength, config.prefillChunkSize, models.device);
     const messages = applyResponseFormat(params.messages, params.response_format);
     const includeUsage = params.stream_options?.include_usage ?? true;
     const toolsCount = params.tools?.length ?? 0;
