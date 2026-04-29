@@ -88,6 +88,8 @@ export function logGenerationProfile(profile: GenerationProfile): void {
       profile.prefillChunkSize ? `prefillChunkSize=${profile.prefillChunkSize}` : null,
       profile.prefillChunks ? `prefillChunks=${profile.prefillChunks}` : null,
       profile.prefillMs != null ? `prefillMs=${profile.prefillMs}` : null,
+      profile.prefixCacheHit != null ? `prefixCache=${profile.prefixCacheHit ? "hit" : "miss"}` : null,
+      profile.prefixCacheTokens != null ? `prefixCacheTokens=${profile.prefixCacheTokens}` : null,
       `totalMs=${profile.totalMs}`,
       profile.failedStage ? `failedStage=${profile.failedStage}` : null,
       profile.errorMessage ? `error=${JSON.stringify(profile.errorMessage.slice(0, 240))}` : null,

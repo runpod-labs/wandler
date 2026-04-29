@@ -7,7 +7,8 @@ import type {
   Tool,
 } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
-import { resolvePrefillChunkSize, stripInternalGenOpts } from "./options.js";
+import { stripInternalGenOpts } from "./options.js";
+import { buildPrefixCandidate, preparePrefill, type TensorLike } from "./prefill.js";
 import { getImageUrls } from "../utils/content.js";
 import {
   elapsedMs,
@@ -20,146 +21,12 @@ import {
   serializedToolsChars,
 } from "./profile.js";
 
-type TensorLike = {
-  dims: number[];
-  location?: string;
-  slice(...args: unknown[]): TensorLike;
-  dispose?(): Promise<void>;
-};
-
-type CacheTensor = TensorLike;
-
-class WandlerDynamicCache {
-  [key: string]: CacheTensor | unknown;
-
-  constructor(entries?: Record<string, CacheTensor>) {
-    if (!entries) return;
-    this.update(entries);
-  }
-
-  get_seq_length(): number {
-    for (const [name, tensor] of Object.entries(this)) {
-      if (name.startsWith("past_key_values.") && isTensorLike(tensor)) {
-        return tensor.dims.at(-2) ?? 0;
-      }
-    }
-    return 0;
-  }
-
-  update(entries: Record<string, CacheTensor>): void {
-    for (const [name, tensor] of Object.entries(entries)) {
-      const old = this[name];
-      if (isTensorLike(old) && old !== tensor && old.location === "gpu-buffer") {
-        void old.dispose?.();
-      }
-      this[name] = tensor;
-    }
-  }
-
-  async dispose(): Promise<void> {
-    await Promise.all(
-      Object.values(this)
-        .filter(isTensorLike)
-        .filter((tensor) => tensor.location === "gpu-buffer")
-        .map((tensor) => tensor.dispose?.() ?? Promise.resolve()),
-    );
-  }
-}
-
-function isTensorLike(value: unknown): value is TensorLike {
-  return Boolean(
-    value &&
-    typeof value === "object" &&
-    "dims" in value &&
-    Array.isArray((value as { dims?: unknown }).dims),
-  );
-}
-
-function getPastKeyValues(outputs: Record<string, unknown>, cache: WandlerDynamicCache | null): WandlerDynamicCache {
-  const entries: Record<string, CacheTensor> = Object.create(null);
-  for (const [name, value] of Object.entries(outputs)) {
-    if (!name.startsWith("present") || !isTensorLike(value)) continue;
-    const newName = name
-      .replace("present_ssm", "past_ssm")
-      .replace("present_conv", "past_conv")
-      .replace("present_recurrent", "past_recurrent")
-      .replace("present", "past_key_values");
-    entries[newName] = value;
-  }
-  if (cache) {
-    cache.update(entries);
-    return cache;
-  }
-  return new WandlerDynamicCache(entries);
-}
-
-async function disposeUnusedOutputs(outputs: Record<string, unknown>, cache: WandlerDynamicCache): Promise<void> {
-  const cached = new Set(Object.values(cache));
-  await Promise.all(
-    Object.values(outputs)
-      .filter(isTensorLike)
-      .filter((tensor) => tensor.location === "gpu-buffer" && !cached.has(tensor))
-      .map((tensor) => tensor.dispose?.() ?? Promise.resolve()),
-  );
-}
-
-function readPrefillChunkSize(
-  promptTokens: number,
-  raw = process.env.WANDLER_PREFILL_CHUNK_SIZE ?? "auto",
-  device?: string | null,
-  attentionHeads?: number | null,
-): number | null {
-  const resolved = resolvePrefillChunkSize(raw, device, promptTokens, attentionHeads);
-  if (["0", "false", "off", "no"].includes(resolved.toLowerCase())) return null;
-  const chunkSize = Number.parseInt(resolved, 10);
-  if (!Number.isFinite(chunkSize) || chunkSize < 2 || chunkSize >= promptTokens) return null;
-  return chunkSize;
-}
-
 function promptTooLongErrorMessage(promptTokens: number, maxContextLength: number): string | null {
   if (promptTokens < maxContextLength) return null;
   return (
     `Prompt has ${promptTokens} tokens, but the model context is ${maxContextLength} tokens. ` +
     "Reduce the prompt/tools."
   );
-}
-
-async function prefillPromptCache(
-  model: LoadedModels["model"],
-  inputIds: TensorLike,
-  promptTokens: number,
-  chunkSize: number,
-): Promise<{ cache: WandlerDynamicCache | null; lastTokenInputIds: TensorLike; chunks: number; prefillMs: number }> {
-  const m = model as unknown as {
-    prepare_inputs_for_generation(inputIds: bigint[][], modelInputs: Record<string, unknown>, generationConfig: Record<string, unknown>): Record<string, unknown>;
-    forward(modelInputs: Record<string, unknown>): Promise<Record<string, unknown>>;
-  };
-
-  const started = nowMs();
-  let cache: WandlerDynamicCache | null = null;
-  let chunks = 0;
-  const prefillEnd = promptTokens - 1;
-
-  for (let start = 0; start < prefillEnd; start += chunkSize) {
-    const end = Math.min(start + chunkSize, prefillEnd);
-    const chunkInputIds = inputIds.slice(null, [start, end]);
-    let modelInputs: Record<string, unknown> = {
-      input_ids: chunkInputIds,
-      past_key_values: cache,
-    };
-    modelInputs = m.prepare_inputs_for_generation([], modelInputs, {});
-    const outputs = await m.forward(modelInputs);
-    cache = getPastKeyValues(outputs, cache);
-    await disposeUnusedOutputs(outputs, cache);
-    chunks++;
-  }
-
-  return {
-    cache,
-    lastTokenInputIds: inputIds.slice(null, [promptTokens - 1, promptTokens]),
-    chunks,
-    prefillMs: elapsedMs(started),
-  };
 }
 
 /**
@@ -317,7 +184,9 @@ export async function generate(
   let prefillChunkSize: number | undefined;
   let prefillChunks: number | undefined;
   let prefillMs: number | undefined;
-  let chunkedCache: WandlerDynamicCache | null = null;
+  let prefixCacheHit: boolean | undefined;
+  let prefixCacheTokens: number | undefined;
+  let prefillCleanup: (() => Promise<void>) | null = null;
   try {
     const promptTokens = inputs.input_ids.dims[1]!;
     const contextError = models.maxContextLength
@@ -359,27 +228,34 @@ export async function generate(
           ),
         }
       : genOpts;
-    const chunkSize = readPrefillChunkSize(
-      promptTokens,
-      effectiveGenOpts.prefill_chunk_size,
-      models.device,
-      models.attentionHeads,
-    );
     const transformersGenOpts = stripInternalGenOpts(effectiveGenOpts);
-    if (chunkSize) {
-      const prefill = await prefillPromptCache(
-        models.model,
-        inputs.input_ids as TensorLike,
-        promptTokens,
-        chunkSize,
-      );
-      chunkedCache = prefill.cache;
-      prefillChunkSize = chunkSize;
-      prefillChunks = prefill.chunks;
-      prefillMs = prefill.prefillMs;
+    const prefixCandidate = buildPrefixCandidate(
+      models.tokenizer!,
+      messages,
+      modelId,
+      tools,
+      models.chatTemplate,
+      prompt,
+    );
+    const prefill = await preparePrefill(
+      models,
+      inputs.input_ids as TensorLike,
+      promptTokens,
+      effectiveGenOpts,
+      prompt,
+      prefixCandidate,
+    );
+    prefillCleanup = prefill.cleanup;
+    prefillChunkSize = prefill.prefillChunkSize;
+    prefillChunks = prefill.prefillChunks;
+    prefillMs = prefill.prefillMs;
+    prefixCacheHit = prefill.prefixCacheHit;
+    prefixCacheTokens = prefill.prefixCacheTokens;
+
+    if (prefill.pastKeyValues) {
       outputIds = await models.model!.generate({
-        input_ids: prefill.lastTokenInputIds,
-        past_key_values: chunkedCache,
+        input_ids: prefill.inputIds,
+        past_key_values: prefill.pastKeyValues,
         ...transformersGenOpts,
       });
     } else {
@@ -387,7 +263,7 @@ export async function generate(
     }
   } catch (error) {
     if (error instanceof GenerationExecutionError) {
-      await chunkedCache?.dispose();
+      await prefillCleanup?.();
       throw error;
     }
     const promptTokens = inputs.input_ids.dims[1]!;
@@ -407,6 +283,8 @@ export async function generate(
       prefillChunkSize,
       prefillChunks,
       prefillMs,
+      prefixCacheHit,
+      prefixCacheTokens,
       memoryBefore,
       memoryAfterTokenize,
       memoryAfterGenerate,
@@ -419,7 +297,7 @@ export async function generate(
       errorMessage: error instanceof Error ? error.message : String(error),
     };
     logGenerationProfile(profile);
-    await chunkedCache?.dispose();
+    await prefillCleanup?.();
     throw new GenerationExecutionError(error, profile);
   }
   const generateMs = elapsedMs(generateStart);
@@ -432,7 +310,7 @@ export async function generate(
   const newIds = outputIds.slice(null, [chunkedPromptOffset, null]);
   const text = models.tokenizer!.batch_decode(newIds, { skip_special_tokens: true })[0]!;
   const decodeMs = elapsedMs(decodeStart);
-  await chunkedCache?.dispose();
+  await prefillCleanup?.();
   const profile = {
     path: "text" as const,
     promptChars: prompt.length,
@@ -448,6 +326,8 @@ export async function generate(
     prefillChunkSize,
     prefillChunks,
     prefillMs,
+    prefixCacheHit,
+    prefixCacheTokens,
     memoryBefore,
     memoryAfterTokenize,
     memoryAfterGenerate,

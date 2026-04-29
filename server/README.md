@@ -95,6 +95,9 @@ Every CLI flag has a corresponding environment variable:
 | `WANDLER_QUIET` | false | Suppress non-error startup/profile logs |
 | `WANDLER_CACHE_DIR` | — | Model cache directory |
 | `WANDLER_PREFILL_CHUNK_SIZE` | auto | Chunk size for long-prompt prefill; `auto` uses the fastest WebGPU path that fits a 640MB attention budget, `auto:<mb>` customizes it; set `0`/`off` to disable |
+| `WANDLER_PREFIX_CACHE` | true | Enable in-memory prefix KV caching for repeated system/tool prefixes |
+| `WANDLER_PREFIX_CACHE_ENTRIES` | 2 | Prefix KV cache entry count |
+| `WANDLER_PREFIX_CACHE_MIN_TOKENS` | 512 | Minimum prefix size before caching |
 | `WANDLER_WARMUP_TOKENS` | 0 | Approximate prompt tokens to run once before serving |
 | `WANDLER_WARMUP_MAX_NEW_TOKENS` | 8 | Max new tokens for startup warmup |
 | `HF_TOKEN` | — | HuggingFace token for gated models |

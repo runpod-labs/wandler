@@ -145,13 +145,14 @@ export function formatChat(
   _modelId: string,
   tools?: Tool[],
   chatTemplate?: string | null,
+  options?: { addGenerationPrompt?: boolean },
 ): string {
   // Normalize multimodal content to strings for tokenization
   const normalized = normalizeMessages(messages);
 
   const opts: Record<string, unknown> = {
     tokenize: false,
-    add_generation_prompt: true,
+    add_generation_prompt: options?.addGenerationPrompt ?? true,
   };
   if (tools?.length) {
     opts.tools = sanitizeTools(tools);
