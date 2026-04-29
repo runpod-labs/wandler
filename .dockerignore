@@ -1,0 +1,10 @@
+.git
+.turbo
+.next
+node_modules
+**/node_modules
+server/dist
+site
+*.log
+.DS_Store
+**/._*

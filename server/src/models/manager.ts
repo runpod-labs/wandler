@@ -31,6 +31,16 @@ export interface LoadedModels {
    * loaded or the model doesn't expose the field.
    */
   maxContextLength: number | null;
+  /**
+   * Vocabulary size read from the loaded LLM config. Used for diagnostics to
+   * estimate how large full-prompt logits would be for long contexts.
+   */
+  vocabSize: number | null;
+  generationDiagnostics: {
+    numLogitsToKeepInput: boolean;
+    numLogitsToKeepPatchedSessions: string[];
+  };
+  attentionHeads: number | null;
 }
 
 /**
@@ -46,6 +56,164 @@ function readMaxContextLength(
   const textConfig = (config.text_config as Record<string, unknown> | undefined) ?? config;
   const mpe = textConfig.max_position_embeddings;
   return typeof mpe === "number" && mpe > 0 ? mpe : null;
+}
+
+function readVocabSize(model: unknown): number | null {
+  const config = (model as { config?: Record<string, unknown> }).config;
+  if (!config) return null;
+  const textConfig = (config.text_config as Record<string, unknown> | undefined) ?? config;
+  const vocabSize = textConfig.vocab_size;
+  return typeof vocabSize === "number" && vocabSize > 0 ? vocabSize : null;
+}
+
+function readAttentionHeads(model: unknown): number | null {
+  const config = (model as { config?: Record<string, unknown> }).config;
+  if (!config) return null;
+  const textConfig = (config.text_config as Record<string, unknown> | undefined) ?? config;
+  const heads = textConfig.num_attention_heads;
+  return typeof heads === "number" && heads > 0 ? heads : null;
+}
+
+type SessionLike = {
+  inputNames?: string[];
+  run?: (feeds: Record<string, unknown>, ...args: unknown[]) => Promise<unknown>;
+  __wandlerRunPatch?: boolean;
+};
+
+type OnnxRunOptions = {
+  extra?: {
+    memory?: {
+      enable_memory_arena_shrinkage?: "0" | "1";
+    };
+  };
+};
+
+function shouldShrinkOnnxMemoryArena(): boolean {
+  const raw = process.env.WANDLER_ONNX_MEMORY_ARENA_SHRINKAGE;
+  if (raw == null) return true;
+  return !["0", "false", "off", "no"].includes(raw.toLowerCase());
+}
+
+function mergeRunOptions(args: unknown[], runOptions: OnnxRunOptions): unknown[] {
+  if (args.length === 0) return [runOptions];
+
+  // session.run(feeds, options)
+  if (args.length === 1 && isPlainObject(args[0]) && !looksLikeFetches(args[0])) {
+    return [mergePlainObjects(args[0], runOptions)];
+  }
+
+  // session.run(feeds, fetches, options)
+  if (args.length >= 2) {
+    const next = [...args];
+    const existing = isPlainObject(next[1]) && !looksLikeFetches(next[1]) ? next[1] : {};
+    next[1] = mergePlainObjects(existing, runOptions);
+    return next;
+  }
+
+  return args;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function looksLikeFetches(value: unknown): boolean {
+  if (!isPlainObject(value)) return false;
+  return Object.values(value).some((entry) => entry === true || isOnnxValueLike(entry));
+}
+
+function isOnnxValueLike(value: unknown): boolean {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    "dims" in value &&
+    Array.isArray((value as { dims?: unknown }).dims),
+  );
+}
+
+function mergePlainObjects(base: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(patch)) {
+    out[key] = isPlainObject(value) && isPlainObject(out[key])
+      ? mergePlainObjects(out[key], value)
+      : value;
+  }
+  return out;
+}
+
+function setScalarTensorValue(tensor: unknown, value: bigint): boolean {
+  const t = tensor as { data?: unknown; cpuData?: unknown };
+  const data = t.data ?? t.cpuData;
+  if (
+    data &&
+    typeof data === "object" &&
+    "length" in data &&
+    typeof (data as { length: unknown }).length === "number" &&
+    (data as { length: number }).length > 0
+  ) {
+    const array = data as { [index: number]: bigint | number };
+    const current = array[0];
+    if (current === 0n) {
+      array[0] = value;
+      return true;
+    }
+    if (current === 0) {
+      array[0] = Number(value);
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * transformers.js sets `num_logits_to_keep=1` during generation, but the
+ * current Gemma3n/Gemma4 forward path drops that kwarg before `decoder_forward`.
+ * If it reaches ONNX as 0, Gemma computes logits for the full prompt
+ * (`prompt_tokens * vocab_size`) and long prompts can allocate tens of GB.
+ *
+ * Wandler only uses `generate()`, where last-token logits are sufficient, so
+ * this ONNX-feed guard restores the intended generation behavior without
+ * changing user prompts, messages, or tool schemas.
+ */
+function patchOnnxSessionRuns(model: LoadedModels["model"]): string[] {
+  const sessions = (model as unknown as { sessions?: Record<string, SessionLike> })?.sessions;
+  if (!sessions) return [];
+
+  const patched: string[] = [];
+  const shrinkMemoryArena = shouldShrinkOnnxMemoryArena();
+  const shrinkRunOptions: OnnxRunOptions = {
+    extra: { memory: { enable_memory_arena_shrinkage: "1" } },
+  };
+
+  for (const [name, session] of Object.entries(sessions)) {
+    if (!session.run || session.__wandlerRunPatch) {
+      continue;
+    }
+
+    const originalRun = session.run.bind(session);
+    session.run = async (feeds: Record<string, unknown>, ...args: unknown[]) => {
+      const valueWasPatched = session.inputNames?.includes("num_logits_to_keep")
+        ? setScalarTensorValue(feeds.num_logits_to_keep, 1n)
+        : false;
+      if (valueWasPatched && process.env.WANDLER_LOG_LEVEL === "debug") {
+        console.debug(`[wandler] Forced num_logits_to_keep=1 for session=${name}`);
+      }
+      const runArgs = shrinkMemoryArena ? mergeRunOptions(args, shrinkRunOptions) : args;
+      return await originalRun(feeds, ...runArgs);
+    };
+    session.__wandlerRunPatch = true;
+    if (session.inputNames?.includes("num_logits_to_keep")) {
+      patched.push(name);
+    }
+  }
+
+  return patched;
+}
+
+function hasNumLogitsToKeepInput(model: LoadedModels["model"]): boolean {
+  const sessions = (model as unknown as { sessions?: Record<string, SessionLike> })?.sessions;
+  if (!sessions) return false;
+  return Object.values(sessions).some((session) => session.inputNames?.includes("num_logits_to_keep"));
 }
 
 /**
@@ -131,6 +299,29 @@ export const SUPPORTED_DTYPES: readonly DtypeType[] = [
  * warn the user instead of silently falling back and producing garbage.
  */
 const LOW_BIT_DTYPES: readonly DtypeType[] = ["q1", "q1f16", "q2", "q2f16"] as const;
+
+function buildSessionOptions(device: DeviceType): Record<string, unknown> | undefined {
+  if (device !== "cuda") return undefined;
+
+  const cudaProvider: Record<string, unknown> = {
+    name: "cuda",
+    // ONNX Runtime's default grows the CUDA arena by powers of two. That is
+    // fast, but long prompts can leave most of the GPU reserved after a run.
+    arena_extend_strategy: process.env.WANDLER_CUDA_ARENA_EXTEND_STRATEGY ?? "kSameAsRequested",
+  };
+
+  const gpuMemLimitMb = process.env.WANDLER_CUDA_GPU_MEM_LIMIT_MB;
+  if (gpuMemLimitMb) {
+    const mb = Number.parseInt(gpuMemLimitMb, 10);
+    if (Number.isFinite(mb) && mb > 0) {
+      cudaProvider.gpu_mem_limit = String(mb * 1024 * 1024);
+    }
+  }
+
+  return {
+    executionProviders: [cudaProvider, "cpu"],
+  };
+}
 
 // All device types in preference order (best perf first, cpu last).
 // onnxruntime may crash instead of falling back between providers
@@ -225,18 +416,7 @@ async function loadLLM(
 ): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean }> {
   // Explicit device (not "auto") — try it, fall back to cpu.
   if (device !== "auto") {
-    try {
-      return await loadLLMWithDevice(modelId, dtype, device as DeviceType);
-    } catch (err) {
-      if (device !== "cpu") {
-        console.warn(
-          `[wandler] device=${device} failed: ${err instanceof Error ? err.message : err}`,
-        );
-        console.warn(`[wandler] Falling back to device=cpu`);
-        return await loadLLMWithDevice(modelId, dtype, "cpu");
-      }
-      throw err;
-    }
+    return await loadLLMWithDevice(modelId, dtype, device as DeviceType);
   }
 
   // device="auto" — walk the fallback chain.
@@ -316,6 +496,7 @@ async function loadLLMWithDevice(
     const model = await VisionModel.from_pretrained(modelId, {
       dtype: dtype as DtypeType,
       device,
+      session_options: buildSessionOptions(device),
     }) as unknown as LoadedModels["model"];
 
     const processor = await AutoProcessor.from_pretrained(modelId);
@@ -326,6 +507,7 @@ async function loadLLMWithDevice(
     const model = await AutoModelForCausalLM.from_pretrained(modelId, {
       dtype: dtype as DtypeType,
       device,
+      session_options: buildSessionOptions(device),
     }) as unknown as LoadedModels["model"];
     return { model, processor: null, isVision: false };
   }
@@ -371,6 +553,12 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
   let isVision = false;
   let chatTemplate: string | null = null;
   let maxContextLength: number | null = null;
+  let vocabSize: number | null = null;
+  let attentionHeads: number | null = null;
+  let generationDiagnostics: LoadedModels["generationDiagnostics"] = {
+    numLogitsToKeepInput: false,
+    numLogitsToKeepPatchedSessions: [],
+  };
 
   if (config.modelId) {
     console.log(`[wandler] Loading LLM: ${config.modelId} (${config.modelDtype}, device=${device})`);
@@ -390,8 +578,24 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
 
     chatTemplate = await loadChatTemplate(tokenizer, config.modelId);
     maxContextLength = readMaxContextLength(model);
+    vocabSize = readVocabSize(model);
+    attentionHeads = readAttentionHeads(model);
+    generationDiagnostics = {
+      numLogitsToKeepInput: hasNumLogitsToKeepInput(model),
+      numLogitsToKeepPatchedSessions: patchOnnxSessionRuns(model),
+    };
     if (maxContextLength) {
       console.log(`[wandler] Model context: ${maxContextLength} tokens`);
+    }
+    if (vocabSize) {
+      console.log(`[wandler] Model vocab: ${vocabSize} tokens`);
+    }
+    if (attentionHeads) {
+      console.log(`[wandler] Model attention heads: ${attentionHeads}`);
+    }
+    if (generationDiagnostics.numLogitsToKeepInput) {
+      const sessions = generationDiagnostics.numLogitsToKeepPatchedSessions.join(", ") || "none";
+      console.log(`[wandler] num_logits_to_keep input detected; patched sessions: ${sessions}`);
     }
     console.log(`[wandler] LLM ready in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   }
@@ -429,5 +633,8 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     transcriber,
     embedder,
     maxContextLength,
+    vocabSize,
+    generationDiagnostics,
+    attentionHeads,
   };
 }

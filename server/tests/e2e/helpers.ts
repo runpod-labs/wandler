@@ -2,6 +2,7 @@ import { serve } from "@hono/node-server";
 import type { ServerConfig } from "../../src/config.js";
 import type { LoadedModels } from "../../src/models/manager.js";
 import type { Tokenizer } from "../../src/models/tokenizer.js";
+import { resetMetrics } from "../../src/routes/admin.js";
 import { createApp } from "../../src/server.js";
 
 /** Minimal mock tokenizer compatible with transformers.js TextStreamer */
@@ -88,7 +89,22 @@ export function createMockModels(): LoadedModels {
     data: new Float32Array([0.1, 0.2, 0.3, 0.4, 0.5]),
   });
 
-  return { tokenizer, chatTemplate: null, processor: null, isVision: false, model, transcriber, embedder };
+  return {
+    tokenizer,
+    chatTemplate: null,
+    processor: null,
+    isVision: false,
+    model,
+    transcriber,
+    embedder,
+    maxContextLength: 2048,
+    vocabSize: 32000,
+    generationDiagnostics: {
+      numLogitsToKeepInput: false,
+      numLogitsToKeepPatchedSessions: [],
+    },
+    attentionHeads: 8,
+  };
 }
 
 /**
@@ -197,6 +213,7 @@ export interface TestServer {
 export async function startTestServer(
   configOverrides?: Partial<ServerConfig>,
 ): Promise<TestServer> {
+  resetMetrics();
   const config = createTestConfig(configOverrides);
   const models = createMockModels();
   const app = createApp(config, models);
