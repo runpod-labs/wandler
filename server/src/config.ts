@@ -103,7 +103,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     logLevel: env.WANDLER_LOG_LEVEL || "info",
     hfToken: env.HF_TOKEN || env.WANDLER_HF_TOKEN || "",
     cacheDir: env.WANDLER_CACHE_DIR || defaultHfCacheDir(env),
-    prefillChunkSize: env.WANDLER_PREFILL_CHUNK_SIZE || "2048",
+    prefillChunkSize: env.WANDLER_PREFILL_CHUNK_SIZE || "1024",
     warmupTokens: parseNonNegativeInt(env.WANDLER_WARMUP_TOKENS, 0),
     warmupMaxNewTokens: parsePositiveInt(env.WANDLER_WARMUP_MAX_NEW_TOKENS, 8),
   };

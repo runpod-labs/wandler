@@ -103,7 +103,7 @@ async function disposeUnusedOutputs(outputs: Record<string, unknown>, cache: Wan
   );
 }
 
-function readPrefillChunkSize(promptTokens: number, raw = process.env.WANDLER_PREFILL_CHUNK_SIZE ?? "2048"): number | null {
+function readPrefillChunkSize(promptTokens: number, raw = process.env.WANDLER_PREFILL_CHUNK_SIZE ?? "1024"): number | null {
   if (["0", "false", "off", "no"].includes(raw.toLowerCase())) return null;
   const chunkSize = Number.parseInt(raw, 10);
   if (!Number.isFinite(chunkSize) || chunkSize < 2 || chunkSize >= promptTokens) return null;

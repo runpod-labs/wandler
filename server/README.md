@@ -93,7 +93,7 @@ Every CLI flag has a corresponding environment variable:
 | `WANDLER_TIMEOUT` | 120000 | Request timeout (ms) |
 | `WANDLER_LOG_LEVEL` | info | Log level |
 | `WANDLER_CACHE_DIR` | — | Model cache directory |
-| `WANDLER_PREFILL_CHUNK_SIZE` | 2048 | Chunk size for long-prompt prefill; set `0`/`off` to disable |
+| `WANDLER_PREFILL_CHUNK_SIZE` | 1024 | Chunk size for long-prompt prefill; set `0`/`off` to disable |
 | `WANDLER_WARMUP_TOKENS` | 0 | Approximate prompt tokens to run once before serving |
 | `WANDLER_WARMUP_MAX_NEW_TOKENS` | 8 | Max new tokens for startup warmup |
 | `HF_TOKEN` | — | HuggingFace token for gated models |

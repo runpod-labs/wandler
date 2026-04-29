@@ -63,7 +63,7 @@ describe("loadConfig", () => {
     expect(config.logLevel).toBe("info");
     expect(config.hfToken).toBe("");
     expect(config.cacheDir).toBe(join(homedir(), ".cache", "huggingface"));
-    expect(config.prefillChunkSize).toBe("2048");
+    expect(config.prefillChunkSize).toBe("1024");
     expect(config.warmupTokens).toBe(0);
     expect(config.warmupMaxNewTokens).toBe(8);
   });
