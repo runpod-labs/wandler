@@ -25,7 +25,7 @@ fi
 
 set +e
 node /opt/wandler/server/dist/cli.js \
-  --llm "${WANDLER_LLM:-${WANDLER_MODEL:-onnx-community/gemma-4-E4B-it-ONNX:q4}}" \
+  --llm "${WANDLER_LLM:-onnx-community/gemma-4-E4B-it-ONNX:q4}" \
   --device "${WANDLER_DEVICE:-webgpu}" \
   --host "${WANDLER_HOST:-0.0.0.0}" \
   --port "${WANDLER_PORT:-8000}"
