@@ -351,6 +351,41 @@ export interface GenerationResult {
   text: string;
   promptTokens: number;
   completionTokens: number;
+  profile?: GenerationProfile;
+}
+
+export interface MemorySnapshot {
+  rssMb: number;
+  heapUsedMb: number;
+  heapTotalMb: number;
+  externalMb: number;
+}
+
+export interface GenerationProfile {
+  path: "text" | "vision" | "stream";
+  promptChars: number;
+  toolsCount: number;
+  toolsChars: number;
+  promptTokens: number;
+  completionTokens: number;
+  formatMs: number;
+  tokenizeMs: number;
+  generateMs: number;
+  decodeMs: number;
+  totalMs: number;
+  prefillChunkSize?: number;
+  prefillChunks?: number;
+  prefillMs?: number;
+  memoryBefore: MemorySnapshot;
+  memoryAfterTokenize: MemorySnapshot;
+  memoryAfterGenerate: MemorySnapshot;
+  memoryAfterDecode: MemorySnapshot;
+  estimatedFullLogitsMb: number | null;
+  estimatedAttentionScoresMb: number | null;
+  numLogitsToKeepInput: boolean;
+  numLogitsToKeepPatchedSessions: string[];
+  failedStage?: "format" | "tokenize" | "generate" | "decode";
+  errorMessage?: string;
 }
 
 export interface GenerationOptions {

@@ -44,6 +44,7 @@
     "prepublishOnly": "cp ../README.md . && npm run build",
     "typecheck": "tsc --noEmit",
     "benchmark": "node --expose-gc --import tsx/esm src/benchmark.ts",
+    "verify:webgpu": "tsx scripts/verify-webgpu.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",

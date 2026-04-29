@@ -12,7 +12,7 @@ import { listModels, getModel } from "./routes/models.js";
 import { audioTranscriptions } from "./routes/audio.js";
 import { tokenize, detokenize } from "./routes/tokenize.js";
 import { health } from "./routes/health.js";
-import { adminMetrics, trackRequest } from "./routes/admin.js";
+import { adminMetrics } from "./routes/admin.js";
 
 export type AppEnv = {
   Variables: {
@@ -45,12 +45,6 @@ export function createApp(config: ServerConfig, models: LoadedModels) {
     app.use("/tokenize", bearerAuth({ token: config.apiKey }));
     app.use("/detokenize", bearerAuth({ token: config.apiKey }));
   }
-
-  // Track requests
-  app.use("/v1/*", async (_c, next) => {
-    await next();
-    trackRequest();
-  });
 
   // OpenAI-compatible endpoints
   app.get("/v1/models", listModels);

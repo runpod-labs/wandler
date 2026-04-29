@@ -1,11 +1,20 @@
 import { TextStreamer } from "@huggingface/transformers";
 import type { LoadedModels } from "../models/manager.js";
-import type { ChatMessage, GenerationOptions } from "../types/openai.js";
+import type { ChatMessage, GenerationOptions, GenerationProfile, Tool } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
+import {
+  elapsedMs,
+  estimateAttentionScoresMb,
+  estimateFullLogitsMb,
+  GenerationExecutionError,
+  logGenerationProfile,
+  memorySnapshot,
+  nowMs,
+  serializedToolsChars,
+} from "./profile.js";
 
 /**
- * Generate tokens with a callback for each token. Used for the no-tools
- * streaming path; tool-aware streaming lives in `./stream-tools.ts`.
+ * Generate tokens with a callback for each token.
  * Framework-agnostic — works with Hono streamSSE, raw http, or anything else.
  */
 export async function generateStreamTokens(
@@ -14,9 +23,17 @@ export async function generateStreamTokens(
   messages: ChatMessage[],
   genOpts: GenerationOptions,
   onToken: (token: string) => void | Promise<void>,
-): Promise<{ promptTokens: number; completionTokens: number }> {
-  const prompt = formatChat(models.tokenizer!, messages, modelId, undefined, models.chatTemplate);
+  tools?: Tool[],
+): Promise<{ promptTokens: number; completionTokens: number; profile: GenerationProfile }> {
+  const started = nowMs();
+  const memoryBefore = memorySnapshot();
+  const formatStart = nowMs();
+  const prompt = formatChat(models.tokenizer!, messages, modelId, tools, models.chatTemplate);
+  const formatMs = elapsedMs(formatStart);
+  const tokenizeStart = nowMs();
   const inputs = models.tokenizer!(prompt, { return_tensors: "pt" });
+  const tokenizeMs = elapsedMs(tokenizeStart);
+  const memoryAfterTokenize = memorySnapshot();
   const promptTokens = inputs.input_ids.dims[1]!;
   let completionTokens = 0;
 
@@ -31,7 +48,61 @@ export async function generateStreamTokens(
     },
   );
 
-  await models.model!.generate({ ...inputs, ...genOpts, streamer });
+  const generateStart = nowMs();
+  try {
+    await models.model!.generate({ ...inputs, ...genOpts, streamer });
+  } catch (error) {
+    const memoryAfterGenerate = memorySnapshot();
+    const profile: GenerationProfile = {
+      path: "stream",
+      promptChars: prompt.length,
+      toolsCount: tools?.length ?? 0,
+      toolsChars: serializedToolsChars(tools),
+      promptTokens,
+      completionTokens,
+      formatMs,
+      tokenizeMs,
+      generateMs: elapsedMs(generateStart),
+      decodeMs: 0,
+      totalMs: elapsedMs(started),
+      memoryBefore,
+      memoryAfterTokenize,
+      memoryAfterGenerate,
+      memoryAfterDecode: memoryAfterGenerate,
+      estimatedFullLogitsMb: estimateFullLogitsMb(models, promptTokens),
+      estimatedAttentionScoresMb: estimateAttentionScoresMb(models, promptTokens),
+      numLogitsToKeepInput: models.generationDiagnostics.numLogitsToKeepInput,
+      numLogitsToKeepPatchedSessions: models.generationDiagnostics.numLogitsToKeepPatchedSessions,
+      failedStage: "generate",
+      errorMessage: error instanceof Error ? error.message : String(error),
+    };
+    logGenerationProfile(profile);
+    throw new GenerationExecutionError(error, profile);
+  }
+  const generateMs = elapsedMs(generateStart);
+  const memoryAfterGenerate = memorySnapshot();
 
-  return { promptTokens, completionTokens };
+  const profile: GenerationProfile = {
+    path: "stream",
+    promptChars: prompt.length,
+    toolsCount: tools?.length ?? 0,
+    toolsChars: serializedToolsChars(tools),
+    promptTokens,
+    completionTokens,
+    formatMs,
+    tokenizeMs,
+    generateMs,
+    decodeMs: 0,
+    totalMs: elapsedMs(started),
+    memoryBefore,
+    memoryAfterTokenize,
+    memoryAfterGenerate,
+    memoryAfterDecode: memoryAfterGenerate,
+    estimatedFullLogitsMb: estimateFullLogitsMb(models, promptTokens),
+    estimatedAttentionScoresMb: estimateAttentionScoresMb(models, promptTokens),
+    numLogitsToKeepInput: models.generationDiagnostics.numLogitsToKeepInput,
+    numLogitsToKeepPatchedSessions: models.generationDiagnostics.numLogitsToKeepPatchedSessions,
+  };
+  logGenerationProfile(profile);
+  return { promptTokens, completionTokens, profile };
 }
