@@ -1,5 +1,6 @@
 import type { LoadedModels } from "../models/manager.js";
 import type { ChatMessage, GenerationOptions, Tool } from "../types/openai.js";
+import { generateCompletion, streamCompletionTokens } from "../generation/completion.js";
 import { generate } from "../generation/generate.js";
 import { generateStreamTokens } from "../generation/stream.js";
 import { generateStreamWithTools } from "../generation/stream-tools.js";
@@ -37,5 +38,17 @@ export class WandlerBackend implements LLMBackend {
     handlers: StreamToolHandlers,
   ) {
     return generateStreamWithTools(this.models, modelId, messages, genOpts, tools, handlers);
+  }
+
+  generateCompletion(prompt: string, genOpts: GenerationOptions) {
+    return generateCompletion(this.models, prompt, genOpts);
+  }
+
+  streamCompletion(
+    prompt: string,
+    genOpts: GenerationOptions,
+    onToken: (token: string) => void | Promise<void>,
+  ) {
+    return streamCompletionTokens(this.models, prompt, genOpts, onToken);
   }
 }

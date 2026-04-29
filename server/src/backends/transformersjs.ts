@@ -239,4 +239,104 @@ export class TransformersJsBackend implements LLMBackend {
     }
     return result;
   }
+
+  async generateCompletion(prompt: string, genOpts: GenerationOptions) {
+    const started = nowMs();
+    const memoryBefore = memorySnapshot();
+    const tokenizeStart = nowMs();
+    const inputs = this.models.tokenizer!(prompt, { return_tensors: "pt" });
+    const tokenizeMs = elapsedMs(tokenizeStart);
+    const memoryAfterTokenize = memorySnapshot();
+    const promptTokens = inputs.input_ids.dims[1]!;
+    const generateStart = nowMs();
+    const outputIds = await this.models.model!.generate({
+      ...inputs,
+      ...stripInternalGenOpts(capGenOpts(this.models, promptTokens, genOpts)),
+    });
+    const generateMs = elapsedMs(generateStart);
+    const memoryAfterGenerate = memorySnapshot();
+    const completionTokens = outputIds.dims[1]! - promptTokens;
+    const decodeStart = nowMs();
+    const newIds = outputIds.slice(null, [promptTokens, null]);
+    const text = this.models.tokenizer!.batch_decode(newIds, { skip_special_tokens: true })[0]!;
+    const decodeMs = elapsedMs(decodeStart);
+    const profile: GenerationProfile = {
+      path: "text",
+      promptChars: prompt.length,
+      toolsCount: 0,
+      toolsChars: 0,
+      promptTokens,
+      completionTokens,
+      formatMs: 0,
+      tokenizeMs,
+      generateMs,
+      decodeMs,
+      totalMs: elapsedMs(started),
+      memoryBefore,
+      memoryAfterTokenize,
+      memoryAfterGenerate,
+      memoryAfterDecode: memorySnapshot(),
+      estimatedFullLogitsMb: estimateFullLogitsMb(this.models, promptTokens),
+      estimatedAttentionScoresMb: estimateAttentionScoresMb(this.models, promptTokens),
+      numLogitsToKeepInput: this.models.generationDiagnostics.numLogitsToKeepInput,
+      numLogitsToKeepPatchedSessions: this.models.generationDiagnostics.numLogitsToKeepPatchedSessions,
+    };
+    logGenerationProfile(profile);
+    return { text, promptTokens, completionTokens, profile };
+  }
+
+  async streamCompletion(
+    prompt: string,
+    genOpts: GenerationOptions,
+    onToken: (token: string) => void | Promise<void>,
+  ) {
+    const started = nowMs();
+    const memoryBefore = memorySnapshot();
+    const tokenizeStart = nowMs();
+    const inputs = this.models.tokenizer!(prompt, { return_tensors: "pt" });
+    const tokenizeMs = elapsedMs(tokenizeStart);
+    const memoryAfterTokenize = memorySnapshot();
+    const promptTokens = inputs.input_ids.dims[1]!;
+    let completionTokens = 0;
+    const streamer = new TextStreamer(
+      this.models.tokenizer as unknown as ConstructorParameters<typeof TextStreamer>[0],
+      {
+        skip_prompt: true,
+        callback_function: (token: string) => {
+          completionTokens++;
+          onToken(token);
+        },
+      },
+    );
+    const generateStart = nowMs();
+    await this.models.model!.generate({
+      ...inputs,
+      ...stripInternalGenOpts(capGenOpts(this.models, promptTokens, genOpts)),
+      streamer,
+    });
+    const memoryAfterGenerate = memorySnapshot();
+    const profile: GenerationProfile = {
+      path: "stream",
+      promptChars: prompt.length,
+      toolsCount: 0,
+      toolsChars: 0,
+      promptTokens,
+      completionTokens,
+      formatMs: 0,
+      tokenizeMs,
+      generateMs: elapsedMs(generateStart),
+      decodeMs: 0,
+      totalMs: elapsedMs(started),
+      memoryBefore,
+      memoryAfterTokenize,
+      memoryAfterGenerate,
+      memoryAfterDecode: memoryAfterGenerate,
+      estimatedFullLogitsMb: estimateFullLogitsMb(this.models, promptTokens),
+      estimatedAttentionScoresMb: estimateAttentionScoresMb(this.models, promptTokens),
+      numLogitsToKeepInput: this.models.generationDiagnostics.numLogitsToKeepInput,
+      numLogitsToKeepPatchedSessions: this.models.generationDiagnostics.numLogitsToKeepPatchedSessions,
+    };
+    logGenerationProfile(profile);
+    return { promptTokens, completionTokens, profile };
+  }
 }

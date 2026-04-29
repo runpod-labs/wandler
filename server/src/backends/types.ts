@@ -29,4 +29,13 @@ export interface LLMBackend {
     tools: Tool[] | undefined,
     handlers: StreamToolHandlers,
   ): Promise<{ promptTokens: number; completionTokens: number; profile?: GenerationProfile }>;
+  generateCompletion(
+    prompt: string,
+    genOpts: GenerationOptions,
+  ): Promise<GenerationResult>;
+  streamCompletion(
+    prompt: string,
+    genOpts: GenerationOptions,
+    onToken: (token: string) => void | Promise<void>,
+  ): Promise<{ promptTokens: number; completionTokens: number; profile?: GenerationProfile }>;
 }

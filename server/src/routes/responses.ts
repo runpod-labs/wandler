@@ -16,10 +16,7 @@ import type {
   Tool,
   ToolCall,
 } from "../types/openai.js";
-import { generate } from "../generation/generate.js";
 import { buildGenOpts } from "../generation/options.js";
-import { generateStreamTokens } from "../generation/stream.js";
-import { generateStreamWithTools } from "../generation/stream-tools.js";
 import { parseToolCalls } from "../tools/parser.js";
 import { makeId } from "../utils/http.js";
 import { getTextContent } from "../utils/content.js";
@@ -199,6 +196,7 @@ function buildResponseSkeleton(
 export async function responses(c: Context<AppEnv>) {
   const config = c.get("config");
   const models = c.get("models");
+  const backend = c.get("backend");
   const modelId = config.modelId;
 
   if (!models.model || !models.tokenizer) {
@@ -250,8 +248,8 @@ export async function responses(c: Context<AppEnv>) {
 
       if (chatTools?.length) {
         // Tool-aware streaming
-        const result = await generateStreamWithTools(
-          models, modelId, messages, genOpts, chatTools,
+        const result = await backend.streamChatWithTools(
+          modelId, messages, genOpts, chatTools,
           {
             onContent: async (delta) => {
               if (!delta) return;
@@ -328,8 +326,8 @@ export async function responses(c: Context<AppEnv>) {
         }) });
 
         // 4. Stream text deltas
-        const result = await generateStreamTokens(
-          models, modelId, messages, genOpts,
+        const result = await backend.streamChat(
+          modelId, messages, genOpts,
           async (token) => {
             fullText += token;
             await stream.writeSSE({ event: "response.output_text.delta", data: JSON.stringify({
@@ -379,7 +377,7 @@ export async function responses(c: Context<AppEnv>) {
   }
 
   // ── Non-streaming path ────────────────────────────────────────────────────
-  const result = await generate(models, modelId, messages, genOpts, chatTools);
+  const result = await backend.generateChat(modelId, messages, genOpts, chatTools);
   const toolCalls = chatTools?.length ? parseToolCalls(result.text) : null;
 
   const output: ResponsesOutputItem[] = [];
