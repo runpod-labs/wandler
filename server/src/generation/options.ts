@@ -21,6 +21,7 @@ export function buildGenOpts(
   tokenizer: Tokenizer,
   maxTokensCap?: number | null,
   modelMaxContext?: number | null,
+  prefillChunkSize?: string,
 ): GenerationOptions {
   const temperature = params.temperature ?? 0.7;
   const hardCap = maxTokensCap ?? modelMaxContext ?? FALLBACK_MAX_TOKENS;
@@ -31,6 +32,7 @@ export function buildGenOpts(
     top_p: params.top_p ?? 0.95,
     do_sample: temperature > 0,
   };
+  if (prefillChunkSize != null) opts.prefill_chunk_size = prefillChunkSize;
 
   // Extended sampling params supported by transformers.js
   if (params.top_k != null) opts.top_k = params.top_k;
@@ -67,4 +69,9 @@ export function buildGenOpts(
   }
 
   return opts;
+}
+
+export function stripInternalGenOpts(opts: GenerationOptions): Omit<GenerationOptions, "prefill_chunk_size"> {
+  const { prefill_chunk_size: _prefillChunkSize, ...transformersOpts } = opts;
+  return transformersOpts;
 }

@@ -46,6 +46,7 @@ program
   .option("--log-level <level>", "debug, info, warn, error")
   .option("--hf-token <token>", "HuggingFace token for gated models")
   .option("--cache-dir <path>", "Model cache directory (default: ~/.cache/huggingface)")
+  .option("--prefill-chunk-size <n>", "Chunk size for long-prompt prefill; 0/off disables it")
   .option("--warmup-tokens <n>", "Approximate prompt tokens to run once before serving")
   .option("--warmup-max-new-tokens <n>", "Max new tokens for startup warmup")
   .action(async (opts) => {
@@ -64,6 +65,7 @@ program
       WANDLER_LOG_LEVEL: opts.logLevel ?? process.env.WANDLER_LOG_LEVEL,
       HF_TOKEN: opts.hfToken ?? process.env.HF_TOKEN,
       WANDLER_CACHE_DIR: opts.cacheDir ?? process.env.WANDLER_CACHE_DIR,
+      WANDLER_PREFILL_CHUNK_SIZE: opts.prefillChunkSize ?? process.env.WANDLER_PREFILL_CHUNK_SIZE,
       WANDLER_WARMUP_TOKENS: opts.warmupTokens ?? process.env.WANDLER_WARMUP_TOKENS,
       WANDLER_WARMUP_MAX_NEW_TOKENS: opts.warmupMaxNewTokens ?? process.env.WANDLER_WARMUP_MAX_NEW_TOKENS,
       HF_HOME: process.env.HF_HOME,

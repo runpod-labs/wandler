@@ -69,6 +69,8 @@ Server:
       --max-concurrent <n>    Max concurrent requests (default: 1)
       --timeout <ms>          Request timeout in ms (default: 120000)
       --log-level <level>     debug, info, warn, error (default: info)
+      --prefill-chunk-size <n>
+                              Chunk size for long-prompt prefill; 0/off disables it
       --warmup-tokens <n>     Approximate prompt tokens to run once before serving
       --warmup-max-new-tokens <n>
                               Max new tokens for startup warmup

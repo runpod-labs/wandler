@@ -120,4 +120,9 @@ describe("buildGenOpts", () => {
     const opts = buildGenOpts({ max_tokens: 0 }, mockTokenizer, null, 131072);
     expect(opts.max_new_tokens).toBe(0);
   });
+
+  it("passes server prefill chunk size through to generation", () => {
+    const opts = buildGenOpts({}, mockTokenizer, null, 131072, "1024");
+    expect(opts.prefill_chunk_size).toBe("1024");
+  });
 });

@@ -2,6 +2,7 @@ import { TextStreamer } from "@huggingface/transformers";
 import type { LoadedModels } from "../models/manager.js";
 import type { ChatMessage, GenerationOptions, GenerationProfile, Tool } from "../types/openai.js";
 import { formatChat } from "../models/tokenizer.js";
+import { stripInternalGenOpts } from "./options.js";
 import {
   elapsedMs,
   estimateAttentionScoresMb,
@@ -90,7 +91,7 @@ export async function generateStreamTokens(
 
   const generateStart = nowMs();
   try {
-    await models.model!.generate({ ...inputs, ...effectiveGenOpts, streamer });
+    await models.model!.generate({ ...inputs, ...stripInternalGenOpts(effectiveGenOpts), streamer });
   } catch (error) {
     if (error instanceof GenerationExecutionError) throw error;
     const memoryAfterGenerate = memorySnapshot();
