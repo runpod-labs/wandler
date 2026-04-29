@@ -1,15 +1,17 @@
 import type { LoadedModels } from "../models/manager.js";
 import type { ChatMessage, GenerationOptions, Tool } from "../types/openai.js";
-import { generateCompletion, streamCompletionTokens } from "../generation/completion.js";
 import { generate } from "../generation/generate.js";
-import { generateStreamTokens } from "../generation/stream.js";
-import { generateStreamWithTools } from "../generation/stream-tools.js";
+import { getImageUrls } from "../utils/content.js";
 import type { LLMBackend, StreamToolHandlers } from "./types.js";
+import { WandlerTextEngine } from "./wandler/engine.js";
 
 export class WandlerBackend implements LLMBackend {
   readonly name = "wandler" as const;
+  private readonly textEngine: WandlerTextEngine;
 
-  constructor(readonly models: LoadedModels) {}
+  constructor(readonly models: LoadedModels) {
+    this.textEngine = new WandlerTextEngine(models);
+  }
 
   generateChat(
     modelId: string,
@@ -17,7 +19,10 @@ export class WandlerBackend implements LLMBackend {
     genOpts: GenerationOptions,
     tools?: Tool[],
   ) {
-    return generate(this.models, modelId, messages, genOpts, tools);
+    if (this.hasVisionImages(messages)) {
+      return generate(this.models, modelId, messages, genOpts, tools);
+    }
+    return this.textEngine.generateChat(modelId, messages, genOpts, tools);
   }
 
   streamChat(
@@ -27,7 +32,7 @@ export class WandlerBackend implements LLMBackend {
     onToken: (token: string) => void | Promise<void>,
     tools?: Tool[],
   ) {
-    return generateStreamTokens(this.models, modelId, messages, genOpts, onToken, tools);
+    return this.textEngine.streamChat(modelId, messages, genOpts, onToken, tools);
   }
 
   streamChatWithTools(
@@ -37,11 +42,11 @@ export class WandlerBackend implements LLMBackend {
     tools: Tool[] | undefined,
     handlers: StreamToolHandlers,
   ) {
-    return generateStreamWithTools(this.models, modelId, messages, genOpts, tools, handlers);
+    return this.textEngine.streamChatWithTools(modelId, messages, genOpts, tools, handlers);
   }
 
   generateCompletion(prompt: string, genOpts: GenerationOptions) {
-    return generateCompletion(this.models, prompt, genOpts);
+    return this.textEngine.generateCompletion(prompt, genOpts);
   }
 
   streamCompletion(
@@ -49,6 +54,14 @@ export class WandlerBackend implements LLMBackend {
     genOpts: GenerationOptions,
     onToken: (token: string) => void | Promise<void>,
   ) {
-    return streamCompletionTokens(this.models, prompt, genOpts, onToken);
+    return this.textEngine.streamCompletion(prompt, genOpts, onToken);
+  }
+
+  private hasVisionImages(messages: ChatMessage[]): boolean {
+    return Boolean(
+      this.models.isVision &&
+      this.models.processor &&
+      messages.some((message) => getImageUrls(message.content).length > 0),
+    );
   }
 }
