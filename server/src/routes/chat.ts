@@ -12,7 +12,7 @@ import { generate } from "../generation/generate.js";
 import { buildGenOpts } from "../generation/options.js";
 import { generateStreamTokens } from "../generation/stream.js";
 import { generateStreamWithTools } from "../generation/stream-tools.js";
-import { getGenerationProfile } from "../generation/profile.js";
+import { getGenerationProfile, getGenerationStatusCode } from "../generation/profile.js";
 import { parseToolCalls } from "../tools/parser.js";
 import { makeId } from "../utils/http.js";
 import { getTextContent } from "../utils/content.js";
@@ -164,8 +164,9 @@ export async function chatCompletions(c: Context<AppEnv>) {
           finalize({ promptTokens, completionTokens, stream: true, toolsCount, generationProfile: profile });
         } catch (error) {
           const errorProfile = getGenerationProfile(error);
+          const statusCode = getGenerationStatusCode(error) ?? 500;
           finalize({
-            statusCode: 500,
+            statusCode,
             stream: true,
             toolsCount,
             promptTokens: errorProfile?.promptTokens ?? promptTokens,
@@ -198,14 +199,21 @@ export async function chatCompletions(c: Context<AppEnv>) {
       usage: { prompt_tokens: result.promptTokens, completion_tokens: result.completionTokens, total_tokens: result.promptTokens + result.completionTokens },
     } satisfies ChatCompletionResponse);
   } catch (error) {
+    const statusCode = getGenerationStatusCode(error) ?? 500;
     if (!tracked) {
       const profile = getGenerationProfile(error);
       finalize({
-        statusCode: 500,
+        statusCode,
         promptTokens: profile?.promptTokens,
         completionTokens: profile?.completionTokens,
         generationProfile: profile,
       });
+    }
+    if (statusCode < 500) {
+      return c.json(
+        { error: { message: error instanceof Error ? error.message : String(error), type: "invalid_request_error", param: null, code: "context_length_exceeded" } },
+        statusCode as 400,
+      );
     }
     throw error;
   }

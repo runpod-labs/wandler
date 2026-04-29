@@ -213,9 +213,16 @@ export interface TestServer {
 export async function startTestServer(
   configOverrides?: Partial<ServerConfig>,
 ): Promise<TestServer> {
-  resetMetrics();
   const config = createTestConfig(configOverrides);
   const models = createMockModels();
+  return startTestServerWithLoadedModels(models, config);
+}
+
+export async function startTestServerWithLoadedModels(
+  models: LoadedModels,
+  config: ServerConfig,
+): Promise<TestServer> {
+  resetMetrics();
   const app = createApp(config, models);
 
   return new Promise((resolve) => {

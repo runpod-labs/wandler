@@ -14,6 +14,7 @@ import { audioTranscriptions } from "./routes/audio.js";
 import { tokenize, detokenize } from "./routes/tokenize.js";
 import { health } from "./routes/health.js";
 import { adminMetrics } from "./routes/admin.js";
+import { getGenerationStatusCode } from "./generation/profile.js";
 
 export type AppEnv = {
   Variables: {
@@ -192,6 +193,13 @@ export function createApp(config: ServerConfig, models: LoadedModels) {
     if (err instanceof SyntaxError) {
       return c.json(
         { error: { message: "Invalid JSON", type: "invalid_request_error", param: null, code: null } },
+        400,
+      );
+    }
+    const generationStatus = getGenerationStatusCode(err);
+    if (generationStatus && generationStatus < 500) {
+      return c.json(
+        { error: { message: err.message, type: "invalid_request_error", param: null, code: "context_length_exceeded" } },
         400,
       );
     }

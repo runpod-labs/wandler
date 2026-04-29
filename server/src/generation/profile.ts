@@ -97,17 +97,24 @@ export function logGenerationProfile(profile: GenerationProfile): void {
 
 export class GenerationExecutionError extends Error {
   profile: GenerationProfile;
+  statusCode: number;
 
-  constructor(error: unknown, profile: GenerationProfile) {
+  constructor(error: unknown, profile: GenerationProfile, statusCode = 500) {
     super(error instanceof Error ? error.message : String(error));
     this.name = "GenerationExecutionError";
     this.cause = error;
     this.stack = error instanceof Error ? error.stack : this.stack;
     this.profile = profile;
+    this.statusCode = statusCode;
   }
 }
 
 export function getGenerationProfile(error: unknown): GenerationProfile | undefined {
   if (error instanceof GenerationExecutionError) return error.profile;
+  return undefined;
+}
+
+export function getGenerationStatusCode(error: unknown): number | undefined {
+  if (error instanceof GenerationExecutionError) return error.statusCode;
   return undefined;
 }
