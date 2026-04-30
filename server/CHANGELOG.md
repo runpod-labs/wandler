@@ -1,5 +1,11 @@
 # wandler
 
+## 2.6.3
+
+### Patch Changes
+
+- e8939bb: Keep `--decode-loop auto` on the safe transformers.js `generate()` path by default after release testing showed the experimental owned decode loop is much slower on CUDA. Use `--decode-loop on` to opt into the Wandler decode loop explicitly.
+
 ## 2.6.2
 
 ### Patch Changes
