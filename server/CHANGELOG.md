@@ -1,5 +1,13 @@
 # wandler
 
+## 2.6.2
+
+### Patch Changes
+
+- 1147050: Add Wandler's owned text decode loop for supported generation requests. The Wandler backend can now run prefill and token-by-token decode through `forward()` without calling transformers.js `generate()`, while `--decode-loop off` / `WANDLER_DECODE_LOOP=off` keeps the direct `generate()` fallback available.
+- 260b020: Log when startup warmup begins, add `--quiet` / `WANDLER_QUIET`, introduce the explicit `wandler` LLM backend with a `transformersjs` baseline switch, make WebGPU prefill chunking budgeted (`auto:<mb>` customizes it), apply chunked prefill to streaming, and add prefix KV caching for repeated system/tool prefixes.
+- a8ce7d1: Move text LLM generation into the Wandler backend engine instead of delegating through legacy generation helpers, and add tests proving the Wandler path performs chunked prefill with KV handoff while the `transformersjs` baseline sends the full prompt to `generate()`. The benchmark runner can now compare `BACKEND=wandler` and `BACKEND=transformersjs`.
+
 ## 2.6.1
 
 ### Patch Changes
