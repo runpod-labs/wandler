@@ -123,7 +123,7 @@ describe("WandlerBackend text engine", () => {
     vi.unstubAllEnvs();
   });
 
-  it("chunks long prompts and owns decode while transformers.js sends the full prompt to generate", async () => {
+  it("chunks long prompts and falls back to generate in auto decode mode", async () => {
     const prompt = "one two three four five six seven eight";
     const genOpts = {
       max_new_tokens: 4,
@@ -135,6 +135,24 @@ describe("WandlerBackend text engine", () => {
 
     const wandler = createModels();
     const result = await new WandlerBackend(wandler.models).generateCompletion(prompt, genOpts);
+
+    expect(wandler.stats.forwardInputTokens).toEqual([3, 3, 1]);
+    expect(wandler.stats.generateInputTokens).toEqual([1]);
+    expect(result.profile?.decodeLoop).toBe(false);
+  });
+
+  it("chunks long prompts and owns decode when the custom decode loop is enabled", async () => {
+    const prompt = "one two three four five six seven eight";
+    const genOpts = {
+      max_new_tokens: 4,
+      temperature: 0,
+      top_p: 1,
+      do_sample: false,
+      prefill_chunk_size: "3",
+    };
+
+    const wandler = createModels();
+    const result = await new WandlerBackend(wandler.models, { decodeLoop: "on" }).generateCompletion(prompt, genOpts);
 
     expect(wandler.stats.forwardInputTokens).toEqual([3, 3, 1, 1, 1, 1, 1]);
     expect(wandler.stats.forwardUsedPast).toEqual([false, true, true, true, true, true, true]);
@@ -175,7 +193,7 @@ describe("WandlerBackend text engine", () => {
     const wandler = createModels();
     const tokens: string[] = [];
 
-    const result = await new WandlerBackend(wandler.models).streamCompletion(
+    const result = await new WandlerBackend(wandler.models, { decodeLoop: "on" }).streamCompletion(
       "one two three four five six seven eight",
       {
         max_new_tokens: 4,
