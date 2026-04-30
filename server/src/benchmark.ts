@@ -29,6 +29,7 @@ const BACKEND = process.env.BACKEND || process.env.WANDLER_BACKEND || "wandler";
 const PROFILE = process.env.PROFILE || "agent";
 const DTYPE = process.env.DTYPE || "q4";
 const PREFILL_CHUNK_SIZE = process.env.PREFILL_CHUNK_SIZE || process.env.WANDLER_PREFILL_CHUNK_SIZE || "auto";
+const DECODE_LOOP = process.env.DECODE_LOOP || process.env.WANDLER_DECODE_LOOP || "auto";
 const OUTPUT_JSON = process.env.OUTPUT_JSON || "";
 const BASE_URL = process.env.BASE_URL || "";
 const API_KEY = process.env.API_KEY || "-";
@@ -489,6 +490,7 @@ async function main() {
     dtype: string;
     backend: string;
     prefillChunkSize: string;
+    decodeLoop: string;
     profile: string;
     runs: number;
     warmupRuns: number;
@@ -501,6 +503,7 @@ async function main() {
     dtype: DTYPE,
     backend: BACKEND,
     prefillChunkSize: PREFILL_CHUNK_SIZE,
+    decodeLoop: DECODE_LOOP,
     profile: PROFILE,
     runs: RUNS,
     warmupRuns: WARMUP_RUNS,
@@ -511,7 +514,7 @@ async function main() {
 
   console.log(`\n${"=".repeat(78)}`);
   console.log(`wandler benchmark — profile=${PROFILE}, runs=${RUNS}, warmup=${WARMUP_RUNS}, device=${DEVICE}`);
-  console.log(`backend=${BACKEND} | prefill=${PREFILL_CHUNK_SIZE} | parallel=${PARALLEL_LEVELS.join(",")} | context_turns=${CONTEXT_TURNS.join(",")} | dtype=${DTYPE}`);
+  console.log(`backend=${BACKEND} | prefill=${PREFILL_CHUNK_SIZE} | decode_loop=${DECODE_LOOP} | parallel=${PARALLEL_LEVELS.join(",")} | context_turns=${CONTEXT_TURNS.join(",")} | dtype=${DTYPE}`);
   if (BASE_URL) console.log(`target=${BASE_URL}`);
   console.log("=".repeat(78));
 
@@ -563,6 +566,7 @@ async function main() {
         DEVICE,
         WANDLER_BACKEND: BACKEND,
         WANDLER_PREFILL_CHUNK_SIZE: PREFILL_CHUNK_SIZE,
+        WANDLER_DECODE_LOOP: DECODE_LOOP,
         STT_MODEL_ID: "",
         EMBEDDING_MODEL_ID: "",
       });

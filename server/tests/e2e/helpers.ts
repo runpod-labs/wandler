@@ -206,6 +206,7 @@ export function createTestConfig(
     hfToken: "",
     cacheDir: "",
     prefillChunkSize: "auto",
+    decodeLoop: "auto",
     warmupTokens: 0,
     warmupMaxNewTokens: 8,
     ...overrides,

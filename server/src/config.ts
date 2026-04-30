@@ -31,6 +31,7 @@ export interface ServerConfig {
   hfToken: string;
   cacheDir: string;
   prefillChunkSize: string;
+  decodeLoop: string;
   warmupTokens: number;
   warmupMaxNewTokens: number;
 }
@@ -108,6 +109,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     hfToken: env.HF_TOKEN || env.WANDLER_HF_TOKEN || "",
     cacheDir: env.WANDLER_CACHE_DIR || defaultHfCacheDir(env),
     prefillChunkSize: env.WANDLER_PREFILL_CHUNK_SIZE || "auto",
+    decodeLoop: env.WANDLER_DECODE_LOOP || "auto",
     warmupTokens: parseNonNegativeInt(env.WANDLER_WARMUP_TOKENS, 0),
     warmupMaxNewTokens: parsePositiveInt(env.WANDLER_WARMUP_MAX_NEW_TOKENS, 8),
   };

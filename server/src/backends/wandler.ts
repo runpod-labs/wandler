@@ -9,8 +9,11 @@ export class WandlerBackend implements LLMBackend {
   readonly name = "wandler" as const;
   private readonly textEngine: WandlerTextEngine;
 
-  constructor(readonly models: LoadedModels) {
-    this.textEngine = new WandlerTextEngine(models);
+  constructor(
+    readonly models: LoadedModels,
+    options: { decodeLoop?: string } = {},
+  ) {
+    this.textEngine = new WandlerTextEngine(models, options);
   }
 
   generateChat(
