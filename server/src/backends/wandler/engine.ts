@@ -131,7 +131,7 @@ function capGenOpts(models: LoadedModels, promptTokens: number, genOpts: Generat
 }
 
 function completionPromptOffset(prefill: PrefillResult, promptTokens: number): number {
-  return prefill.prefillChunkSize ? 1 : promptTokens;
+  return prefill.pastKeyValues ? prefill.inputIds.dims[1] ?? 1 : promptTokens;
 }
 
 function canUseCustomDecode(genOpts: GenerationOptions, mode: string): boolean {

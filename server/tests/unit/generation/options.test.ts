@@ -148,11 +148,18 @@ describe("buildGenOpts", () => {
     expect(resolvePrefillChunkSize("auto:512", "webgpu", 8192, 16)).toBe("1024");
   });
 
-  it("keeps auto prefill chunking on non-WebGPU backends and uses a WebGPU fallback without model heads", () => {
+  it("uses attention-budgeted auto prefill on GPU backends", () => {
+    expect(resolvePrefillChunkSize("auto", "cuda", 4096, 8)).toBe("0");
+    expect(resolvePrefillChunkSize("auto", "cuda", 8192, 8)).toBe("2560");
+    expect(resolvePrefillChunkSize("auto", "coreml", 4096, 8)).toBe("0");
+    expect(resolvePrefillChunkSize("auto", "dml", 4096, 8)).toBe("0");
+  });
+
+  it("keeps auto prefill chunking on CPU-like backends and uses a GPU fallback without model heads", () => {
     expect(resolvePrefillChunkSize("auto", "webgpu")).toBe("1024");
     expect(resolvePrefillChunkSize("auto", "webgpu", FALLBACK_WEBGPU_FULL_PREFILL_MAX_TOKENS)).toBe("0");
     expect(resolvePrefillChunkSize("auto", "webgpu", FALLBACK_WEBGPU_FULL_PREFILL_MAX_TOKENS + 1)).toBe("1024");
-    expect(resolvePrefillChunkSize("auto", "cuda", 2048)).toBe("1024");
+    expect(resolvePrefillChunkSize("auto", "cuda", 2048)).toBe("0");
     expect(resolvePrefillChunkSize("auto", "cpu", 2048)).toBe("1024");
   });
 });

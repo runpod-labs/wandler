@@ -242,6 +242,9 @@ class PrefixCacheStore {
 }
 
 const prefixCache = new PrefixCacheStore();
+const prefixTokenCountCache = new Map<string, { tokens: number; lastUsed: number }>();
+const PREFIX_TOKEN_COUNT_CACHE_MAX_ENTRIES = 128;
+const INLINE_PREFIX_SUFFIX_MAX_TOKENS = 32;
 
 function readPrefixCacheEntries(): number {
   const raw = process.env.WANDLER_PREFIX_CACHE_ENTRIES;
@@ -261,6 +264,26 @@ function prefixCacheEnabled(): boolean {
   const raw = process.env.WANDLER_PREFIX_CACHE;
   if (raw == null || raw === "") return true;
   return !["0", "false", "off", "no"].includes(raw.toLowerCase());
+}
+
+function cachedPrefixTokenCount(tokenizer: Tokenizer, modelId: string, text: string): number {
+  const key = `${modelId}\0${text}`;
+  const now = Date.now();
+  const cached = prefixTokenCountCache.get(key);
+  if (cached) {
+    cached.lastUsed = now;
+    return cached.tokens;
+  }
+
+  const tokens = tokenizer(text, { return_tensors: "pt" }).input_ids.dims[1]!;
+  prefixTokenCountCache.set(key, { tokens, lastUsed: now });
+  while (prefixTokenCountCache.size > PREFIX_TOKEN_COUNT_CACHE_MAX_ENTRIES) {
+    const evict = [...prefixTokenCountCache.entries()]
+      .sort((a, b) => a[1].lastUsed - b[1].lastUsed)[0];
+    if (!evict) break;
+    prefixTokenCountCache.delete(evict[0]);
+  }
+  return tokens;
 }
 
 export function buildPrefixCandidate(
@@ -293,7 +316,7 @@ export function buildPrefixCandidate(
   }
   if (!text || !fullPrompt.startsWith(text)) return null;
 
-  const tokens = tokenizer(text, { return_tensors: "pt" }).input_ids.dims[1]!;
+  const tokens = cachedPrefixTokenCount(tokenizer, modelId, text);
   if (tokens < readPrefixCacheMinTokens()) return null;
   return { text, tokens };
 }
@@ -358,22 +381,28 @@ export async function preparePrefill(
   }
 
   const prefillEnd = promptTokens - 1;
+  let generationInputStart = prefillEnd;
   if (startToken < prefillEnd) {
-    const suffixPrefill = await prefillPromptCache(
-      models.model,
-      inputIds,
-      prefillEnd,
-      chunkSize,
-      cache,
-      startToken,
-    );
-    cache = suffixPrefill.cache;
-    prefillChunks += suffixPrefill.chunks;
-    prefillMs += suffixPrefill.prefillMs;
+    const suffixTokens = prefillEnd - startToken;
+    if (cache && startToken > 0 && suffixTokens <= INLINE_PREFIX_SUFFIX_MAX_TOKENS) {
+      generationInputStart = startToken;
+    } else {
+      const suffixPrefill = await prefillPromptCache(
+        models.model,
+        inputIds,
+        prefillEnd,
+        chunkSize,
+        cache,
+        startToken,
+      );
+      cache = suffixPrefill.cache;
+      prefillChunks += suffixPrefill.chunks;
+      prefillMs += suffixPrefill.prefillMs;
+    }
   }
 
   return {
-    inputIds: inputIds.slice(null, [promptTokens - 1, promptTokens]),
+    inputIds: inputIds.slice(null, [generationInputStart, promptTokens]),
     pastKeyValues: cache,
     prefillChunkSize: chunkSize,
     prefillChunks,
