@@ -73,6 +73,7 @@ Server:
       --quiet                 Suppress non-error startup/profile logs
       --prefill-chunk-size <n>
                               Chunk size for long-prompt prefill; auto uses a 640MB WebGPU attention budget; auto:<mb> customizes it; 0/off disables it
+      --decode-loop <mode>     Wandler decode loop: auto/on/off (default: auto)
       --prefix-cache <mode>   Enable prefix KV cache: true/false (default: true)
       --prefix-cache-entries <n>
                               Prefix KV cache entries (default: 2)
@@ -111,6 +112,7 @@ Every CLI flag has a corresponding environment variable:
 | `WANDLER_QUIET` | false | Suppress non-error startup/profile logs |
 | `WANDLER_CACHE_DIR` | ~/.cache/huggingface | Model cache directory (also respects `HF_HOME`) |
 | `WANDLER_PREFILL_CHUNK_SIZE` | auto | Chunk size for long-prompt prefill; `auto` uses the fastest WebGPU path that fits a 640MB attention budget, `auto:<mb>` customizes it; set `0`/`off` to disable |
+| `WANDLER_DECODE_LOOP` | auto | Wandler-owned decode loop for supported text generation; `auto`/`on` enables it, `off` falls back to transformers.js `generate()` |
 | `WANDLER_PREFIX_CACHE` | true | Enable in-memory prefix KV caching for repeated system/tool prefixes |
 | `WANDLER_PREFIX_CACHE_ENTRIES` | 2 | Prefix KV cache entry count |
 | `WANDLER_PREFIX_CACHE_MIN_TOKENS` | 512 | Minimum prefix size before caching |

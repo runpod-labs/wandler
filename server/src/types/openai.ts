@@ -379,6 +379,7 @@ export interface GenerationProfile {
   prefillMs?: number;
   prefixCacheHit?: boolean;
   prefixCacheTokens?: number;
+  decodeLoop?: boolean;
   memoryBefore: MemorySnapshot;
   memoryAfterTokenize: MemorySnapshot;
   memoryAfterGenerate: MemorySnapshot;

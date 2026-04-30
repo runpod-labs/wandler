@@ -95,7 +95,10 @@ function isTensorLike(value: unknown): value is TensorLike {
   );
 }
 
-function getPastKeyValues(outputs: Record<string, unknown>, cache: WandlerDynamicCache | null): WandlerDynamicCache {
+export function updatePastKeyValuesFromOutputs(
+  outputs: Record<string, unknown>,
+  cache: WandlerDynamicCache | null,
+): WandlerDynamicCache {
   const entries: Record<string, CacheTensor> = Object.create(null);
   for (const [name, value] of Object.entries(outputs)) {
     if (!name.startsWith("present") || !isTensorLike(value)) continue;
@@ -113,8 +116,13 @@ function getPastKeyValues(outputs: Record<string, unknown>, cache: WandlerDynami
   return new WandlerDynamicCache(entries);
 }
 
-async function disposeUnusedOutputs(outputs: Record<string, unknown>, cache: WandlerDynamicCache): Promise<void> {
+export async function disposeUnusedOutputs(
+  outputs: Record<string, unknown>,
+  cache: WandlerDynamicCache,
+  keep: Iterable<unknown> = [],
+): Promise<void> {
   const cached = new Set(Object.values(cache));
+  for (const value of keep) cached.add(value);
   await Promise.all(
     Object.values(outputs)
       .filter(isTensorLike)
@@ -161,7 +169,7 @@ async function prefillPromptCache(
     };
     modelInputs = m.prepare_inputs_for_generation([], modelInputs, {});
     const outputs = await m.forward(modelInputs);
-    cache = getPastKeyValues(outputs, cache);
+    cache = updatePastKeyValuesFromOutputs(outputs, cache);
     await disposeUnusedOutputs(outputs, cache);
     chunks++;
   }

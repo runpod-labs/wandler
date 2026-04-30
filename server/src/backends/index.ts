@@ -11,9 +11,9 @@ export function createLLMBackend(config: ServerConfig, models: LoadedModels): LL
     case "transformersjs":
       return new TransformersJsBackend(models);
     case "wandler":
-      return new WandlerBackend(models);
+      return new WandlerBackend(models, { decodeLoop: config.decodeLoop });
     default:
-      return new WandlerBackend(models);
+      return new WandlerBackend(models, { decodeLoop: config.decodeLoop });
   }
 }
 

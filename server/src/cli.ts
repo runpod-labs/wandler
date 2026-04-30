@@ -50,6 +50,7 @@ program
   .option("--hf-token <token>", "HuggingFace token for gated models")
   .option("--cache-dir <path>", "Model cache directory (default: ~/.cache/huggingface)")
   .option("--prefill-chunk-size <n>", "Chunk size for long-prompt prefill; auto uses a 640MB WebGPU attention budget; auto:<mb> customizes it; 0/off disables it")
+  .option("--decode-loop <mode>", "Wandler decode loop: auto/on/off (default: auto)")
   .option("--prefix-cache <mode>", "Enable prefix KV cache: true/false (default: true)")
   .option("--prefix-cache-entries <n>", "Prefix KV cache entries (default: 2)")
   .option("--prefix-cache-min-tokens <n>", "Minimum prefix tokens to cache (default: 512)")
@@ -74,6 +75,7 @@ program
       HF_TOKEN: opts.hfToken ?? process.env.HF_TOKEN,
       WANDLER_CACHE_DIR: opts.cacheDir ?? process.env.WANDLER_CACHE_DIR,
       WANDLER_PREFILL_CHUNK_SIZE: opts.prefillChunkSize ?? process.env.WANDLER_PREFILL_CHUNK_SIZE,
+      WANDLER_DECODE_LOOP: opts.decodeLoop ?? process.env.WANDLER_DECODE_LOOP,
       WANDLER_PREFIX_CACHE: opts.prefixCache ?? process.env.WANDLER_PREFIX_CACHE,
       WANDLER_PREFIX_CACHE_ENTRIES: opts.prefixCacheEntries ?? process.env.WANDLER_PREFIX_CACHE_ENTRIES,
       WANDLER_PREFIX_CACHE_MIN_TOKENS: opts.prefixCacheMinTokens ?? process.env.WANDLER_PREFIX_CACHE_MIN_TOKENS,
@@ -83,6 +85,7 @@ program
       XDG_CACHE_HOME: process.env.XDG_CACHE_HOME,
     });
     if (opts.prefixCache != null) process.env.WANDLER_PREFIX_CACHE = opts.prefixCache;
+    if (opts.decodeLoop != null) process.env.WANDLER_DECODE_LOOP = opts.decodeLoop;
     if (opts.prefixCacheEntries != null) process.env.WANDLER_PREFIX_CACHE_ENTRIES = opts.prefixCacheEntries;
     if (opts.prefixCacheMinTokens != null) process.env.WANDLER_PREFIX_CACHE_MIN_TOKENS = opts.prefixCacheMinTokens;
     configureLogging({ quiet: config.quiet });
