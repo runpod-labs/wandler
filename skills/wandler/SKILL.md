@@ -43,7 +43,7 @@ wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 -
 # --cache-dir <path>                 Model cache directory (default: HF cache)
 # --prefill-chunk-size <n>           auto | auto:<mb> | 0/off | integer chunk size
 #                                    auto uses a 640MB WebGPU attention budget; other backends use 1024
-# --decode-loop <mode>               auto | on | off (default: auto; env WANDLER_DECODE_LOOP)
+# --decode-loop <mode>               auto | on | off (default: auto; on is experimental; env WANDLER_DECODE_LOOP)
 # --prefix-cache <mode>              true | false (default: true; env WANDLER_PREFIX_CACHE)
 # --prefix-cache-entries <n>         Prefix KV cache entries (default: 2)
 # --prefix-cache-min-tokens <n>      Minimum prefix tokens to cache (default: 512)
@@ -76,7 +76,7 @@ Server at `http://127.0.0.1:8000`.
 
 - Use `WANDLER_LLM`, not `WANDLER_MODEL`.
 - `--backend wandler` is the default optimized serving path; `--backend transformersjs` is the direct baseline for A/B testing.
-- `--decode-loop auto` uses Wandler's owned text decode loop when supported; use `--decode-loop off` to fall back to transformers.js `generate()`.
+- `--decode-loop auto` uses the safe transformers.js `generate()` path. Use `--decode-loop on` only to opt into Wandler's experimental owned text decode loop.
 - Prefix KV cache is process-local and bounded by `WANDLER_PREFIX_CACHE_ENTRIES`; it helps repeated system/tool prefixes but is not true paged attention.
 - Tool calls stream incrementally in Chat Completions and Responses; family-specific openers are buffered so partial tool-call markers do not leak as content.
 - `stop` sequences only match on the last token. Multi-token stops won't match exactly.

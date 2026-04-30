@@ -134,14 +134,9 @@ function completionPromptOffset(prefill: PrefillResult, promptTokens: number): n
   return prefill.prefillChunkSize ? 1 : promptTokens;
 }
 
-function customDecodeEnabled(mode: string): boolean {
-  const raw = mode || process.env.WANDLER_DECODE_LOOP || "auto";
-  if (raw == null || raw === "") return true;
-  return !["0", "false", "off", "no"].includes(raw.toLowerCase());
-}
-
 function canUseCustomDecode(genOpts: GenerationOptions, mode: string): boolean {
-  if (!customDecodeEnabled(mode)) return false;
+  const raw = (mode || process.env.WANDLER_DECODE_LOOP || "auto").toLowerCase();
+  if (!["1", "true", "on", "yes"].includes(raw)) return false;
   if (genOpts.repetition_penalty != null) return false;
   if (genOpts.no_repeat_ngram_size != null) return false;
   if (genOpts.min_p != null) return false;
