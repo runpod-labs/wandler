@@ -8,6 +8,7 @@ export const FALLBACK_MAX_TOKENS = 2048;
 export const DEFAULT_PREFILL_CHUNK_SIZE = "1024";
 export const DEFAULT_WEBGPU_PREFILL_MEMORY_MB = 640;
 export const FALLBACK_WEBGPU_FULL_PREFILL_MAX_TOKENS = 4096;
+const BUDGETED_PREFILL_DEVICES = new Set(["webgpu", "cuda", "coreml", "dml"]);
 
 function parseAutoPrefillMemoryMb(raw: string): number {
   const [, budget] = raw.split(":", 2);
@@ -31,9 +32,10 @@ export function resolvePrefillChunkSize(
   const value = raw.trim().toLowerCase();
   if (value !== "auto" && !value.startsWith("auto:")) return raw;
 
-  if (device !== "webgpu") return DEFAULT_PREFILL_CHUNK_SIZE;
+  const usesBudgetedPrefill = BUDGETED_PREFILL_DEVICES.has(device ?? "");
+  if (!usesBudgetedPrefill) return DEFAULT_PREFILL_CHUNK_SIZE;
 
-  // transformers.js/ORT WebGPU handles small/medium Gemma prompts faster on
+  // transformers.js/ORT handles small/medium GPU prompts faster on
   // the full-prompt path. Use the full path only when the estimated attention
   // score tensor fits the budget; otherwise use the largest budget-fitting
   // chunk to avoid an artificial latency cliff at a fixed token count.

@@ -42,7 +42,7 @@ wandler --llm LiquidAI/LFM2.5-1.2B-Instruct-ONNX:q4 --port 3000 --host 0.0.0.0 -
 # --quiet                            Suppress non-error startup/profile logs (env WANDLER_QUIET)
 # --cache-dir <path>                 Model cache directory (default: HF cache)
 # --prefill-chunk-size <n>           auto | auto:<mb> | 0/off | integer chunk size
-#                                    auto uses a 640MB WebGPU attention budget; other backends use 1024
+#                                    auto uses a 640MB GPU attention budget; CPU-like backends use 1024
 # --decode-loop <mode>               auto | on | off (default: auto; on is experimental; env WANDLER_DECODE_LOOP)
 # --prefix-cache <mode>              true | false (default: true; env WANDLER_PREFIX_CACHE)
 # --prefix-cache-entries <n>         Prefix KV cache entries (default: 2)
