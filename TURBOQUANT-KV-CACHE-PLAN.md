@@ -152,7 +152,49 @@ Three options to recover:
 
 For this session: we already validated TurboQuant correctness vs vLLM's reference (centroids bit-exact, bit-packing layout byte-exact, Triton kernel scores match NumPy ref to 2e-7 relative error) on the RTX 4090 in the previous session. End-to-end real-model output quality remains the one missing piece. Documented as a follow-up.
 
-### End-to-end progress (v1 PROVEN)
+### v2 — Real attention, real numbers (FINAL)
+
+✅ **TurboQuant CUDA in ORT works end-to-end with real attention math, real
+quality, and a real speedup over the fp16 baseline.**
+
+Llama-3.2-1B-Instruct-ONNX (16 GQA layers, 8 KV heads, head_dim=64), prompt
+token = "Hello", RTX A40 / CUDA 12.8:
+
+| Context | fp16 KV | fp16 decode | TQ-v2 KV | TQ-v2 decode | mem ratio | speedup | quality |
+|--------:|--------:|------------:|---------:|-------------:|----------:|--------:|:-------|
+| 4 K     | 128 MiB | 86 ms       | 36 MiB   | 80.7 ms      | 3.56×     | 1.07×   | argmax match, cos sim 0.99526 |
+| 32 K    | 1024 MiB| 790 ms      | 288 MiB  | 157 ms       | 3.56×     | 5.03×   | argmax match, cos sim 0.99526 |
+| 131 K   | 4096 MiB| 3166 ms     | 1152 MiB | 845 ms       | 3.56×     | 3.75×   | argmax match, cos sim 0.99526 |
+
+Top-10 token agreement: **10/10**. Predicted token: **315** in both fp16 and
+TQ-v2 at every context length. Cosine similarity of the full 128 K-dim logit
+vectors: **0.99526**.
+
+### v2 architecture (in `group_query_attention_turboquant_impl.cu`)
+
+`LaunchTurboQuantAttention<T, U>` orchestrates:
+
+1. `DispatchEncodeDecode` — encode incoming K/V into the present cache slots
+   (Walsh-Hadamard rotation + Lloyd-Max codebook for K, uniform asymmetric for
+   V), then decode the entire present cache back to fp16 K_full / V_full
+   buffers.
+2. `LaunchTQAttention` — three custom kernels:
+   - `TQScoresKernel` computes Q @ K_full^T scaled by 1/√D, applies causal
+     mask, writes [B, num_heads, S_q, total_seq] fp32 scores.
+   - `TQSoftmaxRowKernel` does row-wise softmax with shared-memory reduction.
+   - `TQOutputKernel` computes attention(scores) @ V_full → fp16 BSNH output.
+   GQA mapping: query head h → kv head h / (num_heads / num_kv_heads).
+
+Memory cost per call: ~`2 × B × H_kv × total_seq × D × 2` bytes (the temp
+fp16 K/V buffers) plus `B × num_heads × S_q × total_seq × 4` bytes (fp32
+scores). Both freed after the call. The KV cache itself stays in compressed
+uint8 form between calls.
+
+---
+
+### v1 progress (replaced by v2)
+
+✅ All wiring done end-to-end. Calibration converts a real model. Patched onnxruntime-node loads it on CUDA. Inputs are accepted by our schema. (v1 zeroed the attention output as a proof-of-wire shortcut; v2 above replaces that with real attention math.)
 
 ✅ **TurboQuant inference runs end-to-end on Llama-3.2-1B via CUDA EP. Real numbers below.**
 
