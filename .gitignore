@@ -4,3 +4,5 @@ dist/
 .turbo/
 .vercel/
 server/README.md
+external/
+pod_artifacts/
