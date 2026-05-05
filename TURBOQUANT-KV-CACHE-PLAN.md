@@ -157,8 +157,7 @@ For this session: we already validated TurboQuant correctness vs vLLM's referenc
 ✅ **TurboQuant CUDA in ORT works end-to-end with real attention math, real
 quality, and a real speedup over the fp16 baseline.**
 
-Llama-3.2-1B-Instruct-ONNX (16 GQA layers, 8 KV heads, head_dim=64), prompt
-token = "Hello", RTX A40 / CUDA 12.8:
+#### Llama-3.2-1B-Instruct-ONNX (early v2, 16 GQA layers, 8 KV heads, head_dim=64), RTX A40
 
 | Context | fp16 KV | fp16 decode | TQ-v2 KV | TQ-v2 decode | mem ratio | speedup | quality |
 |--------:|--------:|------------:|---------:|-------------:|----------:|--------:|:-------|
@@ -167,8 +166,54 @@ token = "Hello", RTX A40 / CUDA 12.8:
 | 131 K   | 4096 MiB| 3166 ms     | 1152 MiB | 845 ms       | 3.56×     | 3.75×   | argmax match, cos sim 0.99526 |
 
 Top-10 token agreement: **10/10**. Predicted token: **315** in both fp16 and
-TQ-v2 at every context length. Cosine similarity of the full 128 K-dim logit
-vectors: **0.99526**.
+TQ-v2 at every context length.
+
+#### LiquidAI/LFM2-1.2B (hybrid SSM + 6 GQA layers, 8 KV heads, head_dim=64), RTX A40
+
+Decode-step throughput (lower decode_ms = faster), TQ-v2 vs the fp16 q4f16
+baseline of the same exported model. Note that LFM2-1.2B is a hybrid (most
+layers are conv/SSM; only every third layer is GQA), so KV-cache savings are
+already minor relative to model weights and the wins are concentrated in the
+attention layers.
+
+| Prompt len | fp16 decode/step | TQ-v2 decode/step | speedup | TQ tok/s | fp16 tok/s | peak mem |
+|-----------:|-----------------:|------------------:|--------:|---------:|-----------:|---------:|
+|       64   |  6.4 ms          |  11.6 ms          |  0.55×  |  85.9    |  156.2     | 1040 MiB |
+|      256   |  6.5 ms          |   9.7 ms          |  0.67×  | 103.4    |  154.2     | 1032 MiB |
+|     1024   | 12.1 ms          |  11.1 ms          |  1.09×  |  89.9    |   83.0     | 1032 MiB |
+|     2048   | 18.0 ms          |  17.3 ms          |  1.04×  |  57.9    |   55.5     | 2056 MiB |
+|     4096   | 30.7 ms          |  17.0 ms          | **1.81×** |  58.7  |   32.5     | 3080 MiB |
+
+The crossover is at ~1 K context, after which TQ-v2 wins. At 4 K context the
+fp16 attention has to read 32 KB of K and 32 KB of V per layer per token from
+HBM, while TQ-v2 reads ~1 KB per layer per token from cache and decodes in
+shared memory — the bandwidth saving converts to a 1.8× faster decode step.
+
+Memory parity at every context: TQ-v2 here doesn't reduce peak GPU memory in
+absolute terms because the dominant memory cost is the model weights, not the
+KV cache. Per-byte: TQ uses 36 bytes/slot (uint8 packed) vs fp16's 128
+bytes/slot — a 3.56× reduction *of the cache itself*, but the model weights
+(~1.2 GB at q4f16) dwarf the 4 K-context cache (~7 MB).
+
+LFM2.5-specific fixes that landed in this session:
+- `seqlen_present_kv_cache` is now set to `total_sequence_length` (not
+  `past_dims[2]`), so dynamic-shape past_kv (HF transformers ONNX export
+  convention) is sized correctly for present_kv output.
+- Added `cudaStreamSynchronize` before reading `total_seq_lens_minus_one`
+  host-side. The attn_mask subgraph that produces this tensor is on the same
+  stream and async — without the sync, cudaMemcpy reads garbage on multi-step
+  decode.
+- Past-content copy: encode kernel only writes the new slots, so we now
+  cudaMemcpyAsync past_key/past_value into the first `past_seq` slots of
+  present_key/present_value before encode. Previously those slots were
+  zero-initialized and decode produced NaN/garbage.
+- fp16 saturation clamps in encode (vec_norm, v_scale, v_zero) and decode
+  (v_hat, K_out, output). Without these, layers with large K/V magnitudes
+  produce ±inf during encode that propagates as NaN through the rest of the
+  network on subsequent decode steps.
+- `norm_correction` rsqrtf guard: when sum-of-squared-centroids is ~0 the
+  rsqrt overflows to +inf and `+inf * 0` (vec_norm) yields NaN. Now returns 0
+  for that pathological case.
 
 ### v2 architecture (in `group_query_attention_turboquant_impl.cu`)
 
