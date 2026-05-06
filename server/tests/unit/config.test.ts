@@ -39,6 +39,15 @@ describe("parseModelRef", () => {
       dtype: "q4",
     });
   });
+
+  it("parses TurboQuant KV-cache dtype suffixes", () => {
+    expect(parseModelRef("LiquidAI/LFM2-1.2B-Instruct-ONNX:turboquant_4bit_nc", "q4")).toEqual({
+      id: "LiquidAI/LFM2-1.2B-Instruct-ONNX",
+      dtype: "turboquant_4bit_nc",
+    });
+    expect(parseModelRef("org/m:turboquant_k3v4_nc", "q4").dtype).toBe("turboquant_k3v4_nc");
+    expect(parseModelRef("org/m:turboquant_3bit_nc", "q4").dtype).toBe("turboquant_3bit_nc");
+  });
 });
 
 describe("loadConfig", () => {
@@ -69,6 +78,12 @@ describe("loadConfig", () => {
     expect(config.decodeLoop).toBe("auto");
     expect(config.warmupTokens).toBe(0);
     expect(config.warmupMaxNewTokens).toBe(8);
+    expect(config.kvCacheDtype).toBe("default");
+  });
+
+  it("reads WANDLER_KV_CACHE_DTYPE", () => {
+    const config = loadConfig({ WANDLER_KV_CACHE_DTYPE: "turboquant_4bit_nc" });
+    expect(config.kvCacheDtype).toBe("turboquant_4bit_nc");
   });
 
   it("uses HF_HOME as cache dir when set", () => {

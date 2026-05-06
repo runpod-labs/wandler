@@ -8,6 +8,23 @@ export interface ServerConfig {
   host: string;
   modelId: string;
   modelDtype: string;
+  /**
+   * KV-cache dtype hint for the LLM session. Recognized values:
+   *
+   *   - "default"             — whatever the .onnx export uses (typically fp16)
+   *   - "turboquant_4bit_nc"  — TurboQuant K=4-bit V=4-bit + norm-correction
+   *                             (3.56× cache compression, see TURBOQUANT-KV-CACHE-PLAN.md)
+   *   - "turboquant_k3v4_nc"  — K=3-bit V=4-bit + norm-correction (4.34× compression)
+   *   - "turboquant_3bit_nc"  — K=3-bit V=3-bit + norm-correction (5.02× compression)
+   *
+   * TurboQuant requires a pre-converted .onnx (run
+   * `python -m onnxruntime.quantization.turboquant_kv <model.onnx>` to convert)
+   * AND an `onnxruntime-node` build that includes the TurboQuant kernels.
+   * The wandler runtime passes this through to the model loader; if the
+   * loaded session doesn't recognise the dtype it will error early instead of
+   * silently falling back to fp16.
+   */
+  kvCacheDtype: string;
   backend: "wandler" | "transformersjs";
   device: string;
   sttModelId: string;
@@ -47,6 +64,9 @@ export interface ServerConfig {
  *   - 2-bit:          q2, q2f16       (v4.1+, CPU/WebGPU only)
  *   - 1-bit (BitNet): q1, q1f16       (v4.1+, CPU/WebGPU only)
  *   - Auto:           auto            (defers to the model's config dtype)
+ *   - TurboQuant KV:  turboquant_4bit_nc, turboquant_k3v4_nc, turboquant_3bit_nc
+ *                     (CUDA only, requires a TQ-converted .onnx file and a
+ *                     patched onnxruntime-node — see TURBOQUANT-KV-CACHE-PLAN.md)
  *
  * Example: "onnx-community/Qwen3-0.6B-ONNX:q4" or "some-org/bitnet:q1".
  */
@@ -93,6 +113,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     host: env.WANDLER_HOST || "127.0.0.1",
     modelId: llm.id,
     modelDtype: llm.dtype,
+    kvCacheDtype: env.WANDLER_KV_CACHE_DTYPE || "default",
     backend: parseBackend(env.WANDLER_BACKEND),
     device: env.WANDLER_DEVICE || env.DEVICE || "auto",
     sttModelId: stt.id,

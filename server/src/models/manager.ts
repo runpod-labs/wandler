@@ -302,6 +302,20 @@ export const SUPPORTED_DTYPES: readonly DtypeType[] = [
  */
 const LOW_BIT_DTYPES: readonly DtypeType[] = ["q1", "q1f16", "q2", "q2f16"] as const;
 
+/**
+ * TurboQuant KV-cache dtype suffixes. Recognised by `parseModelRef` so users
+ * can write `--llm org/repo:turboquant_4bit_nc` to load a pre-converted .onnx
+ * file. The runtime layer ignores these for HF-Hub dtype probing (the file
+ * may live alongside the standard q4f16 weights and the Hub helpers don't
+ * understand the TQ naming convention yet).  The actual TurboQuant kernels
+ * live in the patched onnxruntime-node — see TURBOQUANT-KV-CACHE-PLAN.md.
+ */
+const TURBOQUANT_DTYPES: readonly string[] = [
+  "turboquant_4bit_nc",
+  "turboquant_k3v4_nc",
+  "turboquant_3bit_nc",
+] as const;
+
 function buildSessionOptions(device: DeviceType): Record<string, unknown> | undefined {
   if (device !== "cuda") return undefined;
 
@@ -358,6 +372,18 @@ const AUTO_DTYPE_PREFERENCE: DtypeType[] = [
  * error. This keeps offline / private-model flows working.
  */
 async function resolveDtype(modelId: string, requested: string): Promise<string> {
+  // TurboQuant dtypes bypass the Hub probe — the matching `.onnx` file is
+  // produced by our calibration tool and may live in the same repo without
+  // appearing in the standard transformers.js dtype index. Let the loader
+  // surface a clear error if the file is missing rather than failing here.
+  if (TURBOQUANT_DTYPES.includes(requested)) {
+    logInfo(
+      `[wandler] dtype=${requested}: TurboQuant KV cache. Requires a TQ-converted ` +
+      `model and a patched onnxruntime-node — see TURBOQUANT-KV-CACHE-PLAN.md.`,
+    );
+    return requested;
+  }
+
   let available: string[];
   try {
     available = await ModelRegistry.get_available_dtypes(modelId);
