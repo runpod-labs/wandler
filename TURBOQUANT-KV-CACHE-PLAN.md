@@ -307,19 +307,94 @@ than fp16** (~2.3× faster end-to-end vs the start of the session).
 | argmax matches fp16        |             ✗  |              ✓  |     ✓   |
 | 8-step decode produces NaN |             ✓  |              ✗  |     ✗   |
 
+### v6 — wmma tensor cores for Q·K^T (~20% extra prompt speedup)
+
+The phase-1 score compute in v5 was 2048 fp32 dot products of length
+64 per K/V tile, all on plain CUDA cores. v6 replaces this with
+`nvcuda::wmma::mma_sync` operating on 16×16×16 fp16 fragments with
+fp32 accumulators on Ampere/Ada tensor cores. The Q*K^T matmul tiles
+naturally to (q_tile=2 × s_tile=4 × k_iter=4) = 32 mma_sync calls per
+K/V tile, distributed across 2 warps in a 64-thread block.
+
+K layout trick: `smem_k[s][i]` (s outer) is reused unchanged. We treat
+that storage as `col_major B` with leading dim = kHeadDim; column n=s
+starts at byte offset `n*kHeadDim*sizeof(half)`, matching the in-place
+layout. A is row_major Q. Phase 2 (online softmax) and phase 3 (V
+update) are byte-identical to v5.
+
+LFM2-1.2B prompt step on RTX A40:
+
+| context | fp16 ms | TQ v5 ms | TQ v6 ms | v6 / fp16 |
+|--------:|--------:|---------:|---------:|----------:|
+|     64  |  13.9   |  20.5    |  19.7    |  1.42×   |
+|   1024  |  79.5   | 111.1    |  95.5    |  1.20×   |
+|   4096  |  239.3  | 779.6    | **630.2** | **2.63×** |
+
+**Total session arc at 4K prompt** (RTX A40, LFM2-1.2B):
+
+| stage                          | TQ ms | TQ / fp16 |
+|--------------------------------|------:|----------:|
+| pre-fix (BSNH stride bug)      |  ~1640 |   7.42×  |
+| stride fix (correct quality)   |  1564 |   6.31×  |
+| v5 q-tiling                    |   780 |   3.27×  |
+| v6 wmma tensor cores           |   630 |   2.63×  |
+
+End-to-end the prompt step is ~3× faster than where it started, while
+the cos-sim-vs-fp16 went from 0.45 (broken) to 0.995 (production-quality).
+
+v6 only fires for T == half on head_size=64. bf16 paths fall through to v5,
+head_dim=128 still routes to v4-lite (deferred — needs kBlockK split from
+kHeadDim).
+
+### Option A — Runtime graph rewrite (no offline conversion needed)
+
+`TurboQuantKVFusion` graph transformer at
+`onnxruntime/core/optimizer/turboquant_kv_fusion.{cc,h}` runs at
+session-create when the user sets
+
+    session.add_session_config_entry(
+        "optimization.turboquant_kv_method", "turboquant_4bit_nc")
+    # optional:
+    session.add_session_config_entry(
+        "optimization.turboquant_kv_boundary", "2")
+
+It iterates the model's GroupQueryAttention nodes and, for each
+non-skipped layer:
+
+1. Sets attributes `kv_quant_method="turboquant"`, `key_quant_bits`,
+   `value_quant_bits`, `norm_correction`.
+2. Adds inputs at slots 14 (codebook) and 15 (hadamard) wired to
+   shared graph initializers — one set per `(head_dim, key_bits)`
+   pair, lazily created by computing Lloyd-Max + Walsh-Hadamard in
+   C++ at session-create (matches the python reference to fp16 noise).
+3. Rewrites past_key/past_value/present_key/present_value tensor
+   types from fp16 to uint8 with last-dim = `max(K_slot, V_slot)`
+   bytes via `NodeArg::UpdateTypeAndShape(..., override_types=true)`.
+4. Honours `boundary_n` to leave the first/last N attention layers in
+   fp16 for accuracy (default 2, mirroring vLLM).
+
+User flow becomes "download a stock fp16 q4f16 .onnx from HuggingFace
+once, opt into TurboQuant via runtime config alone." No python
+conversion script, no second `.onnx_data` blob on disk.
+
+Validation, vanilla `LiquidAI/LFM2-1.2B/model_q4f16.onnx` (no offline
+rewrite), prompt "The quick brown fox jumps over the lazy dog.":
+
+- fp16 baseline argmax: 941 (' The')
+- Option A TQ argmax:   941 (' The')   ✓ match
+- cos sim:              0.98929
+- top-10 token agreement: 9 / 10
+
 ### What's left
 
-- **v6 — tensor-core matmul (wmma)**: replace the per-thread fp32 dot
-  product in phase 1 with `wmma::mma_sync` on fp16 tiles. Should buy
-  another 2-3× on prompt speed (closing most of the remaining gap to
-  fp16 FlashAttention). 1-2 days of focused kernel work.
-- **head_dim=128 q-tiling**: needs `kBlockK` decoupled from `kHeadDim`
-  to fit shared memory. Today's models we test (LFM2 / Llama-3.2-1B)
+- **head_dim=128 q-tiling / wmma**: today both v5 and v6 only run for
+  head_size=64. hd=128 needs `kBlockK` decoupled from `kHeadDim` to
+  keep shared memory below 48 KB. Tested models (LFM2 / Llama-3.2-1B)
   use head_dim=64 so this is low priority.
 - **Per-channel V scales**: would let us preserve precision on layers
   whose V values exceed fp16 range, instead of clamping. Not blocking
   any current model.
-- **8-step decode at p=4096** still occasionally produces a zero token
+- **8-step decode at p=4096** very occasionally produces a zero token
   (cache decode degeneracy on specific token sequences). Quality is
   much better than before but not perfect — likely a corner case in
   how a particular K vector lands on a centroid boundary. Investigate
