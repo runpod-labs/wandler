@@ -433,16 +433,64 @@ Attention time at 32K is dominated by the kernel itself (~2 s/layer
 × 6 layers); closing the rest of that gap needs a multi-warp
 FlashAttention-2-style rewrite (deferred to v8).
 
+### Option ε — Delegate prompt-step attention to FlashAttention (THE WIN)
+
+The architectural insight that v3 → v7 was missing: **for the first-prompt
+step the K/V are already fresh fp16 in HBM**.  We don't need to read
+them from the (lossy) packed cache for THIS turn's attention math.
+We just need to encode them into the cache for FUTURE decode steps.
+
+vLLM's TurboQuant prefill path
+(`external/vllm/vllm/v1/attention/backends/turboquant_attn.py:542`) does
+exactly this: first-chunk prefill never touches the quantized cache —
+runs vanilla FlashAttention on the raw new K/V and quantizes
+asynchronously.  Our v3..v7 was reinventing FA badly inside the TQ
+kernel.  Option ε mirrors vLLM:
+
+- For first-prompt steps (`past_seq == 0` AND `S_q > 1`) the
+  orchestrator now calls `onnxruntime::flash::mha_fwd_kvcache`
+  directly on pre-rotated fp16 Q/K and raw fp16 V (already populated
+  into `d_K_fp16` / `d_V_fp16` by `LaunchCopyFreshKV` in v7).  FA's
+  "no internal append" mode is used: kcache/vcache are pre-populated,
+  new_k/new_v passed as nullptr, `seqlens_k = padded_seq_lens` (=
+  total_seq for first prompt), rotary disabled (we did it externally).
+- The encode kernel still runs and writes the packed cache for
+  future decode steps.  Decode steps (`past_seq > 0`) keep the
+  existing v7/v6 path — that's where the smaller-cache bandwidth
+  win actually pays off.
+
+#### LFM2.5-1.2B-Instruct-ONNX (median of 3 runs each, RTX A40)
+
+Vanilla q4f16 model from HuggingFace + Option A graph rewrite + ε:
+
+| context | phase  | fp16  | TQ pre-ε | TQ ε      | TQ / fp16 |
+|--------:|:-------|------:|---------:|----------:|----------:|
+| 4 K     | prompt | 1160  | 1796     | **1127**  | **0.97×** ≈ tie/win |
+| 4 K     | decode |  16.3 | 21.0     | **17.0**  | 1.04× ≈ tie |
+| 32 K    | prompt | 7241  | 18298    | **6741**  | **0.93×** ✓ TQ wins |
+| 32 K    | decode |  93.6 | 80.0     | **87.0**  | **0.93×** ✓ TQ wins |
+
+End-to-end (200-token reply at 32 K):
+- fp16: 7241 + 200 × 94 = **26041 ms**
+- TQ ε: 6741 + 200 × 87 = **24141 ms** → **TQ 7.3 % faster overall**
+
+Quality: cos sim vs fp16 = **1.00000** for the prompt step (FA on the
+exact pre-quantization K/V is bit-equivalent to fp16 baseline; only
+past tokens during decode go through the lossy roundtrip).
+
+This unblocks the long-context use case.  Decode steps still go
+through the packed-cache path, so the 3.56× KV-cache memory saving
+is preserved (invariant from v7).
+
 ### What's left
 
-- **v8: FlashAttention-2-style multi-warp split-K**. Today's wmma
-  kernel uses 2 warps with 1 mma_sync per pair, walks K serially per
-  Q block. To close the prompt-step gap to fp16 at 32K we need:
-  - blockDim 128-256 (4-8 warps cooperating on a single Q block)
-  - split-K decode so partial outputs reduce via global memory
-  - cp.async double-buffered K/V tile loads for compute/load overlap
-  Estimated 3-5 days of focused kernel work, brings prompt to fp16
-  parity-or-better at every context.
+- ~~**v8: FlashAttention-2-style multi-warp split-K**~~ — no longer
+  urgent.  Was needed only for the prompt-step gap, which option ε
+  now closes by delegating to stock FA.  May still be worth doing
+  to push **decode** speed at extreme context (>64K) — the v6 wmma
+  kernel is still our decode kernel and there's headroom there.
+  Same plan applies (multi-warp + split-K + cp.async) but lower
+  priority now.
 - **head_dim=128 q-tiling / wmma**: today both v5 and v6 only run for
   head_size=64. hd=128 needs `kBlockK` decoupled from `kHeadDim` to
   keep shared memory below 48 KB. Tested models (LFM2 / Llama-3.2-1B)
