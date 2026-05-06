@@ -494,16 +494,43 @@ is preserved (invariant from v7).
   64K/128K decode further, or (b) memory savings start mattering
   more than speed (multi-GPU, very long context).
 
-- **32K ORT ceiling** (under investigation) — independently of TQ,
-  ORT's GroupQueryAttention path on this LFM2.5 ONNX export hits
-  illegal-memory-access at any prompt length above 32768.  fp16
-  baseline fails too, so this is an ORT or model-export issue, not
-  a TurboQuant issue.  Most-suspect causes: int32 overflow in some
-  workspace size calculation, a hardcoded `seqlen_k <= 32768` in FA
-  invocation, or a cos_cache lookup-mode mismatch.  Lifting this
-  ceiling would unlock 64K/128K bench, where the 3.5× KV-cache
-  memory saving (LFM2.5 fp16 KV at 128K ≈ 2 GB → TQ ≈ 570 MB)
-  starts mattering practically.
+- ~~**32K ORT ceiling**~~ — **DIAGNOSED + WORKED AROUND.**  Root cause
+  was int32 overflow in element count of the final logits Cast.
+  At S_q × vocab > 2³¹ the Cast iterator wraps around and the GPU
+  scribbles invalid memory.  For LFM2.5 with vocab = 65 536 the
+  threshold is exactly S_q = 32 768.  Workaround: slice the hidden
+  state to `[:, -1:, :]` BEFORE the LM head matmul (HF transformers
+  calls this `logits_to_keep=1`).  This is what production LLM
+  serving does anyway since only the last token's logits are used
+  for sampling.  Tool: `onnxruntime/python/tools/quantization/turboquant_kv/last_token_logits.py`.
+  Run:
+  ```
+  python -m onnxruntime.quantization.turboquant_kv.last_token_logits \
+      model_q4f16.onnx -o model_q4f16_lasttok.onnx
+  ```
+  After patching, both fp16 and TQ run cleanly to 124 K (and TQ
+  alone runs to 128 K — fp16 hits a different cos_cache off-by-one
+  on the decode step at exactly 128 K).
+
+#### Long-context wins on the patched model (RTX A40, LFM2.5-1.2B-Instruct-ONNX)
+
+| context | fp16 prompt | TQ prompt | fp16 decode | TQ decode | TQ vs fp16 decode |
+|--------:|------------:|----------:|------------:|----------:|------------------:|
+| 32 K    |   1841 ms   |  1680 ms  |   195 ms    |   125 ms  | **1.56× faster**  |
+| 64 K    |   3782 ms   |  3499 ms  |   296 ms    |   188 ms  | **1.57× faster**  |
+| 96 K    |   6114 ms   |  5761 ms  |   270 ms    |   210 ms  | 1.29× faster      |
+| 124 K   |   8426 ms   |  8158 ms  |   358 ms    |   343 ms  | 1.04× faster      |
+| 128 K   |  fp16 fails |  8611 ms  |   fp16 fails |  282 ms  | **TQ-only**       |
+| 131 K   |  exceeds cos_cache |  8568 ms |  ⌐    |   330 ms  | **TQ-only**       |
+
+End-to-end at 64 K, 200-token reply:
+- fp16: 3782 + 200 × 296 = **62 982 ms**
+- TQ:   3499 + 200 × 188 = **41 099 ms** → **TQ 1.53× faster overall**
+
+At 32-64K TurboQuant is the clear winner.  Decode advantage shrinks
+above 96 K (probably v6 wmma kernel hitting non-bandwidth bottlenecks);
+v8 (the parked custom CUDA decode kernel) would be the right tool to
+push that further when needed.
 
 ### v8 design notes (for the future)
 
