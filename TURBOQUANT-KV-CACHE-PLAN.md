@@ -484,13 +484,80 @@ is preserved (invariant from v7).
 
 ### What's left
 
-- ~~**v8: FlashAttention-2-style multi-warp split-K**~~ — no longer
-  urgent.  Was needed only for the prompt-step gap, which option ε
-  now closes by delegating to stock FA.  May still be worth doing
-  to push **decode** speed at extreme context (>64K) — the v6 wmma
-  kernel is still our decode kernel and there's headroom there.
-  Same plan applies (multi-warp + split-K + cp.async) but lower
-  priority now.
+- **v8 plan (parked, see "v8 design notes" below)** — a custom CUDA
+  C++ kernel that reads the packed TurboQuant cache directly during
+  attention, equivalent to vLLM's `_tq_decode_stage1` Triton kernel.
+  Not urgent post-ε: at the contexts we can run today (≤32K on this
+  model + ORT version, see "32K ceiling" below), our v6 wmma kernel
+  already beats fp16 by ~7% on decode.  v8 only becomes obvious-
+  needed if (a) we get past the 32K ORT ceiling and want to push
+  64K/128K decode further, or (b) memory savings start mattering
+  more than speed (multi-GPU, very long context).
+
+- **32K ORT ceiling** (under investigation) — independently of TQ,
+  ORT's GroupQueryAttention path on this LFM2.5 ONNX export hits
+  illegal-memory-access at any prompt length above 32768.  fp16
+  baseline fails too, so this is an ORT or model-export issue, not
+  a TurboQuant issue.  Most-suspect causes: int32 overflow in some
+  workspace size calculation, a hardcoded `seqlen_k <= 32768` in FA
+  invocation, or a cos_cache lookup-mode mismatch.  Lifting this
+  ceiling would unlock 64K/128K bench, where the 3.5× KV-cache
+  memory saving (LFM2.5 fp16 KV at 128K ≈ 2 GB → TQ ≈ 570 MB)
+  starts mattering practically.
+
+### v8 design notes (for the future)
+
+**Goal**: a CUDA C++ kernel that computes attention directly on the
+packed TurboQuant cache during decode, with FA-2-style efficiency.
+Not for prompt step — that's solved by Option ε using stock FA.
+
+**Reference implementation**:
+`external/vllm/vllm/v1/attention/ops/triton_turboquant_decode.py`
+(specifically `_tq_decode_stage1`).  Their algorithm:
+- Block tiling: split-KV into chunks; one block per (batch, head, K-chunk)
+- Reduction across K-chunks via global memory in a `_fwd_kernel_stage2`
+  log-sum-exp combine (shared with FlashDecoding)
+- Inside each block:
+  1. Read packed K bytes from cache slot
+  2. Unpack 3-/4-bit indices
+  3. Gather centroid values from 16-entry LUT (in shared mem or registers)
+  4. Optional norm-correction: re-normalise centroid vector to unit length
+  5. Compute `q_rot · centroid` to form score (fp32 acc)
+  6. Apply per-slot vec_norm (fp16 metadata in slot tail)
+  7. Read packed V bytes, unpack, dequantize via per-slot scale/zero
+  8. Accumulate `p[:, None] * values_dequantized` in registers
+- Online softmax for numerical stability
+- Final write merges per-K-chunk partials via stage 2 reduction
+
+**Why we can't reuse it directly**: it's Triton (Python+JIT compile) and
+ORT's CUDA EP wants C++.  Porting needs a CUDA C++ rewrite from the
+Triton source as the reference design — about 3-5 days of focused
+work for a competent CUDA author.
+
+**Concrete kernel layout for a CUDA port**:
+- blockDim = 128-256 threads (4-8 warps, vs current v6's 64 / 2 warps)
+- Each warp owns one (Q, K-chunk) pair → 4-8 mma_sync ops in parallel
+- `cp.async` for double-buffered K-chunk loads → overlap unpack with
+  prior tile's wmma compute
+- Centroid LUT held in shared memory or registers (only 16 fp16 values)
+- Online softmax in registers (one running max + log-sum per Q row)
+- Two-pass output: stage 1 writes per-chunk (out, lse) to global; stage 2
+  combines via standard FlashDecoding merge kernel
+
+**What we have today (v6 wmma)** uses 2 warps with 1 mma_sync per pair
+and walks K serially per Q block.  No cp.async, no split-K.  Adequate
+for ≤32K decode but leaves perf on the table at extreme context.
+
+**Expected impact if shipped**:
+- Decode at very long context (>64K): probably 2-3× faster than v6
+- Decode at 4K-32K: marginal improvement (already near memory-bound)
+- Encode kernel: unchanged
+- Quality: unchanged (same cache layout, same math, just better
+  scheduling)
+
+**Acceptance criteria**: at 64K context (assuming the ORT ceiling is
+lifted first), TQ decode should be ≥ 1.5× faster than fp16 baseline.
+At 128K: ≥ 2× faster.  Below 64K: keep v6 wmma as the dispatch.
 - **head_dim=128 q-tiling / wmma**: today both v5 and v6 only run for
   head_size=64. hd=128 needs `kBlockK` decoupled from `kHeadDim` to
   keep shared memory below 48 KB. Tested models (LFM2 / Llama-3.2-1B)
