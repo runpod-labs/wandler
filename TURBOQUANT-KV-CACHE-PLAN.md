@@ -385,8 +385,64 @@ rewrite), prompt "The quick brown fox jumps over the lazy dog.":
 - cos sim:              0.98929
 - top-10 token agreement: 9 / 10
 
+### v7 — skip-dequant for new tokens + causal early-exit (long-context win)
+
+Two independent prompt-step optimisations:
+
+1. **Skip the lossy round-trip for new tokens.** Previously every forward
+   pass did `encode → decode` for ALL slots: pack the fresh K/V into the
+   cache, immediately unpack them back to fp16 in a scratch buffer used
+   by attention. For *new* tokens this is pure waste — we already have
+   them in fp16 in `data.key` / `data.value`. v7 splits the work:
+   - encode still runs (cache write for FUTURE decode steps)
+   - decode runs on PAST slots only `[0, past_seq)`
+   - a new `TQCopyFreshKVKernel` writes the original fp16 K/V into the
+     BNSH attention scratch at slots `[past_seq, total_seq)`
+
+   Quality jump: **cos sim vs fp16 = 1.00000** (was 0.99611). For prompt
+   step the attention path is now bit-equivalent to fp16; only past
+   tokens go through the lossy cache.
+
+2. **Causal early-exit in the Q-tiled wmma kernel.** The kernel iterated
+   every K tile up to `total_seq` for every Q block, then masked future
+   positions to `-inf` after the wmma. At long context that's ~99% of
+   the matmul work computed and thrown away. v7 stops at the last K
+   tile any query in the block can attend to:
+   `last_useful_kv = past_seq + s_q_base + q_count - 1`. For prompt
+   step that halves compute. At S=32K the per-layer attention time
+   drops from 4036 ms to 2036 ms.
+
+#### Validated on LiquidAI/LFM2.5-1.2B-Instruct-ONNX (the real target model)
+
+Vanilla q4f16 model from HuggingFace + Option A graph rewrite + v7:
+
+| context | phase  | fp16  | TQ pre-v7 | TQ v7    | TQ / fp16 |
+|--------:|:-------|------:|----------:|---------:|----------:|
+| 4 K     | prompt | 1586  | 1985      | **1796** | 1.13×     |
+| 4 K     | decode |  23.0 | 20.0      | **21.0** | **0.91×** ✓ faster |
+| 32 K    | prompt | 7182  | 30221     | **18298** | 2.55×    |
+| 32 K    | decode | 108.4 | 81.6      | **~80**   | **0.74×** ✓ faster |
+
+End-to-end (200-token reply at 4K): TQ 1796 + 200 × 21.0 = **5996 ms**
+vs fp16 1586 + 200 × 23.0 = 6186 ms → TQ ~3% faster. The decode win
+finally pays off the prompt overhead at typical reply lengths.
+
+At 32K prompt is still 2.55× slower than fp16 FlashAttention so TQ
+is only a clear win once the answer is long enough (~700+ tokens).
+Attention time at 32K is dominated by the kernel itself (~2 s/layer
+× 6 layers); closing the rest of that gap needs a multi-warp
+FlashAttention-2-style rewrite (deferred to v8).
+
 ### What's left
 
+- **v8: FlashAttention-2-style multi-warp split-K**. Today's wmma
+  kernel uses 2 warps with 1 mma_sync per pair, walks K serially per
+  Q block. To close the prompt-step gap to fp16 at 32K we need:
+  - blockDim 128-256 (4-8 warps cooperating on a single Q block)
+  - split-K decode so partial outputs reduce via global memory
+  - cp.async double-buffered K/V tile loads for compute/load overlap
+  Estimated 3-5 days of focused kernel work, brings prompt to fp16
+  parity-or-better at every context.
 - **head_dim=128 q-tiling / wmma**: today both v5 and v6 only run for
   head_size=64. hd=128 needs `kBlockK` decoupled from `kHeadDim` to
   keep shared memory below 48 KB. Tested models (LFM2 / Llama-3.2-1B)
