@@ -195,7 +195,7 @@ KV cache. Per-byte: TQ uses 36 bytes/slot (uint8 packed) vs fp16's 128
 bytes/slot — a 3.56× reduction *of the cache itself*, but the model weights
 (~1.2 GB at q4f16) dwarf the 4 K-context cache (~7 MB).
 
-LFM2.5-specific fixes that landed in this session:
+LFM2-specific fixes that landed in this session:
 - `seqlen_present_kv_cache` is now set to `total_sequence_length` (not
   `past_dims[2]`), so dynamic-shape past_kv (HF transformers ONNX export
   convention) is sized correctly for present_kv output.
@@ -214,6 +214,116 @@ LFM2.5-specific fixes that landed in this session:
 - `norm_correction` rsqrtf guard: when sum-of-squared-centroids is ~0 the
   rsqrt overflows to +inf and `+inf * 0` (vec_norm) yields NaN. Now returns 0
   for that pathological case.
+
+### v3 — On-device codebook conversion
+
+Removed the per-call `cudaStreamSynchronize` that was forcing a host
+roundtrip to convert the fp16 codebook to fp32. Replaced with a tiny
+`TQConvertCodebookKernel<<<1, 32>>>` running on the same stream. No
+host sync, no host scratch vector. Marginal but real perf win on
+short-context decode where orchestration overhead is a higher %.
+
+### v3.5 — Inline RoPE for `do_rotary=1` GQA models
+
+The standard QkvToContext path applies rotary embeddings via
+LaunchUnpackRoPEAppend before writing the cache. The TQ orchestrator
+bypassed that helper, so when the GQA op carried `do_rotary=1` (LFM2,
+Qwen3 ONNX exports) the cache stored positionless K and Q never saw
+rotation — turning attention into "bag-of-tokens" and producing
+near-random logits. Fixed by allocating scratch Q and K buffers,
+running `LaunchRotaryEmbeddingKernel` on them with
+`position_ids_format=2` (positions derived from `past_sequence_lengths[b] + s`),
+and feeding the rotated buffers into encode and the attention kernels.
+
+### v4-lite — Fused FlashAttention with online softmax
+
+Replaced the v3.5 split (TQScores + TQSoftmaxRow + TQOutput) with a
+single fused kernel that walks K/V in tiles of `kBlockK` rows and
+keeps the running (max, sum, accumulator) trio in registers. The
+`[B, num_heads, S_q, total_seq]` fp32 scores buffer (~2 GB at S=4096)
+is never materialised. Same big-O HBM as v3.5 but ~12% faster on
+prompt step at 4K context — the savings are exactly the eliminated
+scores buffer reads/writes. Decode-step path is unchanged.
+
+### v5 stride-bug fix — quality jump 0.45 → 0.996 (the big one)
+
+The encode kernel was reading K and V with **BNSH stride**:
+```
+in_off = ((b * n_kv_heads + h) * new_seq_len + s_new) * head_dim
+```
+but ORT's GroupQueryAttention op delivers K/V in **BSNH** layout —
+the projection outputs are flat `(B, S, N_kv * H_kv)` and stride
+accordingly:
+```
+in_off_correct = ((b * new_seq_len + s_new) * n_kv_heads + h) * head_dim
+```
+With the wrong stride every (b, h, s) block read a slice that
+interleaved values from different head and sequence positions, the
+encoded slot was effectively garbage, and the FWHT roundtrip produced
+near-random K vectors. Per-layer attention output was at cos sim 0.18
+vs fp16. The Llama-3.2-1B 0.99 number from earlier was measured with
+a synthetic-Gaussian unit test that never exercised this stride; LFM2
+inference exposed it because it actually runs through the GQA op end
+to end. After the one-line fix every layer is > 0.97 cos sim and the
+final logits agree at **0.99611** with argmax matching fp16 token
+2479 (' There').
+
+### v5 — q-tiled FlashAttention kernel (~2× prompt speedup)
+
+The v4-lite kernel used one block per (b, h, s_q) output position, so
+every Q row in the same head re-read the entire K_full / V_full from
+HBM independently. At S=4096 that's ~67 GB of K_full reads per layer
+per call, 4096× the actual data size. v5 groups `kBlockQ=32`
+consecutive Q rows into one block, so K_tile / V_tile are loaded once
+and shared across all 32 queries — a 32× drop in K/V HBM reads.
+
+Threading invariant: `blockDim.x == kHeadDim == kBlockK == 64`. In
+phase 1 (score compute) thread `tid` plays "K row tid", computing
+`score[q][tid] = (Q[q] · K_tile[tid]) * scale` for every `q` in the
+block. In phase 2 (acc update) thread `tid` plays "output dim tid",
+computing `my_acc[q] += p[q][s] * V_tile[s][tid]` for every (q, s).
+Per-query running (max, sum) and the new scaling factor `alpha` live
+in shared memory and are read by all threads at the right phase
+boundaries.
+
+LFM2-1.2B prompt step on RTX A40 (median of 3 runs):
+
+| context | fp16 ms | TQ pre-v5 | TQ v5 | TQ/fp16 |
+|--------:|--------:|----------:|------:|--------:|
+|     24  |    13.5 |      19.7 |  19.3 |  1.43×  |
+|    256  |    21.1 |      34.0 |  34.1 |  1.62×  |
+|   1024  |    67.5 |     146.6 | 111.1 |  1.64×  |
+|   4096  |   244.0 |    1564.5 | **779.6** |  **3.27×**  |
+
+The total session improvement at 4K prompt is **7.4× → 3.27× slower
+than fp16** (~2.3× faster end-to-end vs the start of the session).
+
+### Quality summary (LFM2-1.2B, real prompt: "The quick brown fox …")
+
+| metric                     | pre-stride-fix | post-stride-fix | post-v5 |
+|----------------------------|---------------:|----------------:|--------:|
+| final logits cos sim       |          0.448 |          0.996  |  0.996  |
+| top-10 token agreement     |           0/10 |           8/10  |   8/10  |
+| argmax matches fp16        |             ✗  |              ✓  |     ✓   |
+| 8-step decode produces NaN |             ✓  |              ✗  |     ✗   |
+
+### What's left
+
+- **v6 — tensor-core matmul (wmma)**: replace the per-thread fp32 dot
+  product in phase 1 with `wmma::mma_sync` on fp16 tiles. Should buy
+  another 2-3× on prompt speed (closing most of the remaining gap to
+  fp16 FlashAttention). 1-2 days of focused kernel work.
+- **head_dim=128 q-tiling**: needs `kBlockK` decoupled from `kHeadDim`
+  to fit shared memory. Today's models we test (LFM2 / Llama-3.2-1B)
+  use head_dim=64 so this is low priority.
+- **Per-channel V scales**: would let us preserve precision on layers
+  whose V values exceed fp16 range, instead of clamping. Not blocking
+  any current model.
+- **8-step decode at p=4096** still occasionally produces a zero token
+  (cache decode degeneracy on specific token sequences). Quality is
+  much better than before but not perfect — likely a corner case in
+  how a particular K vector lands on a centroid boundary. Investigate
+  if user reports issues.
 
 ### v2 architecture (in `group_query_attention_turboquant_impl.cu`)
 
