@@ -512,6 +512,35 @@ is preserved (invariant from v7).
   alone runs to 128 K — fp16 hits a different cos_cache off-by-one
   on the decode step at exactly 128 K).
 
+#### Vectorised K/V smem loads in v4-lite + v6 wmma (uint4 / 8-fp16)
+
+Switched from "thread tid loads column tid for every row" scalar pattern
+to "each thread loads ONE full row via uint4". At hd=64 this is 8 vector
+loads per thread instead of 64 scalar loads with a single coalesced HBM
+burst per row. **Decode at 32 K dropped 40 % (125 → 74 ms), at 64 K
+dropped 27 % (188 → 137 ms).** Cheap, low-risk, ships always.
+
+Quality unchanged: cos sim vs fp16 still 1.00000.
+
+#### Cross-model validation: onnx-community/Qwen3-0.6B-ONNX
+
+Qwen3-0.6B is pure-transformer (28 GQA layers, hd=128, vocab=151 936).
+Validates that TQ + Option A + Option ε generalise beyond LFM2.5:
+
+| context | fp16 prompt | TQ prompt | fp16 decode | TQ decode |
+|--------:|------------:|----------:|------------:|----------:|
+|  4 K    |     608 ms  |  447 ms   |   130 ms    |    86 ms  |
+| 16 K    |    1862 ms  | 1191 ms   |   456 ms    |   284 ms  |
+| 32 K    |    4197 ms  | 2808 ms   |   915 ms    |   468 ms  |
+
+**TQ wins prompt 1.36-1.56× and decode 1.51-1.96× across all contexts**.
+At 32 K, end-to-end for a 200-token reply: TQ 96 s vs fp16 187 s →
+**TQ 1.94× faster overall**. TQ wins MORE on Qwen3 than LFM2.5 because
+Qwen3 has no SSM dilution — every layer benefits from KV-cache compression.
+
+(Qwen3's vocab=151 936 hits the int32 logits-Cast cliff at S_q > 14 128
+on the original export; same `last_token_logits.py` patcher fixes it.)
+
 #### Long-context wins on the patched model (RTX A40, LFM2.5-1.2B-Instruct-ONNX)
 
 | context | fp16 prompt | TQ prompt | fp16 decode | TQ decode | TQ vs fp16 decode |
