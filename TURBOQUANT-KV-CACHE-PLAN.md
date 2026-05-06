@@ -561,6 +561,56 @@ above 96 K (probably v6 wmma kernel hitting non-bandwidth bottlenecks);
 v8 (the parked custom CUDA decode kernel) would be the right tool to
 push that further when needed.
 
+### Final summary — what ships today
+
+**CUDA TurboQuant is production-ready** on `head_dim ∈ {64, 128}` causal-LM
+ONNX exports.  Validated end-to-end on:
+
+- `LiquidAI/LFM2.5-1.2B-Instruct-ONNX` (hybrid SSM, 6 GQA layers, hd=64)
+- `onnx-community/Qwen3-0.6B-ONNX` (pure transformer, 28 GQA layers, hd=128)
+
+User flow: download stock `model_q4f16.onnx` from HF, run our patched
+ORT with one session option:
+
+```python
+opts.add_session_config_entry("optimization.turboquant_kv_method",
+                              "turboquant_4bit_nc")
+```
+
+For prompts ≥ 32 K, also patch the model once with `last_token_logits.py`
+to avoid the int32 overflow in ORT's CUDA Cast kernel
+([upstream issue #28385](https://github.com/microsoft/onnxruntime/issues/28385)).
+
+#### Headline numbers, RTX A40, 200-token reply
+
+| model | context | fp16 total | TQ total | TQ vs fp16 |
+|---|---:|---:|---:|---|
+| LFM2.5-1.2B | 4 K   |   6.2 s |   6.0 s | tied |
+| LFM2.5-1.2B | 32 K  |  26.0 s |  24.1 s | 7 % faster |
+| LFM2.5-1.2B | 64 K  |  63.0 s |  41.1 s | **53 % faster** |
+| LFM2.5-1.2B | 128 K | fp16 fails | 65 s | **TQ-only** |
+| Qwen3-0.6B  | 4 K   |  26.6 s |  17.6 s | **51 % faster** |
+| Qwen3-0.6B  | 16 K  |  93 s |  58 s | **60 % faster** |
+| Qwen3-0.6B  | 32 K  | 187 s |  96 s | **94 % faster** |
+
+Quality: cos sim vs fp16 = **1.00000** for prompt step (Option ε is
+bit-equivalent to fp16); only past-token reads go through the lossy
+roundtrip and that scores 0.99526 across-context.
+
+Memory: KV cache is **3.56× smaller** (36 bytes/slot vs 128 bytes/slot
+fp16 at hd=64; 68 bytes vs 256 bytes at hd=128).
+
+#### How to reproduce on a Mac
+
+The full ORT + WebGPU build doesn't fit in this CUDA-only autonomous
+session, but the `.github/workflows/turboquant-mac-bench.yml` workflow
+runs everything on a `macos-15` runner end-to-end (~90 minutes).
+Trigger via `workflow_dispatch` and download the artifact.  WebGPU
+TurboQuant kernel work is not yet committed (see "v8 design notes"
+below) so the workflow currently benches **fp16 baseline only on Mac**;
+that's still the apples-to-apples comparison point we're missing for
+Apple Silicon.
+
 ### v8 design notes (for the future)
 
 **Goal**: a CUDA C++ kernel that computes attention directly on the
