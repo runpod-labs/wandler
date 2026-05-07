@@ -1,0 +1,61 @@
+=== matrix bench: fp16 + tq @ 4K, 16K, 32K ===
+
+--- ctx=4096 mode=fp16 ---
+=== LFM2.5-1.2B-mac | mode=fp16 prompt=4096 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 3797 ms
+  decode (4 steps): step1=141.3ms steady avg=37.4 ms/tok
+
+result: prompt=3797ms decode=37.4ms/tok
+
+
+--- ctx=4096 mode=tq ---
+=== LFM2.5-1.2B-mac | mode=tq prompt=4096 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 3790 ms
+  decode (4 steps): step1=93.6ms steady avg=18.1 ms/tok
+
+result: prompt=3790ms decode=18.1ms/tok
+
+
+--- ctx=16384 mode=fp16 ---
+=== LFM2.5-1.2B-mac | mode=fp16 prompt=16384 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 29615 ms
+  decode (4 steps): step1=376.1ms steady avg=88.9 ms/tok
+
+result: prompt=29615ms decode=88.9ms/tok
+
+
+--- ctx=16384 mode=tq ---
+=== LFM2.5-1.2B-mac | mode=tq prompt=16384 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 28933 ms
+  decode (4 steps): step1=552.2ms steady avg=65.1 ms/tok
+
+result: prompt=28933ms decode=65.1ms/tok
+
+
+--- ctx=32768 mode=fp16 ---
+=== LFM2.5-1.2B-mac | mode=fp16 prompt=32768 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 97667 ms
+  decode (4 steps): step1=2489.2ms steady avg=348.7 ms/tok
+
+result: prompt=97667ms decode=348.7ms/tok
+
+
+--- ctx=32768 mode=tq ---
+=== LFM2.5-1.2B-mac | mode=tq prompt=32768 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 95480 ms
+  decode (4 steps): step1=2286.5ms steady avg=94.3 ms/tok
+
+result: prompt=95480ms decode=94.3ms/tok
+

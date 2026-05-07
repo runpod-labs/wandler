@@ -121,7 +121,7 @@ Upstream issues filed:
 - [LiquidAI/LFM2.5-1.2B-Instruct-ONNX discussion #3](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX/discussions/3)
   — request to re-export with `logits_to_keep=1`.
 
-## WebGPU port (partial — scaffold landed)
+## WebGPU port — working end-to-end on Apple Silicon Metal
 
 Added during the autonomous arc:
 
@@ -135,29 +135,55 @@ Added during the autonomous arc:
   `TurboQuantDecodeProgram`, `RunTurboQuantAttention` orchestrator
   mirroring CUDA's Option-ε pattern.
 - TQ branch in `webgpu/GroupQueryAttention::ComputeInternal` —
-  attribute parsing (`kv_quant_method`, `key_quant_bits`, etc.),
-  CheckInputs bypass for the rewritten cache shape, present_kv output
+  attribute parsing, rotary applied up-front (so we can call FA
+  without its packed-QKV-only do_rotary path), present_kv output
   resized to `slot_bytes`.
+- uint8 → uint32 alias-tensor view inside the orchestrator so the
+  packed cache binds cleanly to WGSL `array<u32>` (ORT's
+  `ShaderVariableHelper` rejects uint8 storage bindings; graph dtype
+  stays uint8 — CUDA path untouched).
 - `TurboQuantKVFusion` graph transformer scope extended from
   `cuda_eps` only to `{cuda_eps, webgpu_eps}` so Option A fires
   on both backends.
 
-Status: the patched ORT **builds cleanly** with `--use_webgpu`, and
-the **fp16 baseline path runs** through the WebGPU EP on Lavapipe
-(software Vulkan / linux), 6.7 s for a 32-token LFM2.5 prompt — slow
-because Lavapipe is CPU, but verifies the plumbing is correct.
+### Apple Silicon Metal benches (LFM2.5-1.2B-Instruct-ONNX)
 
-The TurboQuant attention path itself currently fails at FlashAttention
-bind-time inside Dawn's storage-buffer accounting (reports 2355 vs 16
-limit on Lavapipe).  Likely a parameter / shape mismatch when our
-hand-set TQ parameters feed into ApplyFlashAttention's internal
-sizing logic.  Needs a focused webgpu / Dawn debug pass — out of scope
-for this autonomous session.
+Single Apple Silicon GPU, 4-step decode after the prompt.  All numbers
+from the patched ORT WebGPU EP via Dawn → Metal.
 
-Apple Silicon Metal users **may** get past the same bug — different
-backend, different limits.  The `.github/workflows/turboquant-mac-bench.yml`
-workflow is the right harness to find out.  At minimum it produces
-real fp16 baseline numbers on Apple Silicon, which we don't have.
+| context | fp16 prompt | TQ prompt | fp16 decode  | TQ decode    | decode speedup |
+|--------:|------------:|----------:|-------------:|-------------:|---------------:|
+|   4 K   |   3.8 s     |   3.8 s   |  37.4 ms/tok |  **18.1 ms/tok** | **2.07× faster** |
+|  16 K   |  29.6 s     |  28.9 s   |  88.9 ms/tok |  **65.1 ms/tok** | **1.37×** |
+|  32 K   |  97.7 s     |  95.5 s   | 348.7 ms/tok |  **94.3 ms/tok** | **3.70× faster** |
+
+Prompt is tied because Option-ε runs the standard FlashAttention path
+on fresh fp16 K/V (bit-equivalent to fp16, no quantisation cost).
+Decode is where TQ shines — the cache reads dominate, and TQ shrinks
+them 3.56×; **at 32 K context, the speedup is 3.7×**.
+
+Five fixes turned the Linux/Lavapipe scaffold into a real Apple Silicon
+runner (single ORT-fork commit, regenerated into the patch):
+
+1. Compute `past_seq_len` from `past_key.shape[2]` instead of
+   `seqlens_k` input — HF causal-LM benches commonly leave that
+   zero-filled on the prompt step; the past tensor's shape is the
+   ground truth either way (mirrors what `CheckInputs` does for fp16).
+2. Apply rotary inline before `RunTurboQuantAttention` so we can call
+   `ApplyFlashAttention` without its packed-QKV-only do_rotary path.
+3. Alias the uint8 cache as uint32 view tensors before binding to the
+   decode shader (`ShaderVariableHelper` rejects uint8).
+4. Strip `u` suffix from template-substituted compares
+   (`if (key_bits == 4u)` → `if (4 == 4u)` is a Tint type mismatch).
+5. Rename local `meta` → `v_meta_word` (reserved WGSL keyword).
+
+Plus a Mac clang `[[maybe_unused]]` on the still-placeholder
+`TurboQuantEncodeProgram::norm_correction_` field.
+
+The encode kernel is still placeholder; the decode-only path is what
+we exercise on prompt-step Option-ε + decode-step roundtrip.  Wiring
+encode for new-token cache writes during decode is the natural
+follow-up.
 
 ## What's NOT in this session
 

@@ -6,3 +6,5 @@ dist/
 server/README.md
 external/
 pod_artifacts/
+tq-mac-bench/model/
+.claude/
