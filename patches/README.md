@@ -4,7 +4,7 @@ These patches add TurboQuant KV-cache quantization support to ONNX Runtime's CUD
 
 ## `turboquant-kv-cache.patch`
 
-A single unified diff of 17 commits on top of upstream `microsoft/onnxruntime` commit `b81f3f855`. To apply:
+A single unified diff of 18 commits on top of upstream `microsoft/onnxruntime` commit `b81f3f855` (CUDA TurboQuant + WebGPU scaffold). To apply:
 
 ```bash
 git clone https://github.com/microsoft/onnxruntime.git
@@ -74,4 +74,8 @@ b61ef5234  turboquant(cuda): v7 — skip lossy round-trip for new tokens + causa
 c29ea0318  turboquant: last_token_logits patcher — unlocks long context (>32K)
 c26dd3e20  turboquant(cuda): vectorize K/V smem loads in v4-lite + v6 wmma decode kernels
 fc7f206dc  turboquant(cuda): tried cp.async double-buffered K/V load, regressed at our tile size
+29376c874  turboquant(webgpu): scaffold TurboQuant integration in webgpu/group_query_attention
 ```
+
+**WebGPU scaffold** (commit `29376c874`):
+Adds the TurboQuant code path to ORT's WebGPU EP — encode + decode WGSL templates, C++ Program wrappers, integration into `webgpu/GroupQueryAttention::ComputeInternal`, and Option-A graph rewrite scope extended to include WebGPU.  The patched ORT builds cleanly with `--use_webgpu`; fp16 baseline runs through the WebGPU provider (validated on Lavapipe / Vulkan-CPU).  The TurboQuant attention path itself currently fails inside Dawn's storage-buffer accounting at FlashAttention bind time — see commit message for diagnosis.  Apple Silicon Metal users may get past it depending on backend limits; the `.github/workflows/turboquant-mac-bench.yml` workflow is the right place to experiment.
