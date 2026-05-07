@@ -121,13 +121,45 @@ Upstream issues filed:
 - [LiquidAI/LFM2.5-1.2B-Instruct-ONNX discussion #3](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX/discussions/3)
   — request to re-export with `logits_to_keep=1`.
 
-## What's NOT in this session
+## WebGPU port (partial — scaffold landed)
 
-- **WebGPU port**: work-in-progress sketches of WGSL kernels exist
-  (`copy_kv_cache_turboquant.wgsl.template`,
-  `flash_attention_decode_qkt_turboquant.wgsl.template`) but are
-  incomplete and not wired into ORT's webgpu GroupQueryAttention op.
-  Estimated 3-5 days of focused WGSL + C++ work.
+Added during the autonomous arc:
+
+- `turboquant_encode.wgsl.template` — fresh-K/V → packed cache, full
+  algorithm: ‖k‖ reduction, FWHT, Lloyd-Max codebook lookup, V min/max
+  reduction, 4-bit / 3-bit packing, fp16 metadata writes.
+- `turboquant_decode.wgsl.template` — packed cache → fp16 K/V scratch,
+  full algorithm: codebook gather, optional norm correction, vec_norm
+  scale, inverse FWHT, V dequant via per-slot scale/zero.
+- `turboquant_attention.cc/h` — `TurboQuantEncodeProgram`,
+  `TurboQuantDecodeProgram`, `RunTurboQuantAttention` orchestrator
+  mirroring CUDA's Option-ε pattern.
+- TQ branch in `webgpu/GroupQueryAttention::ComputeInternal` —
+  attribute parsing (`kv_quant_method`, `key_quant_bits`, etc.),
+  CheckInputs bypass for the rewritten cache shape, present_kv output
+  resized to `slot_bytes`.
+- `TurboQuantKVFusion` graph transformer scope extended from
+  `cuda_eps` only to `{cuda_eps, webgpu_eps}` so Option A fires
+  on both backends.
+
+Status: the patched ORT **builds cleanly** with `--use_webgpu`, and
+the **fp16 baseline path runs** through the WebGPU EP on Lavapipe
+(software Vulkan / linux), 6.7 s for a 32-token LFM2.5 prompt — slow
+because Lavapipe is CPU, but verifies the plumbing is correct.
+
+The TurboQuant attention path itself currently fails at FlashAttention
+bind-time inside Dawn's storage-buffer accounting (reports 2355 vs 16
+limit on Lavapipe).  Likely a parameter / shape mismatch when our
+hand-set TQ parameters feed into ApplyFlashAttention's internal
+sizing logic.  Needs a focused webgpu / Dawn debug pass — out of scope
+for this autonomous session.
+
+Apple Silicon Metal users **may** get past the same bug — different
+backend, different limits.  The `.github/workflows/turboquant-mac-bench.yml`
+workflow is the right harness to find out.  At minimum it produces
+real fp16 baseline numbers on Apple Silicon, which we don't have.
+
+## What's NOT in this session
 
 - **wandler integration**: the dtype plumbing is in place
   (`server/src/config.ts`, `server/src/models/manager.ts` from earlier
