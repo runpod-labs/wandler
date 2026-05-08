@@ -1,7 +1,7 @@
 From 9f55c2f7d73e4c6fde4a7f51fd034c10b4cf188e Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Tue, 5 May 2026 22:59:33 +0200
-Subject: [PATCH 01/19] feat(turboquant): end-to-end TurboQuant KV cache
+Subject: [PATCH 01/20] feat(turboquant): end-to-end TurboQuant KV cache
  compression on CUDA
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -4699,7 +4699,7 @@ index 000000000..9b5e8bd52
 From 1f79c7e30a5eb33d3baff755cded5b4bc7209442 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Tue, 5 May 2026 23:06:36 +0200
-Subject: [PATCH 02/19] turboquant(cuda): drop bulk-dequant temp buffers in v1
+Subject: [PATCH 02/20] turboquant(cuda): drop bulk-dequant temp buffers in v1
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -4798,7 +4798,7 @@ index f7403c91a..3cdb94d13 100644
 From ae6c1babefaae53296b52852151480d94dc0ba0a Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Tue, 5 May 2026 23:39:54 +0200
-Subject: [PATCH 03/19] =?UTF-8?q?turboquant(cuda):=20v2=20=E2=80=94=20real?=
+Subject: [PATCH 03/20] =?UTF-8?q?turboquant(cuda):=20v2=20=E2=80=94=20real?=
  =?UTF-8?q?=20attention=20math,=20validated=20on=20Llama-3.2-1B?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5118,7 +5118,7 @@ index 3cdb94d13..c22a1bde0 100644
 From 9440913c842de58173a63d131f0919587b231c05 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 01:38:18 +0200
-Subject: [PATCH 04/19] turboquant(cuda): make v2 work end-to-end on
+Subject: [PATCH 04/20] turboquant(cuda): make v2 work end-to-end on
  dynamic-cache GQA models (LFM2-1.2B)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5336,7 +5336,7 @@ index c22a1bde0..785a8276d 100644
 From 641e3d5dcb3c10a8416263745bfa6a648028d7ba Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 09:31:07 +0200
-Subject: [PATCH 05/19] =?UTF-8?q?turboquant(cuda):=20v3=20=E2=80=94=20on-d?=
+Subject: [PATCH 05/20] =?UTF-8?q?turboquant(cuda):=20v3=20=E2=80=94=20on-d?=
  =?UTF-8?q?evice=20fp16=20->=20fp32=20codebook=20conversion?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5419,7 +5419,7 @@ index 785a8276d..217c7adde 100644
 From 9449f90205be55ad5e40e9f17ec30971b52f02f4 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 09:54:40 +0200
-Subject: [PATCH 06/19] turboquant(cuda): apply inline RoPE for do_rotary=1 GQA
+Subject: [PATCH 06/20] turboquant(cuda): apply inline RoPE for do_rotary=1 GQA
  models
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -5631,7 +5631,7 @@ index 217c7adde..0d9041879 100644
 From 509f3469b8101728be1a047c557a8d82f471dbcc Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 10:24:25 +0200
-Subject: [PATCH 07/19] =?UTF-8?q?turboquant(cuda):=20v4-lite=20=E2=80=94?=
+Subject: [PATCH 07/20] =?UTF-8?q?turboquant(cuda):=20v4-lite=20=E2=80=94?=
  =?UTF-8?q?=20fused=20FlashAttention-style=20kernel=20with=20online=20soft?=
  =?UTF-8?q?max?=
 MIME-Version: 1.0
@@ -5915,7 +5915,7 @@ index 0d9041879..45830eff6 100644
 From d3b013aabc47fa610d57cd35653e9e26fbdf2490 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 10:53:40 +0200
-Subject: [PATCH 08/19] =?UTF-8?q?turboquant(cuda):=20fix=20BSNH/BNSH=20str?=
+Subject: [PATCH 08/20] =?UTF-8?q?turboquant(cuda):=20fix=20BSNH/BNSH=20str?=
  =?UTF-8?q?ide=20mismatch=20in=20encode=20kernel=20=E2=80=94=20quality=200?=
  =?UTF-8?q?.18=20->=200.996?=
 MIME-Version: 1.0
@@ -6007,7 +6007,7 @@ index 45830eff6..a3dc28882 100644
 From 11e633b1de8ca0db18dd626796ecaba1a4ba3153 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 11:14:13 +0200
-Subject: [PATCH 09/19] turboquant(cuda): v5 q-tiled FlashAttention kernel (~2x
+Subject: [PATCH 09/20] turboquant(cuda): v5 q-tiled FlashAttention kernel (~2x
  prompt speedup at 4K)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6254,7 +6254,7 @@ index a3dc28882..30f8a70b8 100644
 From 363b6dfa88f856e92778e567d3f4a9b6ccf74313 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 12:19:32 +0200
-Subject: [PATCH 10/19] =?UTF-8?q?turboquant:=20option=20A=20=E2=80=94=20ru?=
+Subject: [PATCH 10/20] =?UTF-8?q?turboquant:=20option=20A=20=E2=80=94=20ru?=
  =?UTF-8?q?ntime=20graph=20rewrite,=20no=20offline=20model=20conversion?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -6842,7 +6842,7 @@ index 232e7b946..07b5d5849 100644
 From b749d0fa928d3828e24e71e07d362f35b7a3b430 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 12:25:53 +0200
-Subject: [PATCH 11/19] =?UTF-8?q?turboquant(cuda):=20v6=20=E2=80=94=20wmma?=
+Subject: [PATCH 11/20] =?UTF-8?q?turboquant(cuda):=20v6=20=E2=80=94=20wmma?=
  =?UTF-8?q?=20tensor=20cores=20for=20Q*K^T=20(~20%=20extra=20prompt=20spee?=
  =?UTF-8?q?dup)?=
 MIME-Version: 1.0
@@ -7126,7 +7126,7 @@ index 30f8a70b8..0d7574a13 100644
 From b61ef5234f3622f692fe671098a0db360871f1bc Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 13:26:26 +0200
-Subject: [PATCH 12/19] =?UTF-8?q?turboquant(cuda):=20v7=20=E2=80=94=20skip?=
+Subject: [PATCH 12/20] =?UTF-8?q?turboquant(cuda):=20v7=20=E2=80=94=20skip?=
  =?UTF-8?q?=20lossy=20round-trip=20for=20new=20tokens=20+=20causal=20early?=
  =?UTF-8?q?-exit?=
 MIME-Version: 1.0
@@ -7324,7 +7324,7 @@ index 0d7574a13..ed48d62e9 100644
 From 490a019bbf0e82f24e88d6bb6f471de649df0491 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 13:31:26 +0200
-Subject: [PATCH 13/19] turboquant(cuda): tune wmma kBlockQ back to 32 at long
+Subject: [PATCH 13/20] turboquant(cuda): tune wmma kBlockQ back to 32 at long
  context
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -7359,7 +7359,7 @@ index ed48d62e9..26ac57579 100644
 From 006e15411e280c1b68d8f26f8eff4687df7af773 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 14:17:42 +0200
-Subject: [PATCH 14/19] =?UTF-8?q?turboquant(cuda):=20option=20=CE=B5=20?=
+Subject: [PATCH 14/20] =?UTF-8?q?turboquant(cuda):=20option=20=CE=B5=20?=
  =?UTF-8?q?=E2=80=94=20delegate=20prompt-step=20attention=20to=20FlashAtte?=
  =?UTF-8?q?ntion?=
 MIME-Version: 1.0
@@ -7510,7 +7510,7 @@ index 26ac57579..c489f1a2d 100644
 From c29ea03189a749a6b3bc9fc36eccb54fe718d084 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 14:54:09 +0200
-Subject: [PATCH 15/19] =?UTF-8?q?turboquant:=20last=5Ftoken=5Flogits=20pat?=
+Subject: [PATCH 15/20] =?UTF-8?q?turboquant:=20last=5Ftoken=5Flogits=20pat?=
  =?UTF-8?q?cher=20=E2=80=94=20unlocks=20long=20context=20(>32K)=20by=20sli?=
  =?UTF-8?q?cing=20hidden=20state=20before=20LM=20head=20matmul?=
 MIME-Version: 1.0
@@ -7680,7 +7680,7 @@ index 000000000..d644ff428
 From c26dd3e205be1a7156cc6582fe36e3652c4124aa Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 22:01:34 +0200
-Subject: [PATCH 16/19] turboquant(cuda): vectorize K/V smem loads in v4-lite +
+Subject: [PATCH 16/20] turboquant(cuda): vectorize K/V smem loads in v4-lite +
  v6 wmma decode kernels
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -7773,7 +7773,7 @@ index c489f1a2d..121b2309d 100644
 From fc7f206dc377d81b85e776d59e23254e26f793fd Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Wed, 6 May 2026 22:20:42 +0200
-Subject: [PATCH 17/19] turboquant(cuda): tried cp.async double-buffered K/V
+Subject: [PATCH 17/20] turboquant(cuda): tried cp.async double-buffered K/V
  load, regressed at our tile size. Reverted to plain vectorised uint4 loads.
 
 cp.async pipelining adds cp.async.commit_group + cp.async.wait_group
@@ -7825,7 +7825,7 @@ index 121b2309d..d93e0477b 100644
 From 29376c8746a2c32dd32bf6964a6a63e29d9dc054 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Thu, 7 May 2026 11:27:04 +0200
-Subject: [PATCH 18/19] turboquant(webgpu): scaffold TurboQuant integration in
+Subject: [PATCH 18/20] turboquant(webgpu): scaffold TurboQuant integration in
  webgpu/group_query_attention
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -8892,7 +8892,7 @@ index 8199366b0..dae470ad1 100644
 From b0ba97eff300571bfe651bf815d58d98996d5bd2 Mon Sep 17 00:00:00 2001
 From: Tim Pietrusky <tim.pietrusky@runpod.io>
 Date: Thu, 7 May 2026 21:53:29 +0200
-Subject: [PATCH 19/19] turboquant(webgpu): make Apple Silicon Metal path
+Subject: [PATCH 19/20] turboquant(webgpu): make Apple Silicon Metal path
  actually run
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -9164,6 +9164,335 @@ index 242113935..b1233c57d 100644
      if (tid == 0u) {
        var byte_buf2: array<u32, 32>;
        let n_bytes2: u32 = (HEAD_DIM * 3u + 7u) / 8u;
+-- 
+2.50.1 (Apple Git-155)
+
+
+From a9db715a85ab816f27f5d607cebe82c6d3fc3319 Mon Sep 17 00:00:00 2001
+From: Tim Pietrusky <tim.pietrusky@runpod.io>
+Date: Thu, 7 May 2026 22:40:28 +0200
+Subject: [PATCH 20/20] =?UTF-8?q?turboquant(webgpu):=20wire=20encode=20+?=
+ =?UTF-8?q?=20fix=20K/V=20layout=20for=20FA=20=E2=80=94=20quality=20matche?=
+ =?UTF-8?q?s=20CUDA?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Two fixes that take the WebGPU TQ path from "kernels run, output garbage"
+to "cos sim 0.99+ vs fp16, top-1 matches 7-8/9 across decode chain":
+
+1) ENCODE WIRED.  Previously the encode kernel was instantiated but never
+   actually called from the orchestrator (placeholder ORT_UNUSED_PARAMETER).
+   Decode then read uninitialised cache memory and produced garbage K/V
+   that propagated as NaNs after the first decode step.  Encode now runs
+   unconditionally as a unified copy-past + encode-fresh program: each
+   workgroup handles one (b, h, slot_in_present) triple; if
+   slot_in_present < past_seq_len it byte-copies from past_key/past_value
+   (now bound as additional inputs), else it does the full TQ encode of
+   K_in[s_new = slot - past_seq].  Single launch produces the entire
+   present cache.
+
+   For prompt step (past_seq=0) the past inputs would be zero-sized
+   storage buffers, which WGPU rejects.  Allocate dummy 1-slot uint32
+   tensors and bind those — the shader's copy branch never fires when
+   past_seq=0 so the dummy contents are never read.  We also can't alias
+   present_key for the "dummy" (WGPU forbids same buffer as readonly +
+   read-write in one pass), hence the separate allocation.
+
+2) FA LAYOUT.  Our decode shader writes K/V scratch in BNSH layout (the
+   natural cache layout, indexed (b, h, s, d)).  But ApplyFlashAttention
+   defaults to interpreting its `K`/`V` arguments as BSNH (the GQA op
+   input convention).  Without telling FA otherwise, CopyKVCache
+   reinterpreted our BNSH bytes with BSNH strides, scrambling the data
+   and giving cos sim ~0.6 on every decode step.  Fix: set
+   `params.qkv_format_ = Q_K_V_BSNH_BNSH_BNSH` (Q stays BSNH, K and V
+   are BNSH) before calling FA, and override kv_sequence_length to the
+   full present length so CopyKVCache treats k_scratch as the entire
+   present cache.
+
+After both fixes: per-step logits cos sim against fp16 ranges
+0.993–1.000 on LFM2.5-1.2B and 0.84–1.000 on Qwen3-0.6B (the lower
+floor on Qwen3 reflects 28 GQA layers vs 6 for LFM2.5 — quantisation
+noise compounds with depth).  Top-1 token agreement: 7/9 (LFM2.5),
+8/9 (Qwen3) on a 9-step decode chain, matching what CUDA reports.
+
+Plus three small WGSL fixes uncovered while debugging the chain:
+
+- Strip `u` suffix from template-substituted compares
+  (already in previous commit, kept for completeness).
+- Rename reserved-keyword `meta` -> `v_meta_word` in decode template.
+- `[[maybe_unused]]` on TurboQuantEncodeProgram::norm_correction_
+  (Mac clang -Werror=unused-private-field).
+---
+ .../webgpu/bert/turboquant_attention.cc       | 147 ++++++++++++------
+ .../bert/turboquant_encode.wgsl.template      |  41 +++--
+ 2 files changed, 128 insertions(+), 60 deletions(-)
+
+diff --git a/onnxruntime/contrib_ops/webgpu/bert/turboquant_attention.cc b/onnxruntime/contrib_ops/webgpu/bert/turboquant_attention.cc
+index 1cc77b00a..6dfbc1362 100644
+--- a/onnxruntime/contrib_ops/webgpu/bert/turboquant_attention.cc
++++ b/onnxruntime/contrib_ops/webgpu/bert/turboquant_attention.cc
+@@ -32,11 +32,17 @@ inline uint32_t SlotBytes(uint32_t head_dim, uint32_t key_bits, uint32_t value_b
+ 
+ Status TurboQuantEncodeProgram::GenerateShaderCode(ShaderHelper& sh) const {
+   // Bindings — the AddInput/AddOutput calls register the storage buffers
+-  // with the shader; the WGSL template references them by name (K_in, V_in,
+-  // k_codebook, k_cache, v_cache).
++  // with the shader; the WGSL template references them by name.  Order must
++  // match what the template expects (the WGSL emitter binds in declaration
++  // order).
+   sh.AddInput("K_in", ShaderUsage::UseUniform);
+   sh.AddInput("V_in", ShaderUsage::UseUniform);
+   sh.AddInput("k_codebook", ShaderUsage::UseUniform);
++  // Past cache (uint32 view of past_key / past_value).  The shader's
++  // copy-past branch reads from these; for prompt step (past_seq=0) the
++  // shader never indexes them but the bindings must still exist.
++  sh.AddInput("k_cache_past", ShaderUsage::UseUniform);
++  sh.AddInput("v_cache_past", ShaderUsage::UseUniform);
+   sh.AddOutput("k_cache", ShaderUsage::UseUniform);
+   sh.AddOutput("v_cache", ShaderUsage::UseUniform);
+ 
+@@ -105,8 +111,6 @@ Status RunTurboQuantAttention(onnxruntime::webgpu::ComputeContext& context,
+                               int local_window_size) {
+   ORT_UNUSED_PARAMETER(hadamard);
+   ORT_UNUSED_PARAMETER(seqlen_k);  // we use params.seqlen_present_kv_cache_
+-  ORT_UNUSED_PARAMETER(past_key);
+-  ORT_UNUSED_PARAMETER(past_value);
+   ORT_UNUSED_PARAMETER(local_window_size);
+ 
+   const uint32_t head_dim = static_cast<uint32_t>(params.head_size_);
+@@ -117,35 +121,86 @@ Status RunTurboQuantAttention(onnxruntime::webgpu::ComputeContext& context,
+   const uint32_t total_seq_len = static_cast<uint32_t>(params.total_sequence_length_);
+   const uint32_t max_seq_len = static_cast<uint32_t>(params.seqlen_present_kv_cache_);
+ 
+-  // Step 1: encode fresh K/V into the packed present cache.
+-  // TODO: encode kernel temporarily disabled while we debug a Dawn-side
+-  // shader-binding count error.  For prompt step (past_seq == 0) the
+-  // attention is bit-equivalent to fp16 anyway via Option ε below, and the
+-  // packed cache content isn't used for THIS turn.  Decode steps still
+-  // exercise the encode path indirectly via past content propagation —
+-  // wire that up once encode lands cleanly.
+-  ORT_UNUSED_PARAMETER(present_key);
+-  ORT_UNUSED_PARAMETER(present_value);
+-  ORT_UNUSED_PARAMETER(k_codebook);
+-  ORT_UNUSED_PARAMETER(new_seq_len);
+-  ORT_UNUSED_PARAMETER(batch_size);
+-  ORT_UNUSED_PARAMETER(kv_num_heads);
+-  ORT_UNUSED_PARAMETER(max_seq_len);
+-
+-  // Step 2: for past_seq_len > 0, decode the packed past slots into a fp16
+-  // scratch buffer.  For prompt step (past_seq_len == 0), skip decode and
+-  // run FA on the fresh fp16 inputs directly (Option ε).
++  // ORT WebGPU's ShaderVariableHelper rejects uint8 storage bindings (no WGSL
++  // type maps to a single u8).  Alias the packed uint8 cache as uint32 view
++  // tensors with shape (..., slot_u32) so bindings map to `array<u32>` — which
++  // is exactly how the WGSL templates read them (`k_cache[i]` returns u32).
++  const uint32_t k_slot_bytes = (head_dim * key_bits + 7) / 8 + 2;
++  const uint32_t v_slot_bytes = (head_dim * value_bits + 7) / 8 + 4;
++  const uint32_t slot_bytes = k_slot_bytes > v_slot_bytes ? k_slot_bytes : v_slot_bytes;
++  const int64_t slot_u32 = static_cast<int64_t>((slot_bytes + 3) / 4);
++  const TensorShape present_u32_shape{
++      static_cast<int64_t>(batch_size),
++      static_cast<int64_t>(kv_num_heads),
++      static_cast<int64_t>(max_seq_len),
++      slot_u32,
++  };
++  Tensor k_cache_present_u32(DataTypeImpl::GetType<uint32_t>(), present_u32_shape,
++                             present_key->MutableDataRaw(), present_key->Location());
++  Tensor v_cache_present_u32(DataTypeImpl::GetType<uint32_t>(), present_u32_shape,
++                             present_value->MutableDataRaw(), present_value->Location());
++
++  // Past cache uint32 view.  WGPU rejects (a) zero-sized storage bindings and
++  // (b) the same buffer being bound as both readonly-input and writable-output
++  // in one pass.  So for prompt step (past_seq_len = 0) we allocate a tiny
++  // dummy uint32 buffer that the shader's copy branch never indexes.
++  const int64_t past_dim2 = static_cast<int64_t>(past_seq_len > 0 ? past_seq_len : 1);
++  const TensorShape past_u32_shape{
++      static_cast<int64_t>(batch_size),
++      static_cast<int64_t>(kv_num_heads),
++      past_dim2,
++      slot_u32,
++  };
++  const bool have_past = past_seq_len > 0 && past_key != nullptr && past_value != nullptr;
++  Tensor dummy_past_k, dummy_past_v;
++  if (!have_past) {
++    dummy_past_k = context.CreateGPUTensor(DataTypeImpl::GetType<uint32_t>(), past_u32_shape);
++    dummy_past_v = context.CreateGPUTensor(DataTypeImpl::GetType<uint32_t>(), past_u32_shape);
++  }
++  Tensor k_cache_past_u32(DataTypeImpl::GetType<uint32_t>(), past_u32_shape,
++                          have_past ? const_cast<void*>(past_key->DataRaw())
++                                    : dummy_past_k.MutableDataRaw(),
++                          have_past ? past_key->Location() : dummy_past_k.Location());
++  Tensor v_cache_past_u32(DataTypeImpl::GetType<uint32_t>(), past_u32_shape,
++                          have_past ? const_cast<void*>(past_value->DataRaw())
++                                    : dummy_past_v.MutableDataRaw(),
++                          have_past ? past_value->Location() : dummy_past_v.Location());
++
++  // Step 1: encode (with copy-past + encode-fresh fused).  After this runs,
++  // present_key / present_value contain the full packed cache for this step.
++  TurboQuantEncodeProgram encode{head_dim, key_bits, value_bits, norm_correction};
++  encode.AddInputs({
++      {key, ProgramTensorMetadataDependency::TypeAndRank},
++      {value, ProgramTensorMetadataDependency::TypeAndRank},
++      {k_codebook, ProgramTensorMetadataDependency::TypeAndRank},
++      {&k_cache_past_u32, ProgramTensorMetadataDependency::TypeAndRank},
++      {&v_cache_past_u32, ProgramTensorMetadataDependency::TypeAndRank},
++  });
++  encode.AddOutputs({
++      {&k_cache_present_u32, ProgramTensorMetadataDependency::TypeAndRank},
++      {&v_cache_present_u32, ProgramTensorMetadataDependency::TypeAndRank},
++  });
++  encode.SetWorkgroupSize(head_dim);
++  encode.SetDispatchGroupSize(batch_size * kv_num_heads * total_seq_len);
++  encode.AddUniformVariables({
++      {batch_size},
++      {new_seq_len},
++      {kv_num_heads},
++      {max_seq_len},
++      {past_seq_len},
++  });
++  ORT_RETURN_IF_ERROR(context.RunProgram(encode));
++
++  // Step 2: prompt step uses Option ε — run standard FA on fresh fp16 K/V.
++  // The cache is now correctly populated for the next step.
+   if (past_seq_len == 0) {
+-    // Option ε: prompt-step delegates to standard FA on fresh fp16 K/V.
+-    // No decode needed.  ApplyFlashAttention reads `key`/`value` directly.
+     return ApplyFlashAttention(query, key, value, attention_bias, output,
+                                nullptr, nullptr, nullptr, nullptr,
+                                params, context, /*seqlens_k=*/nullptr,
+                                cos_cache, sin_cache, head_sink);
+   }
+ 
+-  // For decode-step (past_seq > 0): allocate fp16 K/V scratch sized for the
+-  // full present cache and decode into it.
++  // Step 3: decode all present slots → fp16 K/V scratch in BNSH layout.
+   const TensorShape kv_scratch_shape{
+       static_cast<int64_t>(batch_size),
+       static_cast<int64_t>(kv_num_heads),
+@@ -155,29 +210,10 @@ Status RunTurboQuantAttention(onnxruntime::webgpu::ComputeContext& context,
+   Tensor k_scratch = context.CreateGPUTensor(query->DataType(), kv_scratch_shape);
+   Tensor v_scratch = context.CreateGPUTensor(query->DataType(), kv_scratch_shape);
+ 
+-  // ORT WebGPU's ShaderVariableHelper rejects uint8 storage bindings (no WGSL
+-  // type maps to a single u8).  Alias the packed uint8 cache as uint32 view
+-  // tensors with shape (..., slot_u32) so binding maps to `array<u32>` — which
+-  // is exactly how the WGSL template reads it (`k_cache[i]` returns u32).
+-  const uint32_t k_slot_bytes = (head_dim * key_bits + 7) / 8 + 2;
+-  const uint32_t v_slot_bytes = (head_dim * value_bits + 7) / 8 + 4;
+-  const uint32_t slot_bytes = k_slot_bytes > v_slot_bytes ? k_slot_bytes : v_slot_bytes;
+-  const int64_t slot_u32 = static_cast<int64_t>((slot_bytes + 3) / 4);
+-  const TensorShape cache_u32_shape{
+-      static_cast<int64_t>(batch_size),
+-      static_cast<int64_t>(kv_num_heads),
+-      static_cast<int64_t>(max_seq_len),
+-      slot_u32,
+-  };
+-  Tensor k_cache_u32(DataTypeImpl::GetType<uint32_t>(), cache_u32_shape,
+-                     present_key->MutableDataRaw(), present_key->Location());
+-  Tensor v_cache_u32(DataTypeImpl::GetType<uint32_t>(), cache_u32_shape,
+-                     present_value->MutableDataRaw(), present_value->Location());
+-
+   TurboQuantDecodeProgram decode{head_dim, key_bits, value_bits, norm_correction};
+   decode.AddInputs({
+-      {&k_cache_u32, ProgramTensorMetadataDependency::TypeAndRank},
+-      {&v_cache_u32, ProgramTensorMetadataDependency::TypeAndRank},
++      {&k_cache_present_u32, ProgramTensorMetadataDependency::TypeAndRank},
++      {&v_cache_present_u32, ProgramTensorMetadataDependency::TypeAndRank},
+       {k_codebook, ProgramTensorMetadataDependency::TypeAndRank},
+   });
+   decode.AddOutputs({
+@@ -194,12 +230,21 @@ Status RunTurboQuantAttention(onnxruntime::webgpu::ComputeContext& context,
+   });
+   ORT_RETURN_IF_ERROR(context.RunProgram(decode));
+ 
+-  // Step 3: standard FlashAttention on the dequantised K/V scratch.
+-  // We pass nullptr for past_key/past_value because k_scratch / v_scratch
+-  // already contain the full present cache (decoded from packed bytes).
++  // Step 4: standard FlashAttention on the dequantised K/V scratch.
++  //
++  // k_scratch / v_scratch are BNSH-laid-out (this is the natural cache layout
++  // and matches what FA's `CopyKVCache` writes to its internal present_key).
++  // Tell FA to read them as BNSH via Q_K_V_BSNH_BNSH_BNSH (Q stays BSNH).  We
++  // also override kv_sequence_length to the FULL present length and clear
++  // past_seq so CopyKVCache treats k_scratch as the entire present cache.
++  WebgpuAttentionParameters fa_params = params;
++  fa_params.qkv_format_ = Q_K_V_BSNH_BNSH_BNSH;
++  fa_params.kv_sequence_length_ = static_cast<int>(total_seq_len);
++  fa_params.past_sequence_length_ = 0;
++  fa_params.seqlen_past_kv_cache_ = 0;
+   return ApplyFlashAttention(query, &k_scratch, &v_scratch, attention_bias, output,
+                              nullptr, nullptr, nullptr, nullptr,
+-                             params, context, /*seqlens_k=*/nullptr,
++                             fa_params, context, /*seqlens_k=*/nullptr,
+                              cos_cache, sin_cache, head_sink);
+ }
+ 
+diff --git a/onnxruntime/contrib_ops/webgpu/bert/turboquant_encode.wgsl.template b/onnxruntime/contrib_ops/webgpu/bert/turboquant_encode.wgsl.template
+index b1233c57d..5d4c0398c 100644
+--- a/onnxruntime/contrib_ops/webgpu/bert/turboquant_encode.wgsl.template
++++ b/onnxruntime/contrib_ops/webgpu/bert/turboquant_encode.wgsl.template
+@@ -54,16 +54,43 @@ fn lookup_k_index(y: f32) -> u32 {
+ 
+ $MAIN {
+   let tid = local_idx;
+-  // Workgroup id maps to (batch, kv_head, new_token).
++  // Workgroup id maps to (batch, kv_head, slot_in_present).  The dispatch
++  // covers ALL present slots (total_seq_len = past + new), so a single launch
++  // produces the full present cache: copy past slots from past_key/past_value,
++  // and encode-then-pack fresh tokens for slots [past_seq..total_seq).
+   let new_seq_len = uniforms.new_seq_len;
+   let n_kv_heads = uniforms.n_kv_heads;
++  let past_seq_len = uniforms.past_seq_len;
++  let max_seq = uniforms.max_seq_len;
++  let total_seq_len = past_seq_len + new_seq_len;
+ 
+-  let s_new = workgroup_idx % new_seq_len;
+-  let h = (workgroup_idx / new_seq_len) % n_kv_heads;
+-  let b = workgroup_idx / (new_seq_len * n_kv_heads);
++  let s_cache = workgroup_idx % total_seq_len;
++  let h = (workgroup_idx / total_seq_len) % n_kv_heads;
++  let b = workgroup_idx / (total_seq_len * n_kv_heads);
+ 
+   if (b >= uniforms.batch_size) { return; }
+ 
++  // Compute the present-slot u32 offset up-front.  Used by both the copy and
++  // the encode branches; also passed to the existing pack-and-write code at
++  // the end of this kernel.
++  let slot_u32_off = ((b * n_kv_heads + h) * max_seq + s_cache) * SLOT_U32;
++
++  // Past-copy branch — for slots already in the cache, just memcpy.  Each
++  // thread copies one u32 of the slot.
++  if (s_cache < past_seq_len) {
++    let past_off = ((b * n_kv_heads + h) * past_seq_len + s_cache) * SLOT_U32;
++    if (tid < SLOT_U32) {
++      k_cache[slot_u32_off + tid] = k_cache_past[past_off + tid];
++      v_cache[slot_u32_off + tid] = v_cache_past[past_off + tid];
++    }
++    return;
++  }
++
++  // Encode-fresh branch — compute the index of this token within K_in and
++  // run the full encode (Walsh-Hadamard rotation + Lloyd-Max for K, uniform
++  // asymmetric for V).
++  let s_new = s_cache - past_seq_len;
++
+   // Load K/V from BSNH input: stride is ((b * S + s_new) * N_kv + h) * D.
+   // K_in[(b * S + s_new) * N_kv * D + h * D + tid]
+   let in_off = ((b * new_seq_len + s_new) * n_kv_heads + h) * HEAD_DIM;
+@@ -155,11 +182,7 @@ $MAIN {
+   }
+   workgroupBarrier();
+ 
+-  // Pack and write.  Each slot occupies SLOT_U32 u32s in cache.
+-  let s_cache = uniforms.past_seq_len + s_new;
+-  let max_seq = uniforms.max_seq_len;
+-  let slot_u32_off = ((b * n_kv_heads + h) * max_seq + s_cache) * SLOT_U32;
+-
++  // Pack and write.  slot_u32_off was already computed at the top of main.
+   // Pack K indices into u32s.  At 4 bits/index, 8 indices per u32.
+   if (key_bits == 4) {
+     if (tid < KEY_PACKED_U32) {
 -- 
 2.50.1 (Apple Git-155)
 

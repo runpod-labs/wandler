@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TurboQuant browser bench — ORT WebGPU EP via WASM</title>
+<style>
+  body { font-family: ui-monospace, monospace; padding: 1em; background: #0a0a0a; color: #e0e0e0; }
+  pre { white-space: pre-wrap; line-height: 1.4; }
+  .bad { color: #ff5555; }
+  .good { color: #55ff7f; }
+  .head { color: #66ccff; font-weight: bold; }
+</style>
+</head>
+<body>
+<h2>TurboQuant browser bench (ORT WebGPU EP via WASM)</h2>
+<div>
+  Model:
+  <select id="model">
+    <option value="lfm2">LFM2.5-1.2B-Instruct (q4f16, hd=64, 6 GQA layers)</option>
+    <option value="qwen3">Qwen3-0.6B (q4f16, hd=128, 28 GQA layers)</option>
+  </select>
+  Context:
+  <select id="ctx">
+    <option value="4096">4096</option>
+    <option value="16384">16384</option>
+    <option value="32768">32768</option>
+  </select>
+  <button id="run">Run fp16 + TQ</button>
+</div>
+<pre id="log"></pre>
+<script type="module" src="./bench.js"></script>
+</body>
+</html>

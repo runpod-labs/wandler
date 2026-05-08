@@ -1,0 +1,14 @@
+# TurboQuant Mac WebGPU bench — verified-correct kernels (cos sim 0.99+ vs fp16)
+# Apple Silicon (Mac, ORT WebGPU EP via Dawn → Metal)
+# Model: LiquidAI/LFM2.5-1.2B-Instruct-ONNX (q4f16, last_token_logits patched)
+# Method: prompt + 4 decode steps; decode steady is mean of last 3.
+# Both fp16 and TQ runs use the SAME ORT WebGPU EP.
+# Quality: top-1 match 7/9 on a 9-token decode chain, cos sim 0.993 - 1.000
+
+ctx     fp16 prompt   TQ prompt   fp16 decode    TQ decode      decode speedup
+ 4 K    3845 ms       3908 ms     29.7 ms/tok    25.3 ms/tok    1.17×
+16 K    29.7 s        28.6 s      125.9 ms/tok   58.3 ms/tok    2.16×
+32 K    96.2 s        94.9 s      492.1 ms/tok   99.0 ms/tok    4.97× ★
+
+★ At 32K, decode is fully KV-bound; TQ shrinks the cache 3.56× and decode
+  closely tracks that ratio.

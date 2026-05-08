@@ -8,3 +8,4 @@ external/
 pod_artifacts/
 tq-mac-bench/model/
 .claude/
+tq-mac-bench/qwen3/
