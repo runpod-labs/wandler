@@ -1,0 +1,97 @@
+name: TurboQuant Mac WebGPU bench
+
+# Runs on a macOS-15 (Apple Silicon, Metal) GitHub-hosted runner.  Builds
+# our patched ONNX Runtime with --use_webgpu, then runs the LFM2.5 bench.
+# The point: produce real Apple-Silicon performance numbers without anyone
+# having to manually build on their Mac.
+#
+# This is opt-in (workflow_dispatch only) because a full ORT build on a
+# Mac runner is ~90-150 minutes of compute.
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "HuggingFace model ID (must be q4f16 ONNX)"
+        required: false
+        default: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX"
+      contexts:
+        description: "Prompt context lengths to bench (comma-separated)"
+        required: false
+        default: "4096,16384,32768"
+
+jobs:
+  build-and-bench:
+    runs-on: macos-15
+    timeout-minutes: 240   # 4h hard cap; full build is typically 60-90 min on Apple Silicon
+
+    steps:
+      - name: Check out wandler repo (for patch + bench scripts)
+        uses: actions/checkout@v4
+        with:
+          path: wandler
+
+      - name: Install build prerequisites
+        run: |
+          brew install cmake ninja
+          python3 -m pip install --upgrade pip
+          python3 -m pip install onnx numpy huggingface_hub transformers
+
+      - name: Clone ONNX Runtime at the patch base
+        run: |
+          # b81f3f855 is the upstream commit our patch is based on.
+          git clone https://github.com/microsoft/onnxruntime.git
+          cd onnxruntime
+          git checkout b81f3f855
+          git apply ../wandler/patches/turboquant-kv-cache.patch
+          git status --short | head -10
+
+      - name: Build ORT with WebGPU + Python wheel
+        working-directory: onnxruntime
+        run: |
+          ./build.sh \
+            --config Release \
+            --use_webgpu \
+            --build_wheel \
+            --enable_pybind \
+            --skip_submodule_sync \
+            --skip_tests \
+            --parallel \
+            --allow_running_as_root
+          # Install the resulting wheel into the runner's python.
+          python3 -m pip install --force-reinstall --no-deps \
+              build/MacOS/Release/dist/onnxruntime-*.whl
+
+      - name: Patch model with last-token logits slice
+        run: |
+          python3 -c "
+          from huggingface_hub import snapshot_download
+          p = snapshot_download('${{ inputs.model }}', local_dir='./model',
+                                allow_patterns=['*.json', '*.txt', 'onnx/model_q4f16.onnx*', 'chat_template*'])
+          print('downloaded:', p)
+          "
+          python3 onnxruntime/onnxruntime/python/tools/quantization/turboquant_kv/last_token_logits.py \
+              model/onnx/model_q4f16.onnx \
+              model/onnx/model_q4f16_lasttok.onnx
+
+      - name: Run bench (fp16 baseline + TQ via Option A)
+        run: |
+          IFS=',' read -ra CTXS <<< "${{ inputs.contexts }}"
+          for ctx in "${CTXS[@]}"; do
+            for mode in fp16 tq; do
+              echo "=== $mode @ $ctx ==="
+              MODEL_PATH=$PWD/model/onnx/model_q4f16_lasttok.onnx \
+                LABEL="${{ inputs.model }}" \
+                BENCH_MODE=$mode \
+                PROMPT_LEN=$ctx \
+                DECODE_STEPS=4 \
+                python3 wandler/bench/turboquant_general.py 2>&1 | tee -a bench_results.txt
+            done
+          done
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: turboquant-mac-bench-${{ github.run_id }}
+          path: bench_results.txt
+          retention-days: 30
