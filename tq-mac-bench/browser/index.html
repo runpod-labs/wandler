@@ -18,14 +18,22 @@
   <select id="model">
     <option value="lfm2">LFM2.5-1.2B-Instruct (q4f16, hd=64, 6 GQA layers)</option>
     <option value="qwen3">Qwen3-0.6B (q4f16, hd=128, 28 GQA layers)</option>
+    <option value="qwen35" selected>Qwen3.5-0.8B-Text (q4f16, hd=256, 24 layers, 2 kv_heads)</option>
   </select>
   Context:
   <select id="ctx">
     <option value="4096">4096</option>
+    <option value="8192">8192</option>
     <option value="16384">16384</option>
     <option value="32768">32768</option>
+    <option value="65536">65536</option>
+    <option value="131072">131072</option>
+    <option value="262144">262144</option>
   </select>
+  Steps:
+  <input id="steps" type="number" value="64" min="4" max="512" style="width: 5em">
   <button id="run">Run fp16 + TQ</button>
+  <button id="rec">Record JSONL for video</button>
 </div>
 <pre id="log"></pre>
 <script type="module" src="./bench.js"></script>

@@ -1,0 +1,300 @@
+{"step":0,"t_ms":134.81,"dt_ms":134.81,"token_id":1463,"token":"**"}
+{"step":1,"t_ms":199.04,"dt_ms":64.24,"token_id":32674,"token":"Summary"}
+{"step":2,"t_ms":249.48,"dt_ms":50.44,"token_id":843,"token":" ("}
+{"step":3,"t_ms":299.87,"dt_ms":50.38,"token_id":1086,"token":"200"}
+{"step":4,"t_ms":350.5,"dt_ms":50.64,"token_id":1408,"token":"–"}
+{"step":5,"t_ms":402.79,"dt_ms":52.29,"token_id":5091,"token":"300"}
+{"step":6,"t_ms":453.85,"dt_ms":51.06,"token_id":3953,"token":" words"}
+{"step":7,"t_ms":503.56,"dt_ms":49.7,"token_id":518,"token":")"}
+{"step":8,"t_ms":560.58,"dt_ms":57.02,"token_id":1463,"token":"**"}
+{"step":9,"t_ms":621.77,"dt_ms":61.2,"token_id":509,"token":"\n\n"}
+{"step":10,"t_ms":679.71,"dt_ms":57.94,"token_id":42117,"token":"Tur"}
+{"step":11,"t_ms":747.7,"dt_ms":67.99,"token_id":3153,"token":"bo"}
+{"step":12,"t_ms":811.64,"dt_ms":63.94,"token_id":37644,"token":"Quant"}
+{"step":13,"t_ms":866.8,"dt_ms":55.16,"token_id":984,"token":" K"}
+{"step":14,"t_ms":918.98,"dt_ms":52.18,"token_id":563,"token":"V"}
+{"step":15,"t_ms":969.48,"dt_ms":50.5,"token_id":18279,"token":" cache"}
+{"step":16,"t_ms":1020.25,"dt_ms":50.76,"token_id":4560,"token":" quant"}
+{"step":17,"t_ms":1069.81,"dt_ms":49.56,"token_id":2274,"token":"ization"}
+{"step":18,"t_ms":1119.09,"dt_ms":49.28,"token_id":797,"token":" in"}
+{"step":19,"t_ms":1173.29,"dt_ms":54.2,"token_id":16811,"token":" ON"}
+{"step":20,"t_ms":1225.79,"dt_ms":52.51,"token_id":555,"token":"N"}
+{"step":21,"t_ms":1276.37,"dt_ms":50.58,"token_id":565,"token":"X"}
+{"step":22,"t_ms":1326.64,"dt_ms":50.27,"token_id":50457,"token":" Runtime"}
+{"step":23,"t_ms":1377.59,"dt_ms":50.96,"token_id":856,"token":" is"}
+{"step":24,"t_ms":1433.88,"dt_ms":56.29,"token_id":2166,"token":" now"}
+{"step":25,"t_ms":1496.14,"dt_ms":62.25,"token_id":7408,"token":" fully"}
+{"step":26,"t_ms":1559.8,"dt_ms":63.66,"token_id":13914,"token":" accessible"}
+{"step":27,"t_ms":1619.35,"dt_ms":59.56,"token_id":3648,"token":" across"}
+{"step":28,"t_ms":1671.3,"dt_ms":51.95,"token_id":779,"token":" the"}
+{"step":29,"t_ms":1722.11,"dt_ms":50.81,"token_id":3522,"token":" full"}
+{"step":30,"t_ms":1778.14,"dt_ms":56.03,"token_id":10028,"token":" engineering"}
+{"step":31,"t_ms":1828.03,"dt_ms":49.88,"token_id":16907,"token":" stack"}
+{"step":32,"t_ms":1878.99,"dt_ms":50.97,"token_id":1424,"token":"—"}
+{"step":33,"t_ms":1931.57,"dt_ms":52.58,"token_id":10510,"token":"web"}
+{"step":34,"t_ms":1982.73,"dt_ms":51.16,"token_id":24958,"token":"GP"}
+{"step":35,"t_ms":2034.06,"dt_ms":51.33,"token_id":562,"token":"U"}
+{"step":36,"t_ms":2083.53,"dt_ms":49.47,"token_id":521,"token":","}
+{"step":37,"t_ms":2134.29,"dt_ms":50.76,"token_id":52225,"token":" CU"}
+{"step":38,"t_ms":2185.97,"dt_ms":51.67,"token_id":7099,"token":"DA"}
+{"step":39,"t_ms":2236.4,"dt_ms":50.44,"token_id":521,"token":","}
+{"step":40,"t_ms":2291.91,"dt_ms":55.5,"token_id":810,"token":" and"}
+{"step":41,"t_ms":2351.4,"dt_ms":59.5,"token_id":19269,"token":" RT"}
+{"step":42,"t_ms":2415.67,"dt_ms":64.27,"token_id":565,"token":"X"}
+{"step":43,"t_ms":2475.65,"dt_ms":59.98,"token_id":730,"token":" "}
+{"step":44,"t_ms":2526.58,"dt_ms":50.93,"token_id":27503,"token":"409"}
+{"step":45,"t_ms":2576.18,"dt_ms":49.6,"token_id":525,"token":"0"}
+{"step":46,"t_ms":2626.18,"dt_ms":50,"token_id":1424,"token":"—"}
+{"step":47,"t_ms":2677.46,"dt_ms":51.28,"token_id":35814,"token":"without"}
+{"step":48,"t_ms":2727.21,"dt_ms":49.76,"token_id":19671,"token":" requiring"}
+{"step":49,"t_ms":2778.24,"dt_ms":51.02,"token_id":22037,"token":" developers"}
+{"step":50,"t_ms":2829.02,"dt_ms":50.79,"token_id":811,"token":" to"}
+{"step":51,"t_ms":2879.71,"dt_ms":50.68,"token_id":840,"token":" re"}
+{"step":52,"t_ms":2930.09,"dt_ms":50.38,"token_id":35786,"token":"-im"}
+{"step":53,"t_ms":2981.33,"dt_ms":51.24,"token_id":4334,"token":"plement"}
+{"step":54,"t_ms":3031.7,"dt_ms":50.38,"token_id":936,"token":" it"}
+{"step":55,"t_ms":3084.84,"dt_ms":53.14,"token_id":797,"token":" in"}
+{"step":56,"t_ms":3146.9,"dt_ms":62.06,"token_id":52517,"token":" JavaScript"}
+{"step":57,"t_ms":3217.68,"dt_ms":70.78,"token_id":523,"token":"."}
+{"step":58,"t_ms":3277.14,"dt_ms":59.45,"token_id":941,"token":" The"}
+{"step":59,"t_ms":3329.22,"dt_ms":52.08,"token_id":8142,"token":" core"}
+{"step":60,"t_ms":3383.81,"dt_ms":54.59,"token_id":4588,"token":" idea"}
+{"step":61,"t_ms":3435.06,"dt_ms":51.25,"token_id":856,"token":" is"}
+{"step":62,"t_ms":3486.14,"dt_ms":51.09,"token_id":811,"token":" to"}
+{"step":63,"t_ms":3537.68,"dt_ms":51.53,"token_id":1825,"token":" make"}
+{"step":64,"t_ms":3591.38,"dt_ms":53.71,"token_id":1113,"token":" all"}
+{"step":65,"t_ms":3644.71,"dt_ms":53.33,"token_id":31424,"token":" downstream"}
+{"step":66,"t_ms":3701.17,"dt_ms":56.45,"token_id":13911,"token":" consumers"}
+{"step":67,"t_ms":3758.62,"dt_ms":57.45,"token_id":843,"token":" ("}
+{"step":68,"t_ms":3816.29,"dt_ms":57.68,"token_id":61371,"token":"transform"}
+{"step":69,"t_ms":3870.55,"dt_ms":54.26,"token_id":871,"token":"ers"}
+{"step":70,"t_ms":3925.82,"dt_ms":55.27,"token_id":11736,"token":".js"}
+{"step":71,"t_ms":3976.59,"dt_ms":50.77,"token_id":521,"token":","}
+{"step":72,"t_ms":4038.49,"dt_ms":61.9,"token_id":27280,"token":" wand"}
+{"step":73,"t_ms":4106.78,"dt_ms":68.29,"token_id":2296,"token":"ler"}
+{"step":74,"t_ms":4169.33,"dt_ms":62.54,"token_id":521,"token":","}
+{"step":75,"t_ms":4228.22,"dt_ms":58.89,"token_id":884,"token":" on"}
+{"step":76,"t_ms":4287.17,"dt_ms":58.95,"token_id":587,"token":"n"}
+{"step":77,"t_ms":4337.58,"dt_ms":50.41,"token_id":597,"token":"x"}
+{"step":78,"t_ms":4386.59,"dt_ms":49.01,"token_id":591,"token":"r"}
+{"step":79,"t_ms":4437.15,"dt_ms":50.55,"token_id":18715,"token":"untime"}
+{"step":80,"t_ms":4487.68,"dt_ms":50.54,"token_id":6011,"token":"-n"}
+{"step":81,"t_ms":4538.92,"dt_ms":51.24,"token_id":1584,"token":"ode"}
+{"step":82,"t_ms":4589.47,"dt_ms":50.54,"token_id":521,"token":","}
+{"step":83,"t_ms":4639.78,"dt_ms":50.31,"token_id":884,"token":" on"}
+{"step":84,"t_ms":4690.68,"dt_ms":50.9,"token_id":587,"token":"n"}
+{"step":85,"t_ms":4747.64,"dt_ms":56.96,"token_id":597,"token":"x"}
+{"step":86,"t_ms":4799.25,"dt_ms":51.61,"token_id":591,"token":"r"}
+{"step":87,"t_ms":4849.52,"dt_ms":50.27,"token_id":18715,"token":"untime"}
+{"step":88,"t_ms":4906.74,"dt_ms":57.21,"token_id":522,"token":"-"}
+{"step":89,"t_ms":4969.94,"dt_ms":63.2,"token_id":10510,"token":"web"}
+{"step":90,"t_ms":5036.03,"dt_ms":66.09,"token_id":518,"token":")"}
+{"step":91,"t_ms":5093.94,"dt_ms":57.91,"token_id":23316,"token":" freely"}
+{"step":92,"t_ms":5145.34,"dt_ms":51.4,"token_id":4387,"token":" obtain"}
+{"step":93,"t_ms":5196.88,"dt_ms":51.53,"token_id":6354,"token":" Tur"}
+{"step":94,"t_ms":5246.77,"dt_ms":49.89,"token_id":3153,"token":"bo"}
+{"step":95,"t_ms":5297.55,"dt_ms":50.79,"token_id":37644,"token":"Quant"}
+{"step":96,"t_ms":5352.37,"dt_ms":54.82,"token_id":984,"token":" K"}
+{"step":97,"t_ms":5404.7,"dt_ms":52.33,"token_id":563,"token":"V"}
+{"step":98,"t_ms":5456.57,"dt_ms":51.87,"token_id":18279,"token":" cache"}
+{"step":99,"t_ms":5507.38,"dt_ms":50.81,"token_id":4560,"token":" quant"}
+{"step":100,"t_ms":5558.52,"dt_ms":51.14,"token_id":2274,"token":"ization"}
+{"step":101,"t_ms":5608.37,"dt_ms":49.85,"token_id":875,"token":" for"}
+{"step":102,"t_ms":5659.34,"dt_ms":50.98,"token_id":3262,"token":" free"}
+{"step":103,"t_ms":5708.74,"dt_ms":49.4,"token_id":521,"token":","}
+{"step":104,"t_ms":5764.33,"dt_ms":55.59,"token_id":26859,"token":" lever"}
+{"step":105,"t_ms":5827.68,"dt_ms":63.35,"token_id":4792,"token":"aging"}
+{"step":106,"t_ms":5890.38,"dt_ms":62.71,"token_id":7605,"token":" existing"}
+{"step":107,"t_ms":5952.65,"dt_ms":62.26,"token_id":5029,"token":" implement"}
+{"step":108,"t_ms":6011.83,"dt_ms":59.18,"token_id":1132,"token":"ations"}
+{"step":109,"t_ms":6063.53,"dt_ms":51.7,"token_id":1672,"token":" like"}
+{"step":110,"t_ms":6115.68,"dt_ms":52.15,"token_id":6354,"token":" Tur"}
+{"step":111,"t_ms":6168.77,"dt_ms":53.1,"token_id":3153,"token":"bo"}
+{"step":112,"t_ms":6220.85,"dt_ms":52.08,"token_id":37644,"token":"Quant"}
+{"step":113,"t_ms":6271.69,"dt_ms":50.84,"token_id":61036,"token":" Trit"}
+{"step":114,"t_ms":6325.31,"dt_ms":53.63,"token_id":772,"token":"on"}
+{"step":115,"t_ms":6378.43,"dt_ms":53.12,"token_id":843,"token":" ("}
+{"step":116,"t_ms":6429.37,"dt_ms":50.94,"token_id":595,"token":"v"}
+{"step":117,"t_ms":6481.11,"dt_ms":51.74,"token_id":5092,"token":"LL"}
+{"step":118,"t_ms":6531.85,"dt_ms":50.75,"token_id":554,"token":"M"}
+{"step":119,"t_ms":6581.53,"dt_ms":49.68,"token_id":518,"token":")"}
+{"step":120,"t_ms":6639.31,"dt_ms":57.78,"token_id":906,"token":" as"}
+{"step":121,"t_ms":6708.74,"dt_ms":69.43,"token_id":768,"token":" a"}
+{"step":122,"t_ms":6770.99,"dt_ms":62.25,"token_id":7392,"token":" reference"}
+{"step":123,"t_ms":6828.65,"dt_ms":57.67,"token_id":523,"token":"."}
+{"step":124,"t_ms":6881.14,"dt_ms":52.49,"token_id":509,"token":"\n\n"}
+{"step":125,"t_ms":6933.45,"dt_ms":52.31,"token_id":25804,"token":"Recent"}
+{"step":126,"t_ms":6985.71,"dt_ms":52.27,"token_id":22473,"token":" validation"}
+{"step":127,"t_ms":7041.24,"dt_ms":55.53,"token_id":44987,"token":" confirms"}
+{"step":128,"t_ms":7096.61,"dt_ms":55.37,"token_id":896,"token":" that"}
+{"step":129,"t_ms":7158.37,"dt_ms":61.76,"token_id":6354,"token":" Tur"}
+{"step":130,"t_ms":7271.82,"dt_ms":113.45,"token_id":3153,"token":"bo"}
+{"step":131,"t_ms":7331.37,"dt_ms":59.55,"token_id":37644,"token":"Quant"}
+{"step":132,"t_ms":7390.56,"dt_ms":59.18,"token_id":984,"token":" K"}
+{"step":133,"t_ms":7446.74,"dt_ms":56.19,"token_id":563,"token":"V"}
+{"step":134,"t_ms":7529.8,"dt_ms":83.05,"token_id":18279,"token":" cache"}
+{"step":135,"t_ms":7584.95,"dt_ms":55.16,"token_id":4560,"token":" quant"}
+{"step":136,"t_ms":7656.56,"dt_ms":71.61,"token_id":2274,"token":"ization"}
+{"step":137,"t_ms":7727.07,"dt_ms":70.51,"token_id":856,"token":" is"}
+{"step":138,"t_ms":7817.17,"dt_ms":90.1,"token_id":13739,"token":" implemented"}
+{"step":139,"t_ms":7881.05,"dt_ms":63.88,"token_id":16066,"token":" correctly"}
+{"step":140,"t_ms":7936.37,"dt_ms":55.32,"token_id":521,"token":","}
+{"step":141,"t_ms":7992.19,"dt_ms":55.82,"token_id":13861,"token":" passing"}
+{"step":142,"t_ms":8047.58,"dt_ms":55.39,"token_id":1113,"token":" all"}
+{"step":143,"t_ms":8101.82,"dt_ms":54.23,"token_id":21320,"token":" numerical"}
+{"step":144,"t_ms":8156.97,"dt_ms":55.15,"token_id":25749,"token":" checks"}
+{"step":145,"t_ms":8216.73,"dt_ms":59.77,"token_id":843,"token":" ("}
+{"step":146,"t_ms":8285.37,"dt_ms":68.64,"token_id":9770,"token":"valid"}
+{"step":147,"t_ms":8348.72,"dt_ms":63.35,"token_id":960,"token":"ity"}
+{"step":148,"t_ms":8406.95,"dt_ms":58.23,"token_id":2723,"token":" against"}
+{"step":149,"t_ms":8462.34,"dt_ms":55.39,"token_id":847,"token":" v"}
+{"step":150,"t_ms":8520.49,"dt_ms":58.15,"token_id":5092,"token":"LL"}
+{"step":151,"t_ms":8574.55,"dt_ms":54.06,"token_id":554,"token":"M"}
+{"step":152,"t_ms":8653.38,"dt_ms":78.83,"token_id":1172,"token":"’s"}
+{"step":153,"t_ms":8721.5,"dt_ms":68.11,"token_id":2151,"token":" real"}
+{"step":154,"t_ms":8785.61,"dt_ms":64.11,"token_id":2801,"token":" model"}
+{"step":155,"t_ms":8851.39,"dt_ms":65.79,"token_id":518,"token":")"}
+{"step":156,"t_ms":8904.51,"dt_ms":53.11,"token_id":916,"token":" with"}
+{"step":157,"t_ms":8972.73,"dt_ms":68.22,"token_id":5676,"token":" exact"}
+{"step":158,"t_ms":9026.98,"dt_ms":54.25,"token_id":5519,"token":" bit"}
+{"step":159,"t_ms":9081.62,"dt_ms":54.64,"token_id":3876,"token":"-p"}
+{"step":160,"t_ms":9135.57,"dt_ms":53.95,"token_id":51989,"token":"acking"}
+{"step":161,"t_ms":9191.96,"dt_ms":56.39,"token_id":25383,"token":" alignment"}
+{"step":162,"t_ms":9246.5,"dt_ms":54.54,"token_id":810,"token":" and"}
+{"step":163,"t_ms":9299.41,"dt_ms":52.91,"token_id":21320,"token":" numerical"}
+{"step":164,"t_ms":9354.59,"dt_ms":55.17,"token_id":27403,"token":" consistency"}
+{"step":165,"t_ms":9408.03,"dt_ms":53.45,"token_id":843,"token":" ("}
+{"step":166,"t_ms":9459.81,"dt_ms":51.77,"token_id":55512,"token":"≤"}
+{"step":167,"t_ms":9510.4,"dt_ms":50.6,"token_id":527,"token":"2"}
+{"step":168,"t_ms":9581.97,"dt_ms":71.57,"token_id":578,"token":"e"}
+{"step":169,"t_ms":9651.94,"dt_ms":69.97,"token_id":522,"token":"-"}
+{"step":170,"t_ms":9716.13,"dt_ms":64.19,"token_id":532,"token":"7"}
+{"step":171,"t_ms":9787.87,"dt_ms":71.74,"token_id":7889,"token":" relative"}
+{"step":172,"t_ms":9841.77,"dt_ms":53.9,"token_id":5583,"token":" error"}
+{"step":173,"t_ms":9900.56,"dt_ms":58.79,"token_id":811,"token":" to"}
+{"step":174,"t_ms":9956.15,"dt_ms":55.59,"token_id":792,"token":" f"}
+{"step":175,"t_ms":10012.12,"dt_ms":55.98,"token_id":589,"token":"p"}
+{"step":176,"t_ms":10068.78,"dt_ms":56.65,"token_id":1443,"token":"16"}
+{"step":177,"t_ms":10123.3,"dt_ms":54.52,"token_id":1191,"token":")."}
+{"step":178,"t_ms":10176.63,"dt_ms":53.33,"token_id":2357,"token":" On"}
+{"step":179,"t_ms":10241.4,"dt_ms":64.77,"token_id":779,"token":" the"}
+{"step":180,"t_ms":10302.68,"dt_ms":61.28,"token_id":19269,"token":" RT"}
+{"step":181,"t_ms":10358.66,"dt_ms":55.98,"token_id":565,"token":"X"}
+{"step":182,"t_ms":10421.72,"dt_ms":63.06,"token_id":730,"token":" "}
+{"step":183,"t_ms":10475.39,"dt_ms":53.67,"token_id":27503,"token":"409"}
+{"step":184,"t_ms":10554.71,"dt_ms":79.32,"token_id":525,"token":"0"}
+{"step":185,"t_ms":10621.76,"dt_ms":67.06,"token_id":3382,"token":" pod"}
+{"step":186,"t_ms":10673.44,"dt_ms":51.68,"token_id":521,"token":","}
+{"step":187,"t_ms":10725.02,"dt_ms":51.58,"token_id":1023,"token":" we"}
+{"step":188,"t_ms":10776.63,"dt_ms":51.61,"token_id":10836,"token":" achieved"}
+{"step":189,"t_ms":10832.88,"dt_ms":56.25,"token_id":3627,"token":" near"}
+{"step":190,"t_ms":10889.08,"dt_ms":56.2,"token_id":10982,"token":"-the"}
+{"step":191,"t_ms":10940.26,"dt_ms":51.18,"token_id":59190,"token":"oretical"}
+{"step":192,"t_ms":10991.53,"dt_ms":51.27,"token_id":6586,"token":" speed"}
+{"step":193,"t_ms":11053.37,"dt_ms":61.84,"token_id":15175,"token":"ups"}
+{"step":194,"t_ms":11105.25,"dt_ms":51.88,"token_id":535,"token":":"}
+{"step":195,"t_ms":11156.39,"dt_ms":51.14,"token_id":779,"token":" the"}
+{"step":196,"t_ms":11208.61,"dt_ms":52.22,"token_id":837,"token":" T"}
+{"step":197,"t_ms":11261.3,"dt_ms":52.7,"token_id":558,"token":"Q"}
+{"step":198,"t_ms":11312.03,"dt_ms":50.73,"token_id":943,"token":" k"}
+{"step":199,"t_ms":11363.81,"dt_ms":51.78,"token_id":529,"token":"4"}
+{"step":200,"t_ms":11422.92,"dt_ms":59.11,"token_id":595,"token":"v"}
+{"step":201,"t_ms":11487.37,"dt_ms":64.45,"token_id":529,"token":"4"}
+{"step":202,"t_ms":11552,"dt_ms":64.63,"token_id":20516,"token":" variant"}
+{"step":203,"t_ms":11611.04,"dt_ms":59.03,"token_id":9657,"token":" ran"}
+{"step":204,"t_ms":11663.2,"dt_ms":52.16,"token_id":11306,"token":" ~"}
+{"step":205,"t_ms":11722.93,"dt_ms":59.73,"token_id":525,"token":"0"}
+{"step":206,"t_ms":11775.63,"dt_ms":52.7,"token_id":523,"token":"."}
+{"step":207,"t_ms":11829.28,"dt_ms":53.65,"token_id":9763,"token":"92"}
+{"step":208,"t_ms":11882.88,"dt_ms":53.6,"token_id":12444,"token":" seconds"}
+{"step":209,"t_ms":11936.52,"dt_ms":53.65,"token_id":13236,"token":" versus"}
+{"step":210,"t_ms":11990.59,"dt_ms":54.07,"token_id":730,"token":" "}
+{"step":211,"t_ms":12043.12,"dt_ms":52.53,"token_id":11726,"token":"137"}
+{"step":212,"t_ms":12094.11,"dt_ms":51,"token_id":23276,"token":" µ"}
+{"step":213,"t_ms":12145,"dt_ms":50.89,"token_id":592,"token":"s"}
+{"step":214,"t_ms":12199.07,"dt_ms":54.08,"token_id":797,"token":" in"}
+{"step":215,"t_ms":12259.44,"dt_ms":60.36,"token_id":17343,"token":" Py"}
+{"step":216,"t_ms":12316.41,"dt_ms":56.97,"token_id":30877,"token":"Tor"}
+{"step":217,"t_ms":12380.23,"dt_ms":63.82,"token_id":824,"token":"ch"}
+{"step":218,"t_ms":12459.21,"dt_ms":78.98,"token_id":1172,"token":"’s"}
+{"step":219,"t_ms":12517.85,"dt_ms":58.64,"token_id":792,"token":" f"}
+{"step":220,"t_ms":12588.07,"dt_ms":70.21,"token_id":589,"token":"p"}
+{"step":221,"t_ms":12646.74,"dt_ms":58.68,"token_id":1443,"token":"16"}
+{"step":222,"t_ms":12709.84,"dt_ms":63.09,"token_id":17567,"token":" baseline"}
+{"step":223,"t_ms":12768.24,"dt_ms":58.4,"token_id":521,"token":","}
+{"step":224,"t_ms":12825.51,"dt_ms":57.27,"token_id":2158,"token":" while"}
+{"step":225,"t_ms":12884.47,"dt_ms":58.96,"token_id":837,"token":" T"}
+{"step":226,"t_ms":12940.93,"dt_ms":56.46,"token_id":558,"token":"Q"}
+{"step":227,"t_ms":12999.63,"dt_ms":58.7,"token_id":9228,"token":"-k"}
+{"step":228,"t_ms":13059.34,"dt_ms":59.71,"token_id":528,"token":"3"}
+{"step":229,"t_ms":13118.59,"dt_ms":59.25,"token_id":595,"token":"v"}
+{"step":230,"t_ms":13176.63,"dt_ms":58.04,"token_id":529,"token":"4"}
+{"step":231,"t_ms":13240.09,"dt_ms":63.47,"token_id":28029,"token":" matched"}
+{"step":232,"t_ms":13450.59,"dt_ms":210.5,"token_id":847,"token":" v"}
+{"step":233,"t_ms":13536.39,"dt_ms":85.79,"token_id":5092,"token":"LL"}
+{"step":234,"t_ms":13602.86,"dt_ms":66.47,"token_id":554,"token":"M"}
+{"step":235,"t_ms":13669.08,"dt_ms":66.22,"token_id":6660,"token":" output"}
+{"step":236,"t_ms":13731.26,"dt_ms":62.18,"token_id":916,"token":" with"}
+{"step":237,"t_ms":13864.08,"dt_ms":132.82,"token_id":1550,"token":" only"}
+{"step":238,"t_ms":13956.24,"dt_ms":92.16,"token_id":730,"token":" "}
+{"step":239,"t_ms":14034.34,"dt_ms":78.1,"token_id":526,"token":"1"}
+{"step":240,"t_ms":14129.66,"dt_ms":95.32,"token_id":523,"token":"."}
+{"step":241,"t_ms":14200.17,"dt_ms":70.5,"token_id":7568,"token":"56"}
+{"step":242,"t_ms":14256.02,"dt_ms":55.85,"token_id":578,"token":"e"}
+{"step":243,"t_ms":14317.86,"dt_ms":61.84,"token_id":522,"token":"-"}
+{"step":244,"t_ms":14390.29,"dt_ms":72.43,"token_id":1417,"token":"17"}
+{"step":245,"t_ms":14462.25,"dt_ms":71.96,"token_id":21320,"token":" numerical"}
+{"step":246,"t_ms":14540.03,"dt_ms":77.78,"token_id":5521,"token":" difference"}
+{"step":247,"t_ms":14607.73,"dt_ms":67.7,"token_id":523,"token":"."}
+{"step":248,"t_ms":14675.46,"dt_ms":67.73,"token_id":1470,"token":" This"}
+{"step":249,"t_ms":14754.47,"dt_ms":79.01,"token_id":6612,"token":" valid"}
+{"step":250,"t_ms":14838.1,"dt_ms":83.63,"token_id":1338,"token":"ates"}
+{"step":251,"t_ms":14917.3,"dt_ms":79.2,"token_id":2059,"token":" both"}
+{"step":252,"t_ms":14986.08,"dt_ms":68.78,"token_id":779,"token":" the"}
+{"step":253,"t_ms":15081.69,"dt_ms":95.61,"token_id":6448,"token":" memory"}
+{"step":254,"t_ms":15153.62,"dt_ms":71.93,"token_id":20419,"token":" layout"}
+{"step":255,"t_ms":15223.08,"dt_ms":69.46,"token_id":810,"token":" and"}
+{"step":256,"t_ms":15285.3,"dt_ms":62.22,"token_id":8085,"token":" algorith"}
+{"step":257,"t_ms":15346.51,"dt_ms":61.21,"token_id":10551,"token":"mic"}
+{"step":258,"t_ms":15406.2,"dt_ms":59.69,"token_id":63011,"token":" fidelity"}
+{"step":259,"t_ms":15468.5,"dt_ms":62.3,"token_id":803,"token":" of"}
+{"step":260,"t_ms":15531.65,"dt_ms":63.16,"token_id":779,"token":" the"}
+{"step":261,"t_ms":15601.84,"dt_ms":70.18,"token_id":6354,"token":" Tur"}
+{"step":262,"t_ms":15662.09,"dt_ms":60.25,"token_id":3153,"token":"bo"}
+{"step":263,"t_ms":15725.14,"dt_ms":63.05,"token_id":37644,"token":"Quant"}
+{"step":264,"t_ms":15801,"dt_ms":75.86,"token_id":25007,"token":" pipeline"}
+{"step":265,"t_ms":15897.21,"dt_ms":96.21,"token_id":523,"token":"."}
+{"step":266,"t_ms":15989.65,"dt_ms":92.43,"token_id":509,"token":"\n\n"}
+{"step":267,"t_ms":16071.59,"dt_ms":81.95,"token_id":5971,"token":"Key"}
+{"step":268,"t_ms":16151.56,"dt_ms":79.97,"token_id":10017,"token":" technical"}
+{"step":269,"t_ms":16227.81,"dt_ms":76.25,"token_id":30538,"token":" achievements"}
+{"step":270,"t_ms":16304.33,"dt_ms":76.52,"token_id":2957,"token":" include"}
+{"step":271,"t_ms":16384.56,"dt_ms":80.23,"token_id":1334,"token":":\n"}
+{"step":272,"t_ms":16467.13,"dt_ms":82.57,"token_id":522,"token":"-"}
+{"step":273,"t_ms":16551.02,"dt_ms":83.89,"token_id":8076,"token":" **"}
+{"step":274,"t_ms":16652.22,"dt_ms":101.2,"token_id":21202,"token":"Pod"}
+{"step":275,"t_ms":16738.51,"dt_ms":86.29,"token_id":2990,"token":" port"}
+{"step":276,"t_ms":16825.1,"dt_ms":86.58,"token_id":2583,"token":"ability"}
+{"step":277,"t_ms":16907.53,"dt_ms":82.43,"token_id":1463,"token":"**"}
+{"step":278,"t_ms":16988.33,"dt_ms":80.8,"token_id":535,"token":":"}
+{"step":279,"t_ms":17070.82,"dt_ms":82.48,"token_id":835,"token":" A"}
+{"step":280,"t_ms":17160.5,"dt_ms":89.68,"token_id":11934,"token":" dedicated"}
+{"step":281,"t_ms":17251.08,"dt_ms":90.58,"token_id":3382,"token":" pod"}
+{"step":282,"t_ms":17344.47,"dt_ms":93.39,"token_id":953,"token":" was"}
+{"step":283,"t_ms":17439.5,"dt_ms":95.02,"token_id":4659,"token":" built"}
+{"step":284,"t_ms":17523.89,"dt_ms":84.4,"token_id":810,"token":" and"}
+{"step":285,"t_ms":17609.76,"dt_ms":85.86,"token_id":10168,"token":" tested"}
+{"step":286,"t_ms":17693.85,"dt_ms":84.09,"token_id":884,"token":" on"}
+{"step":287,"t_ms":17778.71,"dt_ms":84.86,"token_id":902,"token":" an"}
+{"step":288,"t_ms":17862.61,"dt_ms":83.9,"token_id":928,"token":" N"}
+{"step":289,"t_ms":17952.06,"dt_ms":89.46,"token_id":7731,"token":"VID"}
+{"step":290,"t_ms":18034.68,"dt_ms":82.62,"token_id":8620,"token":"IA"}
+{"step":291,"t_ms":18118.86,"dt_ms":84.18,"token_id":19269,"token":" RT"}
+{"step":292,"t_ms":18201.37,"dt_ms":82.51,"token_id":565,"token":"X"}
+{"step":293,"t_ms":18283.76,"dt_ms":82.39,"token_id":730,"token":" "}
+{"step":294,"t_ms":18503.67,"dt_ms":219.91,"token_id":27503,"token":"409"}
+{"step":295,"t_ms":18595.25,"dt_ms":91.58,"token_id":525,"token":"0"}
+{"step":296,"t_ms":18688.33,"dt_ms":93.08,"token_id":3382,"token":" pod"}
+{"step":297,"t_ms":18822.95,"dt_ms":134.62,"token_id":521,"token":","}
+{"step":298,"t_ms":18936.11,"dt_ms":113.16,"token_id":21844,"token":" achieving"}
+{"step":299,"t_ms":19024.26,"dt_ms":88.15,"token_id":1552,"token":" sub"}

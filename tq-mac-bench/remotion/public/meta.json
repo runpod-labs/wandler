@@ -1,0 +1,24 @@
+{
+  "model": "LFM2.5-1.2B-Instruct",
+  "doc": "../../TURBOQUANT-KV-CACHE-PLAN.md",
+  "prompt_tokens": 10104,
+  "max_new_tokens": 300,
+  "fp16": {
+    "promptMs": 14381.041250000002,
+    "totalDecodeMs": 19024.25783100001,
+    "n": 300,
+    "kvBytes": 124157952,
+    "text": "**Summary (200\u2013300 words)**\n\nTurboQuant KV cache quantization in ONNX Runtime is now fully accessible across the full engineering stack\u2014webGPU, CUDA, and RTX 4090\u2014without requiring developers to re-implement it in JavaScript. The core idea is to make all downstream consumers (transformers.js, wandler, onnxruntime-node, onnxruntime-web) freely obtain TurboQuant KV cache quantization for free, leveraging existing implementations like TurboQuant Triton (vLLM) as a reference.\n\nRecent validation confirms that TurboQuant KV cache quantization is implemented correctly, passing all numerical checks (validity against vLLM\u2019s real model) with exact bit-packing alignment and numerical consistency (\u22642e-7 relative error to fp16). On the RTX 4090 pod, we achieved near-theoretical speedups: the TQ k4v4 variant ran ~0.92 seconds versus 137 \u00b5s in PyTorch\u2019s fp16 baseline, while TQ-k3v4 matched vLLM output with only 1.56e-17 numerical difference. This validates both the memory layout and algorithmic fidelity of the TurboQuant pipeline.\n\nKey technical achievements include:\n- **Pod portability**: A dedicated pod was built and tested on an NVIDIA RTX 4090 pod, achieving sub"
+  },
+  "tq": {
+    "promptMs": 13875.661124999999,
+    "totalDecodeMs": 10210.269118000244,
+    "n": 300,
+    "kvBytes": 34919424,
+    "text": "**Summary (\ufffd\ufffd 250 words)**\n\nTurboQuant KV cache quantization, now fully integrated into ONNX Runtime via TurboQuant KV cache quantization, is ready for all downstream consumers\u2014transformer.js, wandler, onnxruntime nodes, and even onnxruntime-web\u2014without re-implementing it in JavaScript. The key milestones achieved this session are:\n\n- **Validation & Quantization:** A rigorous cross-validation against vLLM\u2019s real Triton implementation confirmed that TurboQuant KV cache quantization works out-of-the-box across multiple data sizes (64\u2013128/256 tokens), with bit-packing, Walsh-Hadamard rotation, Lloyd-Max codebook, and K/V encoding matching fp16 reference results.\n- **Accuracy:** All quantitative metrics\u2014cosim similarity, log probability, and logit comparison\u2014passed tightly (<0.1% deviation) between fp16 and quantized implementations. This confirms that the quantization does not sacrifice accuracy while enabling zero-fragment memory usage for KV cache.\n- **Speed Gains:** TQ-kv4v4 and TQ-k3v4 implementations achieved speedups of up to ~2\u00d7 over vLLM (for v8 LLMs) at 32K context length, thanks to optimized attention decoding and fused score computation. At 128K context, TQ-k3v"
+  },
+  "decode_speedup": 1.86,
+  "recorded_at": "2026-05-11T09:30:41.927Z",
+  "hardware": "Apple M3 Pro",
+  "runtime": "ONNX Runtime \u00b7 WebGPU \u00b7 Node.js"
+}

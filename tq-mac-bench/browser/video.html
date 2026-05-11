@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TurboQuant — real-generation video recorder</title>
+<style>
+  body { font-family: ui-monospace, monospace; padding: 1em; background: #0a0a0a; color: #e0e0e0; max-width: 1100px; }
+  textarea, input, select, button { background: #181818; color: #e0e0e0; border: 1px solid #333; font-family: inherit; padding: 0.4em; }
+  textarea { width: 100%; min-height: 8em; }
+  pre { white-space: pre-wrap; line-height: 1.4; background: #111; padding: 0.6em; border: 1px solid #222; min-height: 4em; }
+  .row { display: flex; gap: 1em; align-items: center; margin: 0.5em 0; flex-wrap: wrap; }
+  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+  .pane h3 { margin: 0 0 0.4em 0; }
+  .pane.fp16 h3 { color: #ff8866; }
+  .pane.tq h3 { color: #66ccff; }
+  .stats { color: #999; font-size: 0.85em; }
+  .bad { color: #ff5555; }
+  .good { color: #55ff7f; }
+  .head { color: #66ccff; font-weight: bold; }
+  .badge { display: inline-block; padding: 0.2em 0.6em; border-radius: 0.3em; background: #1a3a1a; color: #88ff88; margin-left: 0.5em; }
+</style>
+</head>
+<body>
+<h2>TurboQuant — real-generation video recorder</h2>
+<p class="stats">Generates the same prompt twice (fp16, then TQ) using greedy sampling. Records per-token timings + decoded text into JSONL files in <code>recordings/</code>. Watch the two panes below to see live timing.</p>
+
+<div class="row">
+  Model:
+  <select id="model">
+    <option value="qwen3">Qwen3-0.6B</option>
+    <option value="lfm">LFM2.5-1.2B-Instruct</option>
+  </select>
+  Max new tokens: <input id="maxtok" type="number" value="80" min="1" max="512" style="width: 5em">
+  Pad context with: <input id="padctx" type="number" value="4096" min="0" max="32768" style="width: 6em"> tokens (synthetic, to inflate KV cache before generation)
+</div>
+<div class="row">
+  Prompt:
+</div>
+<textarea id="prompt">Explain quantization for an LLM in one short paragraph.</textarea>
+<div class="row">
+  <button id="run">Generate fp16 + TQ and record</button>
+  <span id="status" class="stats"></span>
+</div>
+
+<div class="panes">
+  <div class="pane fp16">
+    <h3>fp16 <span id="fp16-stats" class="stats"></span></h3>
+    <pre id="fp16-out"></pre>
+  </div>
+  <div class="pane tq">
+    <h3>TurboQuant <span id="tq-stats" class="stats"></span></h3>
+    <pre id="tq-out"></pre>
+  </div>
+</div>
+
+<h3>Log</h3>
+<pre id="log"></pre>
+
+<script type="module" src="./video.js"></script>
+</body>
+</html>

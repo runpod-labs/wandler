@@ -1,0 +1,17 @@
+{
+  "name": "browser",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "onnxruntime-web": "1.27.0-dev.20260505-b81f3f8558"
+  },
+  "trustedDependencies": [
+    "protobufjs"
+  ]
+}
