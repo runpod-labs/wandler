@@ -16,5 +16,9 @@
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
     "turbo": "^2.5.4"
+  },
+  "dependencies": {
+    "onnxruntime-node": "file:./vendor/onnxruntime-node-1.27.0.tgz",
+    "onnxruntime-common": "file:./vendor/onnxruntime-common-1.27.0.tgz"
   }
 }

@@ -316,27 +316,47 @@ const TURBOQUANT_DTYPES: readonly string[] = [
   "turboquant_3bit_nc",
 ] as const;
 
-function buildSessionOptions(device: DeviceType): Record<string, unknown> | undefined {
-  if (device !== "cuda") return undefined;
+function buildSessionOptions(
+  device: DeviceType,
+  kvCacheDtype: string,
+): Record<string, unknown> | undefined {
+  const opts: Record<string, unknown> = {};
 
-  const cudaProvider: Record<string, unknown> = {
-    name: "cuda",
-    // ONNX Runtime's default grows the CUDA arena by powers of two. That is
-    // fast, but long prompts can leave most of the GPU reserved after a run.
-    arena_extend_strategy: process.env.WANDLER_CUDA_ARENA_EXTEND_STRATEGY ?? "kSameAsRequested",
-  };
+  if (device === "cuda") {
+    const cudaProvider: Record<string, unknown> = {
+      name: "cuda",
+      // ONNX Runtime's default grows the CUDA arena by powers of two. That is
+      // fast, but long prompts can leave most of the GPU reserved after a run.
+      arena_extend_strategy: process.env.WANDLER_CUDA_ARENA_EXTEND_STRATEGY ?? "kSameAsRequested",
+    };
 
-  const gpuMemLimitMb = process.env.WANDLER_CUDA_GPU_MEM_LIMIT_MB;
-  if (gpuMemLimitMb) {
-    const mb = Number.parseInt(gpuMemLimitMb, 10);
-    if (Number.isFinite(mb) && mb > 0) {
-      cudaProvider.gpu_mem_limit = String(mb * 1024 * 1024);
+    const gpuMemLimitMb = process.env.WANDLER_CUDA_GPU_MEM_LIMIT_MB;
+    if (gpuMemLimitMb) {
+      const mb = Number.parseInt(gpuMemLimitMb, 10);
+      if (Number.isFinite(mb) && mb > 0) {
+        cudaProvider.gpu_mem_limit = String(mb * 1024 * 1024);
+      }
     }
+
+    opts.executionProviders = [cudaProvider, "cpu"];
+  } else if (device === "webgpu") {
+    opts.executionProviders = ["webgpu", "cpu"];
   }
 
-  return {
-    executionProviders: [cudaProvider, "cpu"],
-  };
+  // TurboQuant KV-cache compression: tell ORT to apply the graph rewrite at
+  // session-create time. Works on CUDA and WebGPU EPs (both ship the kernels
+  // in our patched onnxruntime-node).  The `extra` keys are flattened into
+  // session config entries — see js/web/lib/wasm/wasm-utils.ts and
+  // js/node/src/session_options_helper.cc (`IterateExtraOptions`).
+  if (kvCacheDtype && kvCacheDtype.startsWith("turboquant_")) {
+    opts.extra = {
+      "optimization.turboquant_kv_method": kvCacheDtype,
+      "optimization.turboquant_kv_boundary": process.env.WANDLER_KV_CACHE_BOUNDARY ?? "0",
+    };
+    logInfo(`[wandler] TurboQuant enabled: ${kvCacheDtype}`);
+  }
+
+  return Object.keys(opts).length > 0 ? opts : undefined;
 }
 
 // All device types in preference order (best perf first, cpu last).
@@ -441,17 +461,18 @@ async function loadLLM(
   modelId: string,
   dtype: string,
   device: string,
+  kvCacheDtype: string,
 ): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean; device: DeviceType }> {
   // Explicit device (not "auto") — try it, fall back to cpu.
   if (device !== "auto") {
-    return await loadLLMWithDevice(modelId, dtype, device as DeviceType);
+    return await loadLLMWithDevice(modelId, dtype, device as DeviceType, kvCacheDtype);
   }
 
   // device="auto" — walk the fallback chain.
   for (let i = 0; i < DEVICE_FALLBACK_ORDER.length; i++) {
     const dev = DEVICE_FALLBACK_ORDER[i]!;
     try {
-      return await loadLLMWithDevice(modelId, dtype, dev);
+      return await loadLLMWithDevice(modelId, dtype, dev, kvCacheDtype);
     } catch (err) {
       const isLast = i === DEVICE_FALLBACK_ORDER.length - 1;
       if (isLast) throw err;
@@ -503,6 +524,7 @@ async function loadLLMWithDevice(
   modelId: string,
   dtype: string,
   device: DeviceType,
+  kvCacheDtype: string,
 ): Promise<{ model: LoadedModels["model"]; processor: unknown | null; isVision: boolean; device: DeviceType }> {
   // Probe config.json so we don't try the vision path on a 20B text-only
   // model (wasted round-trip) or skip it on a real vision model. A null
@@ -514,7 +536,7 @@ async function loadLLMWithDevice(
     const model = await AutoModelForCausalLM.from_pretrained(modelId, {
       dtype: dtype as DtypeType,
       device,
-      session_options: buildSessionOptions(device),
+      session_options: buildSessionOptions(device, kvCacheDtype),
     }) as unknown as LoadedModels["model"];
     return { model, processor: null, isVision: false, device };
   }
@@ -525,7 +547,7 @@ async function loadLLMWithDevice(
     const model = await VisionModel.from_pretrained(modelId, {
       dtype: dtype as DtypeType,
       device,
-      session_options: buildSessionOptions(device),
+      session_options: buildSessionOptions(device, kvCacheDtype),
     }) as unknown as LoadedModels["model"];
 
     const processor = await AutoProcessor.from_pretrained(modelId);
@@ -536,7 +558,7 @@ async function loadLLMWithDevice(
     const model = await AutoModelForCausalLM.from_pretrained(modelId, {
       dtype: dtype as DtypeType,
       device,
-      session_options: buildSessionOptions(device),
+      session_options: buildSessionOptions(device, kvCacheDtype),
     }) as unknown as LoadedModels["model"];
     return { model, processor: null, isVision: false, device };
   }
@@ -597,7 +619,7 @@ export async function loadModels(config: ServerConfig): Promise<LoadedModels> {
     const resolvedDtype = await resolveDtype(config.modelId, config.modelDtype);
     warnIfLowBitMismatch(resolvedDtype, device);
 
-    const result = await loadLLM(config.modelId, resolvedDtype, device);
+    const result = await loadLLM(config.modelId, resolvedDtype, device, config.kvCacheDtype);
     model = result.model;
     processor = result.processor;
     isVision = result.isVision;

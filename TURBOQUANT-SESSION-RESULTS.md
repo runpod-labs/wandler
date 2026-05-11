@@ -146,21 +146,41 @@ Added during the autonomous arc:
   `cuda_eps` only to `{cuda_eps, webgpu_eps}` so Option A fires
   on both backends.
 
-### Apple Silicon Metal benches (LFM2.5-1.2B-Instruct-ONNX)
+### Verified-correct benches (Apple Silicon Metal)
 
-Single Apple Silicon GPU, 4-step decode after the prompt.  All numbers
-from the patched ORT WebGPU EP via Dawn → Metal.
+Cos sim 0.993–1.000 vs fp16 across decode chain, top-1 token match 7-8/9
+on both LFM2.5 and Qwen3.5 (same fidelity as CUDA paper numbers).
+All KV cache sizes are **measured** by reading the present_kv tensor outputs
+after the prompt step.
 
-| context | fp16 prompt | TQ prompt | fp16 decode  | TQ decode    | decode speedup |
-|--------:|------------:|----------:|-------------:|-------------:|---------------:|
-|   4 K   |   3.8 s     |   3.8 s   |  37.4 ms/tok |  **18.1 ms/tok** | **2.07× faster** |
-|  16 K   |  29.6 s     |  28.9 s   |  88.9 ms/tok |  **65.1 ms/tok** | **1.37×** |
-|  32 K   |  97.7 s     |  95.5 s   | 348.7 ms/tok |  **94.3 ms/tok** | **3.70× faster** |
+#### Browser (ORT-web WebGPU EP via WASM/JSPI, Chrome 148 headless)
 
-Prompt is tied because Option-ε runs the standard FlashAttention path
-on fresh fp16 K/V (bit-equivalent to fp16, no quantisation cost).
-Decode is where TQ shines — the cache reads dominate, and TQ shrinks
-them 3.56×; **at 32 K context, the speedup is 3.7×**.
+| ctx | LFM2.5 fp16 | LFM2.5 TQ | speedup | Qwen3.5 fp16 | Qwen3.5 TQ | speedup |
+|---:|---:|---:|---:|---:|---:|---:|
+| 4K  | 10.95 tok/s | 13.49 tok/s | 1.23× | 7.06 tok/s | 10.08 tok/s | 1.43× |
+| 8K  |  8.81 tok/s | 18.34 tok/s | **2.08×** | 3.21 tok/s | 7.99 tok/s | **2.49×** |
+| 16K |  5.58 tok/s | 11.90 tok/s | 2.13× | 4.12 tok/s | 7.02 tok/s | 1.71× |
+
+#### Node.js (ORT-node native NAPI, same Dawn → Metal)
+
+| ctx | LFM2.5 fp16 | LFM2.5 TQ | speedup | Qwen3.5 fp16 | Qwen3.5 TQ | speedup |
+|---:|---:|---:|---:|---:|---:|---:|
+| 4K  | 23.36 tok/s | 48.54 tok/s | 2.08× | 26.62 tok/s | 36.06 tok/s | 1.36× |
+| 8K  | 16.09 tok/s | 34.45 tok/s | 2.14× | 13.30 tok/s | 26.27 tok/s | 1.98× |
+| 16K | 11.96 tok/s | 19.51 tok/s | 1.63× |  4.61 tok/s | **17.72 tok/s** | **3.84×** |
+
+#### Measured KV cache (identical between browser & Node — same kernels)
+
+| ctx | LFM2.5 fp16 → TQ | Qwen3.5 fp16 → TQ |
+|---:|---:|---:|
+| 4K  | 48.0 MB → 13.5 MB (3.56× smaller) | 48.0 MB → 12.4 MB (3.87×) |
+| 8K  | 96.0 MB → 27.0 MB | 96.0 MB → 24.8 MB |
+| 16K | 192.0 MB → 54.0 MB | 192.0 MB → 49.5 MB |
+
+Node decode is ~3× faster than browser at the same workload because the
+browser pays a WASM orchestration tax; TQ wins are similar in *relative*
+terms.  Both paths use the same C++ kernels and the same WGSL shaders
+dispatched to Apple Metal via Dawn.
 
 Five fixes turned the Linux/Lavapipe scaffold into a real Apple Silicon
 runner (single ORT-fork commit, regenerated into the patch):
@@ -185,13 +205,44 @@ we exercise on prompt-step Option-ε + decode-step roundtrip.  Wiring
 encode for new-token cache writes during decode is the natural
 follow-up.
 
-## What's NOT in this session
+## Wandler integration — wired in
 
-- **wandler integration**: the dtype plumbing is in place
-  (`server/src/config.ts`, `server/src/models/manager.ts` from earlier
-  commits), but no end-to-end `onnxruntime-node` wheel has been
-  built and tested with our patches yet.  Would need to build
-  `onnxruntime-node` with `--build_nodejs` from our fork.
+The server now picks up our patched `onnxruntime-node-1.27.0.tgz`
+(bundled at `vendor/`) and routes `WANDLER_KV_CACHE_DTYPE` through to
+ORT's session config as `optimization.turboquant_kv_method`.
+
+Boot a TQ session:
+
+```bash
+WANDLER_LLM=LiquidAI/LFM2.5-1.2B-Instruct-ONNX \
+WANDLER_LLM_DTYPE=q4f16 \
+WANDLER_DEVICE=webgpu \
+WANDLER_KV_CACHE_DTYPE=turboquant_4bit_nc \
+npm run dev
+```
+
+`server/src/models/manager.ts` `buildSessionOptions(device, kvCacheDtype)`
+emits `extra: { 'optimization.turboquant_kv_method': ..., 'optimization.turboquant_kv_boundary': '0' }`
+which flows through transformers.js's `session_options` to ORT.
+
+A `scripts/fix-ort-dylib-symlinks.mjs` postinstall hook recreates the
+`libonnxruntime.{major}.dylib` symlinks that `npm pack` strips — without
+them the binding fails at dlopen with `@rpath/libonnxruntime.1.dylib not found`.
+
+## Known limitations (Chrome 136+ only for browsers)
+
+The WebGPU EP path requires:
+- **JSPI** (JS Promise Integration) — Chrome 136+ / Edge 136+ only as of
+  May 2026; Safari 26 and Firefox 141 don't ship JSPI yet.
+- **WebGPU Subgroups feature** — Chrome 125+, but inside our orchestrator
+  we always call `ApplyFlashAttention` which requires Subgroups.  When
+  Subgroups isn't available we'd need to route to the non-FA
+  `ApplyAttention` path; today we don't, so TQ session creation will
+  fail on Subgroups-less devices.  Workaround: detect at the graph
+  transformer level and skip the TQ rewrite if Subgroups is missing,
+  falling back to fp16.  Half day of work — not yet done.
+
+## What's NOT in this session
 
 - **head_dim=128 wmma fast path**: today only head_dim=64 uses the
   v6 wmma kernel.  hd=128 (Qwen3-0.6B uses this) falls through to

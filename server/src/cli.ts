@@ -38,6 +38,7 @@ program
   .option("-e, --embedding <id>", "Embedding model")
   .option("-s, --stt <id>", "STT model")
   .option("-d, --device <type>", "Device: auto, cpu, cuda, coreml, dml, webgpu, wasm")
+  .option("--kv-cache-dtype <preset>", "KV cache compression: default, turboquant_4bit_nc, turboquant_k3v4_nc, turboquant_3bit_nc")
   .option("-p, --port <number>", "Port")
   .option("--host <addr>", "Bind address")
   .option("-k, --api-key <key>", "API key for auth")
@@ -63,6 +64,7 @@ program
       WANDLER_STT: opts.stt ?? process.env.WANDLER_STT ?? process.env.STT_MODEL_ID,
       WANDLER_EMBEDDING: opts.embedding ?? process.env.WANDLER_EMBEDDING ?? process.env.EMBEDDING_MODEL_ID,
       WANDLER_DEVICE: opts.device ?? process.env.WANDLER_DEVICE ?? process.env.DEVICE,
+      WANDLER_KV_CACHE_DTYPE: opts.kvCacheDtype ?? process.env.WANDLER_KV_CACHE_DTYPE,
       WANDLER_PORT: opts.port ?? process.env.WANDLER_PORT ?? process.env.PORT,
       WANDLER_HOST: opts.host ?? process.env.WANDLER_HOST,
       WANDLER_API_KEY: opts.apiKey ?? process.env.WANDLER_API_KEY,

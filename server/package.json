@@ -1,7 +1,7 @@
 {
   "name": "wandler",
   "version": "2.6.4",
-  "description": "transformers.js inference server — OpenAI-compatible API for ONNX models",
+  "description": "transformers.js inference server \u2014 OpenAI-compatible API for ONNX models",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -48,17 +48,21 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
-    "test:e2e": "vitest run tests/e2e"
+    "test:e2e": "vitest run tests/e2e",
+    "postinstall:ort": "node scripts/fix-ort-dylib-symlinks.mjs",
+    "postinstall": "node scripts/fix-ort-dylib-symlinks.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.13",
     "@huggingface/transformers": "^4.2.0",
     "commander": "^14.0.3",
     "hono": "^4.7.11",
-    "onnxruntime-node": "^1.24.3"
+    "onnxruntime-node": "file:../vendor/onnxruntime-node-1.27.0.tgz",
+    "onnxruntime-common": "file:../vendor/onnxruntime-common-1.27.0.tgz"
   },
   "overrides": {
-    "onnxruntime-node": "^1.24.3"
+    "onnxruntime-node": "file:../vendor/onnxruntime-node-1.27.0.tgz",
+    "onnxruntime-common": "file:../vendor/onnxruntime-common-1.27.0.tgz"
   },
   "devDependencies": {
     "@ai-sdk/openai": "^3.0.52",
