@@ -34,8 +34,13 @@ jobs:
       - name: Install build prerequisites
         run: |
           brew install cmake ninja
-          python3 -m pip install --upgrade pip
-          python3 -m pip install onnx numpy huggingface_hub transformers
+          # macOS-15 ships Python under Homebrew with PEP 668, so global pip
+          # installs are rejected. Use a venv we'll re-activate in later steps.
+          python3 -m venv "$HOME/ort-build-venv"
+          source "$HOME/ort-build-venv/bin/activate"
+          pip install --upgrade pip
+          pip install onnx numpy huggingface_hub transformers
+          echo "$HOME/ort-build-venv/bin" >> "$GITHUB_PATH"
 
       - name: Clone ONNX Runtime at the patch base
         run: |
