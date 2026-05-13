@@ -61,8 +61,7 @@ jobs:
             --enable_pybind \
             --skip_submodule_sync \
             --skip_tests \
-            --parallel \
-            --allow_running_as_root
+            --parallel
           # Install the resulting wheel into the runner's python.
           python3 -m pip install --force-reinstall --no-deps \
               build/MacOS/Release/dist/onnxruntime-*.whl
