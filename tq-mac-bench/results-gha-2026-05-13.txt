@@ -1,0 +1,91 @@
+=== LiquidAI/LFM2.5-1.2B-Instruct-ONNX | mode=fp16 prompt=4096 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 18717 ms
+  decode (4 steps): step1=1564.8ms steady avg=273.1 ms/tok
+
+result: prompt=18717ms decode=273.1ms/tok
+
+=== LiquidAI/LFM2.5-1.2B-Instruct-ONNX | mode=tq prompt=4096 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 16175 ms
+  decode (4 steps): step1=452.2ms steady avg=95.0 ms/tok
+
+result: prompt=16175ms decode=95.0ms/tok
+
+=== LiquidAI/LFM2.5-1.2B-Instruct-ONNX | mode=fp16 prompt=8192 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 41546 ms
+  decode (4 steps): step1=939.6ms steady avg=315.7 ms/tok
+
+result: prompt=41546ms decode=315.7ms/tok
+
+=== LiquidAI/LFM2.5-1.2B-Instruct-ONNX | mode=tq prompt=8192 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+  prompt (TTFT): 49797 ms
+2026-05-13 17:20:25.518 Python[86159:186074] 2026-05-13 17:20:25.518004 [E:onnxruntime:, sequential_executor.cc:615 ExecuteKernel] Non-zero status code returned while running GatherBlockQuantized node. Name:'/model/embed_tokens/Gather_Quant' Status Message: Failed to create a WebGPU compute pipeline: Error creating pipeline state Compilation failed
+ - While initializing [ComputePipeline (unlabeled)]
+    at InitializeImpl (/Users/runner/work/wandler/wandler/onnxruntime/build/MacOS/Release/_deps/dawn-src/src/dawn/native/metal/ComputePipelineMTL.mm:84)
+Traceback (most recent call last):
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 172, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 163, in main
+    p, d = bench(use_tq=True)
+           ~~~~~^^^^^^^^^^^^^
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 148, in bench
+    outs = sess.run(output_names, inputs)
+  File "/Users/runner/ort-build-venv/lib/python3.14/site-packages/onnxruntime/capi/onnxruntime_inference_collection.py", line 322, in run
+    return self._sess.run(output_names, input_feed, run_options)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Non-zero status code returned while running GatherBlockQuantized node. Name:'/model/embed_tokens/Gather_Quant' Status Message: Failed to create a WebGPU compute pipeline: Error creating pipeline state Compilation failed
+ - While initializing [ComputePipeline (unlabeled)]
+    at InitializeImpl (/Users/runner/work/wandler/wandler/onnxruntime/build/MacOS/Release/_deps/dawn-src/src/dawn/native/metal/ComputePipelineMTL.mm:84)
+
+=== LiquidAI/LFM2.5-1.2B-Instruct-ONNX | mode=fp16 prompt=16384 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+2026-05-13 17:20:38.765 Python[87468:189939] 2026-05-13 17:20:38.764920 [E:onnxruntime:, sequential_executor.cc:615 ExecuteKernel] Non-zero status code returned while running GatherBlockQuantized node. Name:'/model/embed_tokens/Gather_Quant' Status Message: Failed to create a WebGPU compute pipeline: Error creating pipeline state Compilation failed
+ - While initializing [ComputePipeline (unlabeled)]
+    at InitializeImpl (/Users/runner/work/wandler/wandler/onnxruntime/build/MacOS/Release/_deps/dawn-src/src/dawn/native/metal/ComputePipelineMTL.mm:84)
+Traceback (most recent call last):
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 172, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 161, in main
+    p, d = bench(use_tq=False)
+           ~~~~~^^^^^^^^^^^^^^
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 140, in bench
+    outs = sess.run(output_names, inputs)
+  File "/Users/runner/ort-build-venv/lib/python3.14/site-packages/onnxruntime/capi/onnxruntime_inference_collection.py", line 322, in run
+    return self._sess.run(output_names, input_feed, run_options)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Non-zero status code returned while running GatherBlockQuantized node. Name:'/model/embed_tokens/Gather_Quant' Status Message: Failed to create a WebGPU compute pipeline: Error creating pipeline state Compilation failed
+ - While initializing [ComputePipeline (unlabeled)]
+    at InitializeImpl (/Users/runner/work/wandler/wandler/onnxruntime/build/MacOS/Release/_deps/dawn-src/src/dawn/native/metal/ComputePipelineMTL.mm:84)
+
+=== LiquidAI/LFM2.5-1.2B-Instruct-ONNX | mode=tq prompt=16384 decode=4 ===
+  GQA layers: 6
+  head_dim: 64 | TQ slot bytes: 36
+2026-05-13 17:20:53.536 Python[87792:190982] 2026-05-13 17:20:53.536707 [E:onnxruntime:, sequential_executor.cc:615 ExecuteKernel] Non-zero status code returned while running GatherBlockQuantized node. Name:'/model/embed_tokens/Gather_Quant' Status Message: Failed to create a WebGPU compute pipeline: Error creating pipeline state Compilation failed
+ - While initializing [ComputePipeline (unlabeled)]
+    at InitializeImpl (/Users/runner/work/wandler/wandler/onnxruntime/build/MacOS/Release/_deps/dawn-src/src/dawn/native/metal/ComputePipelineMTL.mm:84)
+Traceback (most recent call last):
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 172, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 163, in main
+    p, d = bench(use_tq=True)
+           ~~~~~^^^^^^^^^^^^^
+  File "/Users/runner/work/wandler/wandler/wandler/bench/turboquant_general.py", line 140, in bench
+    outs = sess.run(output_names, inputs)
+  File "/Users/runner/ort-build-venv/lib/python3.14/site-packages/onnxruntime/capi/onnxruntime_inference_collection.py", line 322, in run
+    return self._sess.run(output_names, input_feed, run_options)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Non-zero status code returned while running GatherBlockQuantized node. Name:'/model/embed_tokens/Gather_Quant' Status Message: Failed to create a WebGPU compute pipeline: Error creating pipeline state Compilation failed
+ - While initializing [ComputePipeline (unlabeled)]
+    at InitializeImpl (/Users/runner/work/wandler/wandler/onnxruntime/build/MacOS/Release/_deps/dawn-src/src/dawn/native/metal/ComputePipelineMTL.mm:84)
+
