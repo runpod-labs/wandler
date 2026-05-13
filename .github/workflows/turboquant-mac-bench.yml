@@ -64,7 +64,7 @@ jobs:
             --parallel
           # Install the resulting wheel into the runner's python.
           python3 -m pip install --force-reinstall --no-deps \
-              build/MacOS/Release/dist/onnxruntime-*.whl
+              build/MacOS/Release/dist/onnxruntime_webgpu-*.whl
 
       - name: Patch model with last-token logits slice
         run: |
