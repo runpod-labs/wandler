@@ -76,7 +76,7 @@ jobs:
           "
           python3 onnxruntime/onnxruntime/python/tools/quantization/turboquant_kv/last_token_logits.py \
               model/onnx/model_q4f16.onnx \
-              model/onnx/model_q4f16_lasttok.onnx
+              -o model/onnx/model_q4f16_lasttok.onnx
 
       - name: Run bench (fp16 baseline + TQ via Option A)
         run: |
