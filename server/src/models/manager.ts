@@ -316,7 +316,7 @@ const TURBOQUANT_DTYPES: readonly string[] = [
   "turboquant_3bit_nc",
 ] as const;
 
-function buildSessionOptions(
+export function buildSessionOptions(
   device: DeviceType,
   kvCacheDtype: string,
 ): Record<string, unknown> | undefined {
